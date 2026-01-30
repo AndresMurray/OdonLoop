@@ -1,0 +1,26 @@
+```gitignore
+# Entorno virtual
+venv/
+env/
+
+# Base de datos
+*.sqlite3
+db.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Django
+*.log
+local_settings.py
+db.sqlite3-journal
+media/
+
+# Entornos
+.env
+.venv
+```
