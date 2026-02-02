@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'usuarios',
+    
+    
     
 ]
 
@@ -121,6 +124,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+AUTH_USER_MODEL = 'usuarios.CustomUser' 
 
 # Luego para produccion 
 """CORS_ALLOWED_ORIGINS = [
