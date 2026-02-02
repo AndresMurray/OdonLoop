@@ -71,3 +71,7 @@ coverage/
 *.njsproj
 *.sln
 *.sw?
+
+# Documentación local
+explicacion-api.md
+
