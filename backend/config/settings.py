@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'usuarios',
     'pacientes',
+    'odontologos',
+    'turnos',
 
     
     
