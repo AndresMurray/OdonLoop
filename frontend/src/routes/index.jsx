@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import RegisterPage from '../pages/RegisterPage';
 import TurnosPage from '../pages/TurnosPage';
+import HomeOdonto from '../pages/HomeOdonto';
 import App from '../App';
 
 export const router = createBrowserRouter([
@@ -16,9 +17,9 @@ export const router = createBrowserRouter([
     path: '/turnos',
     element: <TurnosPage />,
   },
-  // Agrega más rutas aquí
-  // {
-  //   path: '/login',
-  //   element: <LoginPage />,
-  // },
+  {
+    path: '/home-odonto',
+    element: <HomeOdonto />,
+  },
+
 ]);
