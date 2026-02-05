@@ -3,6 +3,7 @@ import RegisterPage from '../pages/RegisterPage';
 import TurnosPage from '../pages/TurnosPage';
 import HomeOdonto from '../pages/HomeOdonto';
 import App from '../App';
+import HomePage from '../pages/HomePage';
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ export const router = createBrowserRouter([
   {
     path: '/home-odonto',
     element: <HomeOdonto />,
+  },
+  {
+    path: '/home',
+    element: <HomePage />,
   },
 
 ]);

@@ -3,3 +3,7 @@ export { default as Button } from './Button';
 export { default as Form } from './Form';
 export { default as Alert } from './Alert';
 export { default as UserRegistrationForm } from './UserRegistrationForm';
+export { default as Navbar } from './Navbar';
+export { default as Footer } from './Footer';
+export { Card, CardHeader, CardTitle, CardDescription, CardContent } from './Card';
+export { Calendar } from './Calendar';
