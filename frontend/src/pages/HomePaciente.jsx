@@ -3,20 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
 import Button from '../components/Button';
 import { Calendar } from '../components/Calendar';
-import { Clock, Users, Calendar as CalendarIcon, Settings, LogOut } from 'lucide-react';
+import { 
+  Clock, 
+  Calendar as CalendarIcon, 
+  Settings, 
+  LogOut,
+  FileText,
+  User,
+  Heart
+} from 'lucide-react';
 import { authService } from '../api/authService';
 
-const HomeOdonto = () => {
+const HomePaciente = () => {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [userData] = useState(() => authService.getUserData());
 
   useEffect(() => {
     if (!userData) {
-      navigate('/login?tipo=odontologo');
+      navigate('/login?tipo=paciente');
       return;
     }
-    if (userData.tipo_usuario !== 'odontologo') {
+    if (userData.tipo_usuario !== 'paciente') {
       navigate('/');
       return;
     }
@@ -30,30 +38,29 @@ const HomeOdonto = () => {
   // Datos de ejemplo para las estadísticas
   const stats = [
     {
-      icon: <Clock className="w-8 h-8 text-blue-600" />,
-      title: 'Turnos Hoy',
-      value: '8',
-      description: '3 pendientes, 5 confirmados',
+      icon: <CalendarIcon className="w-8 h-8 text-blue-600" />,
+      title: 'Próximo Turno',
+      value: 'Hoy',
+      description: '15:00 hs - Consulta',
     },
     {
-      icon: <Users className="w-8 h-8 text-green-600" />,
-      title: 'Pacientes Activos',
-      value: '45',
-      description: 'Este mes',
-    },
-    {
-      icon: <CalendarIcon className="w-8 h-8 text-purple-600" />,
-      title: 'Próximos Turnos',
+      icon: <FileText className="w-8 h-8 text-green-600" />,
+      title: 'Historial',
       value: '12',
-      description: 'Esta semana',
+      description: 'Consultas realizadas',
+    },
+    {
+      icon: <Heart className="w-8 h-8 text-red-600" />,
+      title: 'Estado',
+      value: 'Activo',
+      description: 'Sin tratamientos pendientes',
     },
   ];
 
-  const turnosHoy = [
-    { hora: '09:00', paciente: 'Juan Pérez', tipo: 'Consulta general' },
-    { hora: '10:30', paciente: 'María González', tipo: 'Limpieza dental' },
-    { hora: '12:00', paciente: 'Carlos López', tipo: 'Ortodoncia' },
-    { hora: '14:00', paciente: 'Ana Martínez', tipo: 'Control' },
+  const proximosTurnos = [
+    { fecha: '2026-02-06', hora: '15:00', doctor: 'Dr. Juan Pérez', tipo: 'Consulta general' },
+    { fecha: '2026-02-13', hora: '10:30', doctor: 'Dr. Juan Pérez', tipo: 'Control' },
+    { fecha: '2026-02-20', hora: '16:00', doctor: 'Dra. María González', tipo: 'Limpieza dental' },
   ];
 
   if (!userData) {
@@ -61,17 +68,17 @@ const HomeOdonto = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100">
       {/* Header */}
       <header className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Panel de Odontólogo
+                Panel de Paciente
               </h1>
               <p className="text-gray-600 mt-1">
-                Bienvenido, Dr. {userData.first_name} {userData.last_name}
+                Bienvenido, {userData.first_name} {userData.last_name}
               </p>
             </div>
             <div className="flex gap-3">
@@ -87,30 +94,29 @@ const HomeOdonto = () => {
           </div>
         </div>
       </header>
-    
+
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Botón destacado de Gestión de Turnos */}
+        {/* Botón destacado de Solicitar Turno */}
         <div className="mb-8">
-          <Card className="bg-gradient-to-r from-blue-600 to-indigo-600 border-none">
+          <Card className="bg-gradient-to-r from-blue-600 to-cyan-600 border-none">
             <CardContent className="p-8">
               <div className="flex flex-col md:flex-row items-center justify-between text-white">
                 <div className="mb-4 md:mb-0">
-                  <h2 className="text-2xl font-bold mb-2">Gestión de Turnos</h2>
+                  <h2 className="text-2xl font-bold mb-2">¿Necesitas un turno?</h2>
                   <p className="text-blue-100">
-                    Administra, crea y visualiza todos tus turnos de manera eficiente
+                    Solicita tu turno de manera rápida y sencilla
                   </p>
                 </div>
                 <Button 
                   variant="secondary" 
                   className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 text-lg"
                   onClick={() => {
-                    // Aquí irá la navegación a gestión de turnos
-                    console.log('Navegar a gestión de turnos');
+                    console.log('Navegar a solicitar turno');
                   }}
                 >
                   <CalendarIcon className="w-5 h-5 mr-2 inline" />
-                  Gestión de Turnos
+                  Solicitar Turno
                 </Button>
               </div>
             </CardContent>
@@ -143,7 +149,7 @@ const HomeOdonto = () => {
           <Card>
             <CardHeader>
               <CardTitle>Calendario</CardTitle>
-              <CardDescription>Selecciona una fecha para ver los turnos</CardDescription>
+              <CardDescription>Selecciona una fecha para ver tus turnos</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex justify-center">
@@ -156,22 +162,15 @@ const HomeOdonto = () => {
             </CardContent>
           </Card>
 
-          {/* Turnos de hoy */}
+          {/* Próximos turnos */}
           <Card>
             <CardHeader>
-              <CardTitle>Turnos de Hoy</CardTitle>
-              <CardDescription>
-                {new Date().toLocaleDateString('es-ES', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </CardDescription>
+              <CardTitle>Próximos Turnos</CardTitle>
+              <CardDescription>Tus citas programadas</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {turnosHoy.map((turno, index) => (
+                {proximosTurnos.map((turno, index) => (
                   <div
                     key={index}
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
@@ -179,17 +178,17 @@ const HomeOdonto = () => {
                     <div className="flex items-center space-x-4">
                       <div className="flex flex-col items-center justify-center bg-blue-600 text-white rounded-lg w-16 h-16">
                         <span className="text-xs font-medium">
-                          {turno.hora.split(':')[0]}
+                          {new Date(turno.fecha).toLocaleDateString('es-ES', { month: 'short' })}
                         </span>
                         <span className="text-xl font-bold">
-                          {turno.hora.split(':')[1]}
+                          {new Date(turno.fecha).getDate()}
                         </span>
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900">
-                          {turno.paciente}
+                          {turno.hora} - {turno.tipo}
                         </p>
-                        <p className="text-sm text-gray-600">{turno.tipo}</p>
+                        <p className="text-sm text-gray-600">{turno.doctor}</p>
                       </div>
                     </div>
                     <Button variant="secondary" className="text-sm">
@@ -198,10 +197,10 @@ const HomeOdonto = () => {
                   </div>
                 ))}
               </div>
-              {turnosHoy.length === 0 && (
+              {proximosTurnos.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <CalendarIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No hay turnos programados para hoy</p>
+                  <p>No tienes turnos programados</p>
                 </div>
               )}
             </CardContent>
@@ -217,20 +216,20 @@ const HomeOdonto = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Button className="py-6 flex flex-col items-center">
-                  <Users className="w-6 h-6 mb-2" />
-                  Ver Pacientes
+                  <User className="w-6 h-6 mb-2" />
+                  Mi Perfil
+                </Button>
+                <Button variant="secondary" className="py-6 flex flex-col items-center">
+                  <FileText className="w-6 h-6 mb-2" />
+                  Historial Médico
                 </Button>
                 <Button variant="secondary" className="py-6 flex flex-col items-center">
                   <CalendarIcon className="w-6 h-6 mb-2" />
-                  Nuevo Turno
-                </Button>
-                <Button variant="secondary" className="py-6 flex flex-col items-center">
-                  <Clock className="w-6 h-6 mb-2" />
-                  Historial
+                  Mis Turnos
                 </Button>
                 <Button variant="secondary" className="py-6 flex flex-col items-center">
                   <Settings className="w-6 h-6 mb-2" />
-                  Ajustes
+                  Configuración
                 </Button>
               </div>
             </CardContent>
@@ -241,4 +240,4 @@ const HomeOdonto = () => {
   );
 };
 
-export default HomeOdonto;
+export default HomePaciente;

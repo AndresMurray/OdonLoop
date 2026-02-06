@@ -4,12 +4,16 @@ from .models import Paciente
 @admin.register(Paciente)
 class PacienteAdmin(admin.ModelAdmin):
     # Columnas que se ven en el listado
-    list_display = ('dni', 'get_first_name', 'get_last_name')
+    list_display = ('dni', 'get_first_name', 'get_last_name', 'obra_social', 'activo', 'fecha_alta')
     
     # Buscador (podés buscar por DNI o por nombre del usuario relacionado)
-    search_fields = ('dni', 'user__first_name', 'user__last_name')
+    search_fields = ('dni', 'user__first_name', 'user__last_name', 'numero_afiliado')
     
- 
+    # Filtros
+    list_filter = ('activo', 'obra_social', 'fecha_alta')
+    
+    # Campos de solo lectura
+    readonly_fields = ('fecha_alta',)
 
     # Métodos para traer datos del modelo User
     def get_first_name(self, obj):

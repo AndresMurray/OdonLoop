@@ -5,7 +5,24 @@ const apiClient = new ApiClient('');
 
 export const userService = {
   async register(userData) {
-    return apiClient.post(API_ENDPOINTS.users.register, userData);
+    try {
+      const response = await apiClient.post(API_ENDPOINTS.users.register, userData);
+      return response;
+    } catch (error) {
+      // Formatear errores del backend
+      if (error.errors) {
+        const errorMessages = [];
+        for (const [field, messages] of Object.entries(error.errors)) {
+          if (Array.isArray(messages)) {
+            errorMessages.push(...messages);
+          } else {
+            errorMessages.push(messages);
+          }
+        }
+        throw new Error(errorMessages.join(', '));
+      }
+      throw error;
+    }
   },
 
   async getProfile() {

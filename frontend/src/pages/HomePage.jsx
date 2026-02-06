@@ -50,47 +50,61 @@ const HomePage = () => {
 
               {/* Botones de acceso */}
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                <Link to="/paciente">
-                  <Card className="w-80 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer border-2 border-transparent hover:border-blue-400">
-                    <CardContent className="p-8 text-center">
-                      <div className="flex justify-center mb-4">
-                        <div className="p-4 bg-blue-100 rounded-full">
-                          <Users className="w-12 h-12 text-blue-600" />
-                        </div>
+                <Card className="w-80 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer border-2 border-transparent hover:border-blue-400">
+                  <CardContent className="p-8 text-center">
+                    <div className="flex justify-center mb-4">
+                      <div className="p-4 bg-blue-100 rounded-full">
+                        <Users className="w-12 h-12 text-blue-600" />
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                        Soy Paciente
-                      </h3>
-                      <p className="text-gray-600 mb-6">
-                        Gestiona tus turnos y consultas médicas
-                      </p>
-                      <Button variant="primary" className="w-full">
-                        Acceder como Paciente
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Link>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                      Soy Paciente
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      Gestiona tus turnos y consultas médicas
+                    </p>
+                    <div className="space-y-3">
+                      <Link to="/login?tipo=paciente" className="block">
+                        <Button variant="primary" className="w-full">
+                          Iniciar Sesión
+                        </Button>
+                      </Link>
+                      <Link to="/register/paciente" className="block">
+                        <Button variant="outline" className="w-full border-blue-600 text-blue-600 hover:bg-blue-50">
+                          Registrarme
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                <Link to="/odontologo">
-                  <Card className="w-80 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer border-2 border-transparent hover:border-indigo-400">
-                    <CardContent className="p-8 text-center">
-                      <div className="flex justify-center mb-4">
-                        <div className="p-4 bg-indigo-100 rounded-full">
-                          <Stethoscope className="w-12 h-12 text-indigo-600" />
-                        </div>
+                <Card className="w-80 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer border-2 border-transparent hover:border-indigo-400">
+                  <CardContent className="p-8 text-center">
+                    <div className="flex justify-center mb-4">
+                      <div className="p-4 bg-indigo-100 rounded-full">
+                        <Stethoscope className="w-12 h-12 text-indigo-600" />
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                        Soy Odontólogo
-                      </h3>
-                      <p className="text-gray-600 mb-6">
-                        Administra tu consultorio y pacientes
-                      </p>
-                      <Button variant="primary" className="w-full bg-indigo-600 hover:bg-indigo-700">
-                        Acceder como Odontólogo
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Link>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                      Soy Odontólogo
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      Administra tu consultorio y pacientes
+                    </p>
+                    <div className="space-y-3">
+                      <Link to="/login?tipo=odontologo" className="block">
+                        <Button variant="primary" className="w-full bg-indigo-600 hover:bg-indigo-700">
+                          Iniciar Sesión
+                        </Button>
+                      </Link>
+                      <Link to="/register/odontologo" className="block">
+                        <Button variant="outline" className="w-full border-indigo-600 text-indigo-600 hover:bg-indigo-50">
+                          Registrarme
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>

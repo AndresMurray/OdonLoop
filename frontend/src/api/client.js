@@ -3,10 +3,16 @@ class ApiClient {
     this.baseURL = baseURL;
   }
 
+  getAuthHeader() {
+    const token = localStorage.getItem('access_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+  }
+
   async request(endpoint, options = {}) {
     const config = {
       headers: {
         'Content-Type': 'application/json',
+        ...this.getAuthHeader(),
         ...options.headers,
       },
       ...options,
@@ -20,7 +26,7 @@ class ApiClient {
       if (!response.ok) {
         throw {
           status: response.status,
-          message: data.message || 'Error en la petición',
+          message: data.message || data.error || 'Error en la petición',
           errors: data,
         };
       }
