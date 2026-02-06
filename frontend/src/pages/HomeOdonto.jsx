@@ -27,35 +27,6 @@ const HomeOdonto = () => {
     navigate('/');
   };
 
-  // Datos de ejemplo para las estadísticas
-  const stats = [
-    {
-      icon: <Clock className="w-8 h-8 text-blue-600" />,
-      title: 'Turnos Hoy',
-      value: '8',
-      description: '3 pendientes, 5 confirmados',
-    },
-    {
-      icon: <Users className="w-8 h-8 text-green-600" />,
-      title: 'Pacientes Activos',
-      value: '45',
-      description: 'Este mes',
-    },
-    {
-      icon: <CalendarIcon className="w-8 h-8 text-purple-600" />,
-      title: 'Próximos Turnos',
-      value: '12',
-      description: 'Esta semana',
-    },
-  ];
-
-  const turnosHoy = [
-    { hora: '09:00', paciente: 'Juan Pérez', tipo: 'Consulta general' },
-    { hora: '10:30', paciente: 'María González', tipo: 'Limpieza dental' },
-    { hora: '12:00', paciente: 'Carlos López', tipo: 'Ortodoncia' },
-    { hora: '14:00', paciente: 'Ana Martínez', tipo: 'Control' },
-  ];
-
   if (!userData) {
     return null;
   }
@@ -104,10 +75,7 @@ const HomeOdonto = () => {
                 <Button 
                   variant="secondary" 
                   className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 text-lg"
-                  onClick={() => {
-                    // Aquí irá la navegación a gestión de turnos
-                    console.log('Navegar a gestión de turnos');
-                  }}
+                  onClick={() => navigate('/gestion-turnos')}
                 >
                   <CalendarIcon className="w-5 h-5 mr-2 inline" />
                   Gestión de Turnos
@@ -117,24 +85,44 @@ const HomeOdonto = () => {
           </Card>
         </div>
 
-        {/* Estadísticas */}
+        {/* Estadísticas - Se cargarán desde la API */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <Card key={index} className="hover:shadow-lg transition-shadow duration-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-gray-50 rounded-lg">{stat.icon}</div>
+          <Card className="hover:shadow-lg transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <Clock className="w-8 h-8 text-blue-600" />
                 </div>
-                <h3 className="text-sm font-medium text-gray-600 mb-1">
-                  {stat.title}
-                </h3>
-                <p className="text-3xl font-bold text-gray-900 mb-1">
-                  {stat.value}
-                </p>
-                <p className="text-sm text-gray-500">{stat.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+              <h3 className="text-sm font-medium text-gray-600 mb-1">Turnos Hoy</h3>
+              <p className="text-3xl font-bold text-gray-900 mb-1">-</p>
+              <p className="text-sm text-gray-500">Cargando...</p>
+            </CardContent>
+          </Card>
+          <Card className="hover:shadow-lg transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <Users className="w-8 h-8 text-green-600" />
+                </div>
+              </div>
+              <h3 className="text-sm font-medium text-gray-600 mb-1">Pacientes Activos</h3>
+              <p className="text-3xl font-bold text-gray-900 mb-1">-</p>
+              <p className="text-sm text-gray-500">Este mes</p>
+            </CardContent>
+          </Card>
+          <Card className="hover:shadow-lg transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <CalendarIcon className="w-8 h-8 text-purple-600" />
+                </div>
+              </div>
+              <h3 className="text-sm font-medium text-gray-600 mb-1">Próximos Turnos</h3>
+              <p className="text-3xl font-bold text-gray-900 mb-1">-</p>
+              <p className="text-sm text-gray-500">Esta semana</p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Grid de contenido */}
@@ -170,40 +158,11 @@ const HomeOdonto = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {turnosHoy.map((turno, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="flex flex-col items-center justify-center bg-blue-600 text-white rounded-lg w-16 h-16">
-                        <span className="text-xs font-medium">
-                          {turno.hora.split(':')[0]}
-                        </span>
-                        <span className="text-xl font-bold">
-                          {turno.hora.split(':')[1]}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">
-                          {turno.paciente}
-                        </p>
-                        <p className="text-sm text-gray-600">{turno.tipo}</p>
-                      </div>
-                    </div>
-                    <Button variant="secondary" className="text-sm">
-                      Ver
-                    </Button>
-                  </div>
-                ))}
+              <div className="text-center py-8 text-gray-500">
+                <CalendarIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No hay turnos programados para hoy</p>
+                <p className="text-sm mt-2">Los turnos se cargarán desde tu gestión</p>
               </div>
-              {turnosHoy.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <CalendarIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No hay turnos programados para hoy</p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>

@@ -51,7 +51,7 @@ const LoginPage = () => {
         if (response.user.tipo_usuario === 'paciente') {
           navigate('/home-paciente');
         } else if (response.user.tipo_usuario === 'odontologo') {
-          navigate('/home-odonto');
+          navigate('/home-odontologo');
         } else {
           navigate('/');
         }

@@ -35,34 +35,6 @@ const HomePaciente = () => {
     navigate('/');
   };
 
-  // Datos de ejemplo para las estadísticas
-  const stats = [
-    {
-      icon: <CalendarIcon className="w-8 h-8 text-blue-600" />,
-      title: 'Próximo Turno',
-      value: 'Hoy',
-      description: '15:00 hs - Consulta',
-    },
-    {
-      icon: <FileText className="w-8 h-8 text-green-600" />,
-      title: 'Historial',
-      value: '12',
-      description: 'Consultas realizadas',
-    },
-    {
-      icon: <Heart className="w-8 h-8 text-red-600" />,
-      title: 'Estado',
-      value: 'Activo',
-      description: 'Sin tratamientos pendientes',
-    },
-  ];
-
-  const proximosTurnos = [
-    { fecha: '2026-02-06', hora: '15:00', doctor: 'Dr. Juan Pérez', tipo: 'Consulta general' },
-    { fecha: '2026-02-13', hora: '10:30', doctor: 'Dr. Juan Pérez', tipo: 'Control' },
-    { fecha: '2026-02-20', hora: '16:00', doctor: 'Dra. María González', tipo: 'Limpieza dental' },
-  ];
-
   if (!userData) {
     return null;
   }
@@ -111,9 +83,7 @@ const HomePaciente = () => {
                 <Button 
                   variant="secondary" 
                   className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 text-lg"
-                  onClick={() => {
-                    console.log('Navegar a solicitar turno');
-                  }}
+                  onClick={() => navigate('/solicitar-turno')}
                 >
                   <CalendarIcon className="w-5 h-5 mr-2 inline" />
                   Solicitar Turno
@@ -123,24 +93,44 @@ const HomePaciente = () => {
           </Card>
         </div>
 
-        {/* Estadísticas */}
+        {/* Estadísticas - Se cargarán desde la API */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <Card key={index} className="hover:shadow-lg transition-shadow duration-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-gray-50 rounded-lg">{stat.icon}</div>
+          <Card className="hover:shadow-lg transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <CalendarIcon className="w-8 h-8 text-blue-600" />
                 </div>
-                <h3 className="text-sm font-medium text-gray-600 mb-1">
-                  {stat.title}
-                </h3>
-                <p className="text-3xl font-bold text-gray-900 mb-1">
-                  {stat.value}
-                </p>
-                <p className="text-sm text-gray-500">{stat.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+              <h3 className="text-sm font-medium text-gray-600 mb-1">Próximo Turno</h3>
+              <p className="text-3xl font-bold text-gray-900 mb-1">-</p>
+              <p className="text-sm text-gray-500">Cargando...</p>
+            </CardContent>
+          </Card>
+          <Card className="hover:shadow-lg transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <FileText className="w-8 h-8 text-green-600" />
+                </div>
+              </div>
+              <h3 className="text-sm font-medium text-gray-600 mb-1">Historial</h3>
+              <p className="text-3xl font-bold text-gray-900 mb-1">-</p>
+              <p className="text-sm text-gray-500">Consultas realizadas</p>
+            </CardContent>
+          </Card>
+          <Card className="hover:shadow-lg transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <Heart className="w-8 h-8 text-red-600" />
+                </div>
+              </div>
+              <h3 className="text-sm font-medium text-gray-600 mb-1">Estado</h3>
+              <p className="text-3xl font-bold text-gray-900 mb-1">Activo</p>
+              <p className="text-sm text-gray-500">Sin tratamientos pendientes</p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Grid de contenido */}
@@ -169,40 +159,11 @@ const HomePaciente = () => {
               <CardDescription>Tus citas programadas</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {proximosTurnos.map((turno, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="flex flex-col items-center justify-center bg-blue-600 text-white rounded-lg w-16 h-16">
-                        <span className="text-xs font-medium">
-                          {new Date(turno.fecha).toLocaleDateString('es-ES', { month: 'short' })}
-                        </span>
-                        <span className="text-xl font-bold">
-                          {new Date(turno.fecha).getDate()}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">
-                          {turno.hora} - {turno.tipo}
-                        </p>
-                        <p className="text-sm text-gray-600">{turno.doctor}</p>
-                      </div>
-                    </div>
-                    <Button variant="secondary" className="text-sm">
-                      Ver
-                    </Button>
-                  </div>
-                ))}
+              <div className="text-center py-8 text-gray-500">
+                <CalendarIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No tienes turnos programados</p>
+                <p className="text-sm mt-2">Solicita un turno para comenzar</p>
               </div>
-              {proximosTurnos.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <CalendarIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No tienes turnos programados</p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>

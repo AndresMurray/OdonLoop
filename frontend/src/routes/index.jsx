@@ -6,6 +6,8 @@ import LoginPage from '../pages/LoginPage';
 import TurnosPage from '../pages/TurnosPage';
 import HomeOdonto from '../pages/HomeOdonto';
 import HomePaciente from '../pages/HomePaciente';
+import GestionTurnosOdonto from '../pages/GestionTurnosOdonto';
+import SolicitarTurnoPage from '../pages/SolicitarTurnoPage';
 import App from '../App';
 import HomePage from '../pages/HomePage';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -44,10 +46,26 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/home-odonto',
+    path: '/home-odontologo',
     element: (
       <ProtectedRoute requiredRole="odontologo">
         <HomeOdonto />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/gestion-turnos',
+    element: (
+      <ProtectedRoute requiredRole="odontologo">
+        <GestionTurnosOdonto />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/solicitar-turno',
+    element: (
+      <ProtectedRoute requiredRole="paciente">
+        <SolicitarTurnoPage />
       </ProtectedRoute>
     ),
   },

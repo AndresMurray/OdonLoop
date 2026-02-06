@@ -1,7 +1,7 @@
 import ApiClient from './client';
-import { API_ENDPOINTS } from './config';
+import API_BASE_URL, { API_ENDPOINTS } from './config';
 
-const apiClient = new ApiClient('');
+const apiClient = new ApiClient(API_BASE_URL);
 
 // Claves para localStorage
 const TOKEN_KEY = 'access_token';
@@ -22,7 +22,13 @@ export const authService = {
       
       return response;
     } catch (error) {
-      // Formatear errores del backend
+      console.error('Error en login:', error);
+      
+      // Manejar diferentes formatos de error
+      if (error.message) {
+        throw new Error(error.message);
+      }
+      
       if (error.errors) {
         const errorMessages = [];
         for (const [, messages] of Object.entries(error.errors)) {
@@ -34,7 +40,12 @@ export const authService = {
         }
         throw new Error(errorMessages.join(', '));
       }
-      throw error;
+      
+      if (error.error) {
+        throw new Error(error.error);
+      }
+      
+      throw new Error('Error al iniciar sesión');
     }
   },
 

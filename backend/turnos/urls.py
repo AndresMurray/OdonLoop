@@ -3,8 +3,9 @@ from rest_framework.routers import DefaultRouter
 from .views import TurnoViewSet
 
 router = DefaultRouter()
-router.register(r'', TurnoViewSet)
+router.register(r'', TurnoViewSet, basename='turno')
 
 urlpatterns = [
     path('', include(router.urls)),
 ]
+
