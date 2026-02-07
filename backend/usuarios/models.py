@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 class CustomUser(AbstractUser):
+    email = models.EmailField(unique=True, verbose_name='Email')
     bio = models.TextField(blank=True, null=True)
     telefono = models.CharField(max_length=20, blank=True, null=True)
     fecha_nacimiento = models.DateField(blank=True, null=True)
@@ -13,9 +14,13 @@ class CustomUser(AbstractUser):
         ('admin', 'Administrador'),
     ]
     tipo_usuario = models.CharField(max_length=20, choices=TIPO_USUARIO, default='paciente')
+    
+    # Usar email como campo de autenticación principal
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     def __str__(self):
-        return self.username
+        return self.email
     
     def get_edad(self):
         """Calcula la edad a partir de la fecha de nacimiento"""

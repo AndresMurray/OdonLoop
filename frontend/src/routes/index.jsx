@@ -1,11 +1,11 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import RegisterPage from '../pages/RegisterPage';
 import App from '../App';
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />,
+    element: <Navigate to="/home" replace />,
   },
   {
     path: '/register',

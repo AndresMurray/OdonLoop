@@ -1,7 +1,7 @@
 import ApiClient from './client';
-import { API_ENDPOINTS } from './config';
+import API_BASE_URL, { API_ENDPOINTS } from './config';
 
-const apiClient = new ApiClient('');
+const apiClient = new ApiClient(API_BASE_URL);
 
 export const userService = {
   async register(userData) {
