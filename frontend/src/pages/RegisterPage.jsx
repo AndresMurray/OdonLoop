@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import UserRegistrationForm from '../components/UserRegistrationForm';
 import Alert from '../components/Alert';
 import { userService } from '../api/userService';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -40,7 +42,9 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+      <Navbar />
+      <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900">Crear cuenta</h2>
@@ -69,6 +73,8 @@ const RegisterPage = () => {
           </p>
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

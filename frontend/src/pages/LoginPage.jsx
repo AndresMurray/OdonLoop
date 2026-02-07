@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { LogIn, ArrowLeft } from 'lucide-react';
@@ -9,6 +10,8 @@ import Button from '../components/Button';
 import Form from '../components/Form';
 import Alert from '../components/Alert';
 import { Card, CardContent } from '../components/Card';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -76,10 +79,6 @@ const LoginPage = () => {
     return '/register';
   };
 
-  const getBgColor = () => {
-    if (tipoUsuario === 'odontologo') return 'from-indigo-50 to-indigo-100';
-    return 'from-blue-50 to-blue-100';
-  };
 
   const getIconColor = () => {
     if (tipoUsuario === 'odontologo') return 'bg-indigo-100';
@@ -97,11 +96,13 @@ const LoginPage = () => {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${getBgColor()} py-12 px-4 sm:px-6 lg:px-8`}>
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+      <Navbar />
+      <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md mx-auto w-full">
         <Link
           to="/"
-          className={`inline-flex items-center ${getLinkColor()} mb-6 transition-colors`}
+          className="inline-flex items-center text-white hover:text-slate-200 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Volver al inicio
@@ -160,8 +161,8 @@ const LoginPage = () => {
                   variant="primary"
                   className={`w-full py-3 ${
                     tipoUsuario === 'odontologo' 
-                      ? 'bg-indigo-600 hover:bg-indigo-700' 
-                      : ''
+                      ? 'bg-slate-700 hover:bg-slate-800' 
+                      : 'bg-blue-700 hover:bg-blue-800'
                   }`}
                   disabled={isSubmitting}
                 >
@@ -175,7 +176,11 @@ const LoginPage = () => {
                 ¿No tienes cuenta?{' '}
                 <Link
                   to={getRegisterLink()}
-                  className={`${getLinkColor()} font-medium`}
+                  className={`${
+                    tipoUsuario === 'odontologo' 
+                      ? 'text-slate-700 hover:text-slate-800' 
+                      : 'text-blue-700 hover:text-blue-800'
+                  } font-medium`}
                 >
                   Regístrate
                 </Link>
@@ -184,6 +189,8 @@ const LoginPage = () => {
           </CardContent>
         </Card>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

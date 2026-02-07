@@ -9,6 +9,8 @@ import Button from '../components/Button';
 import Form from '../components/Form';
 import Alert from '../components/Alert';
 import { Card, CardContent } from '../components/Card';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const RegisterOdontologoPage = () => {
   const navigate = useNavigate();
@@ -72,11 +74,13 @@ const RegisterOdontologoPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+      <Navbar />
+      <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto w-full">
         <Link
           to="/"
-          className="inline-flex items-center text-indigo-600 hover:text-indigo-700 mb-6 transition-colors"
+          className="inline-flex items-center text-white hover:text-slate-200 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Volver al inicio
@@ -86,8 +90,8 @@ const RegisterOdontologoPage = () => {
           <CardContent className="p-8">
             <div className="text-center mb-8">
               <div className="flex justify-center mb-4">
-                <div className="p-4 bg-indigo-100 rounded-full">
-                  <Stethoscope className="w-12 h-12 text-indigo-600" />
+                <div className="p-4 bg-slate-100 rounded-full">
+                  <Stethoscope className="w-12 h-12 text-slate-700" />
                 </div>
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
@@ -210,7 +214,7 @@ const RegisterOdontologoPage = () => {
                 <Button
                   type="submit"
                   variant="primary"
-                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700"
+                  className="w-full py-3 bg-slate-700 hover:bg-slate-800"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Registrando...' : 'Crear cuenta profesional'}
@@ -223,7 +227,7 @@ const RegisterOdontologoPage = () => {
                 ¿Ya tienes cuenta?{' '}
                 <Link
                   to="/login?tipo=odontologo"
-                  className="text-indigo-600 hover:text-indigo-700 font-medium"
+                  className="text-slate-700 hover:text-slate-800 font-medium"
                 >
                   Inicia sesión
                 </Link>
@@ -232,6 +236,8 @@ const RegisterOdontologoPage = () => {
           </CardContent>
         </Card>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

@@ -4,6 +4,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import { Clock, User, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 // Datos mock de odontólogos
 const odontologos = [
@@ -50,11 +52,13 @@ export default function TurnosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+      <Navbar />
+      <div className="flex-grow bg-white/5 backdrop-blur-sm p-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Reservar Turno</h1>
-          <p className="text-slate-600">Selecciona un odontólogo, fecha y horario para tu consulta</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Reservar Turno</h1>
+          <p className="text-slate-200">Selecciona un odontólogo, fecha y horario para tu consulta</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -178,6 +182,8 @@ export default function TurnosPage() {
           </Card>
         )}
       </div>
+      </div>
+      <Footer />
     </div>
   );
 }

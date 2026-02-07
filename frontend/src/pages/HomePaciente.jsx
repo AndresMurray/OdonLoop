@@ -13,6 +13,8 @@ import {
   Heart
 } from 'lucide-react';
 import { authService } from '../api/authService';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const HomePaciente = () => {
   const navigate = useNavigate();
@@ -40,9 +42,11 @@ const HomePaciente = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100">
-      {/* Header */}
-      <header className="bg-white shadow-md">
+    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+      <Navbar />
+      
+      {/* Header with User Info */}
+      <header className="bg-white/95 shadow-md backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
@@ -68,7 +72,8 @@ const HomePaciente = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-grow bg-white/5 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Botón destacado de Solicitar Turno */}
         <div className="mb-8">
           <Card className="bg-gradient-to-r from-blue-600 to-cyan-600 border-none">
@@ -196,7 +201,9 @@ const HomePaciente = () => {
             </CardContent>
           </Card>
         </div>
+        </div>
       </main>
+      <Footer />
     </div>
   );
 };

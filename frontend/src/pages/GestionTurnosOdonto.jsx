@@ -4,6 +4,8 @@ import { crearTurno, getMisTurnos, cancelarTurno, confirmarTurno, completarTurno
 import { authService } from '../api/authService';
 import Button from '../components/Button';
 import { Card } from '../components/Card';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const GestionTurnosOdonto = () => {
   const navigate = useNavigate();
@@ -142,13 +144,15 @@ const GestionTurnosOdonto = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+      <Navbar />
+      <div className="flex-grow bg-white/5 backdrop-blur-sm p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Gestión de Turnos</h1>
-            <p className="text-gray-600 mt-2">Dr. {userData.nombre} {userData.apellido}</p>
+            <h1 className="text-3xl font-bold text-white">Gestión de Turnos</h1>
+            <p className="text-slate-200 mt-2">Dr. {userData.nombre} {userData.apellido}</p>
           </div>
           <div className="flex gap-4">
             <Button onClick={() => navigate('/home-odontologo')} variant="secondary">
@@ -393,6 +397,8 @@ const GestionTurnosOdonto = () => {
           </div>
         )}
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

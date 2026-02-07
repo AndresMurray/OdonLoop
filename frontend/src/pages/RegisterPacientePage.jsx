@@ -10,6 +10,8 @@ import Button from '../components/Button';
 import Form from '../components/Form';
 import Alert from '../components/Alert';
 import { Card, CardContent } from '../components/Card';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const RegisterPacientePage = () => {
   const navigate = useNavigate();
@@ -103,11 +105,13 @@ const RegisterPacientePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+      <Navbar />
+      <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto w-full">
         <Link
           to="/"
-          className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-6 transition-colors"
+          className="inline-flex items-center text-white hover:text-slate-200 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Volver al inicio
@@ -118,7 +122,7 @@ const RegisterPacientePage = () => {
             <div className="text-center mb-8">
               <div className="flex justify-center mb-4">
                 <div className="p-4 bg-blue-100 rounded-full">
-                  <Users className="w-12 h-12 text-blue-600" />
+                  <Users className="w-12 h-12 text-blue-700" />
                 </div>
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
@@ -262,7 +266,7 @@ const RegisterPacientePage = () => {
                 <Button
                   type="submit"
                   variant="primary"
-                  className="w-full py-3"
+                  className="w-full py-3 bg-blue-700 hover:bg-blue-800"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Registrando...' : 'Crear cuenta'}
@@ -275,7 +279,7 @@ const RegisterPacientePage = () => {
                 ¿Ya tienes cuenta?{' '}
                 <Link
                   to="/login?tipo=paciente"
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-blue-700 hover:text-blue-800 font-medium"
                 >
                   Inicia sesión
                 </Link>
@@ -284,6 +288,8 @@ const RegisterPacientePage = () => {
           </CardContent>
         </Card>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

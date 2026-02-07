@@ -5,6 +5,8 @@ import { getOdontologos } from '../api/odontologoService';
 import { authService } from '../api/authService';
 import Button from '../components/Button';
 import { Card } from '../components/Card';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const SolicitarTurnoPage = () => {
   const navigate = useNavigate();
@@ -130,13 +132,15 @@ const SolicitarTurnoPage = () => {
   const odontologoInfo = odontologos.find(o => o.id === parseInt(odontologoSeleccionado));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+      <Navbar />
+      <div className="flex-grow bg-white/5 backdrop-blur-sm p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Solicitar Turno</h1>
-            <p className="text-gray-600 mt-2">{userData.nombre} {userData.apellido}</p>
+            <h1 className="text-3xl font-bold text-white">Solicitar Turno</h1>
+            <p className="text-slate-200 mt-2">{userData.nombre} {userData.apellido}</p>
           </div>
           <div className="flex gap-4">
             <Button onClick={() => navigate('/home-paciente')} variant="secondary">
@@ -151,7 +155,7 @@ const SolicitarTurnoPage = () => {
             onClick={() => setVistaActual('buscar')}
             className={`px-6 py-3 rounded-lg font-medium transition-colors ${
               vistaActual === 'buscar'
-                ? 'bg-teal-600 text-white'
+                ? 'bg-blue-700 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
@@ -161,7 +165,7 @@ const SolicitarTurnoPage = () => {
             onClick={() => setVistaActual('misTurnos')}
             className={`px-6 py-3 rounded-lg font-medium transition-colors ${
               vistaActual === 'misTurnos'
-                ? 'bg-teal-600 text-white'
+                ? 'bg-blue-700 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
@@ -363,6 +367,8 @@ const SolicitarTurnoPage = () => {
           </div>
         )}
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };
