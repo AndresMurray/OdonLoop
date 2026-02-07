@@ -20,6 +20,11 @@ const SolicitarTurnoPage = () => {
   const [vistaActual, setVistaActual] = useState('buscar'); // 'buscar' o 'misTurnos'
   const [motivo, setMotivo] = useState('');
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
+  const [fechaFiltro, setFechaFiltro] = useState(() => {
+    // Por defecto mostrar la fecha de hoy
+    const hoy = new Date();
+    return hoy.toISOString().split('T')[0];
+  });
 
   const userData = authService.getUserData();
 
@@ -107,14 +112,57 @@ const SolicitarTurnoPage = () => {
   };
 
   const formatearFecha = (fechaHora) => {
+    // El backend guarda las fechas en UTC, pero queremos mostrarlas como "hora local"
+    // sin conversión de zona horaria (la hora que el odontólogo eligió)
     const fecha = new Date(fechaHora);
-    return fecha.toLocaleDateString('es-AR', {
+    
+    // Si la fecha viene como ISO string con Z (UTC), extraer componentes UTC
+    // y tratarlos como hora local
+    const año = fecha.getUTCFullYear();
+    const mes = fecha.getUTCMonth();
+    const dia = fecha.getUTCDate();
+    const horas = fecha.getUTCHours();
+    const minutos = fecha.getUTCMinutes();
+    
+    // Crear nueva fecha con esos valores como hora local
+    const fechaLocal = new Date(año, mes, dia, horas, minutos);
+    
+    return fechaLocal.toLocaleDateString('es-AR', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
+    });
+  };
+
+  const avanzarDia = () => {
+    const fecha = new Date(fechaFiltro);
+    fecha.setDate(fecha.getDate() + 1);
+    setFechaFiltro(fecha.toISOString().split('T')[0]);
+  };
+
+  const retrocederDia = () => {
+    const fecha = new Date(fechaFiltro);
+    fecha.setDate(fecha.getDate() - 1);
+    setFechaFiltro(fecha.toISOString().split('T')[0]);
+  };
+
+  const irHoy = () => {
+    const hoy = new Date();
+    setFechaFiltro(hoy.toISOString().split('T')[0]);
+  };
+
+  const getTurnosFiltrados = () => {
+    return turnosDisponibles.filter(turno => {
+      const fechaTurno = new Date(turno.fecha_hora);
+      const fechaFiltroDate = new Date(fechaFiltro + 'T00:00:00');
+      
+      // Comparar solo la fecha (día/mes/año) en UTC
+      return fechaTurno.getUTCFullYear() === fechaFiltroDate.getFullYear() &&
+             fechaTurno.getUTCMonth() === fechaFiltroDate.getMonth() &&
+             fechaTurno.getUTCDate() === fechaFiltroDate.getDate();
     });
   };
 
@@ -128,8 +176,6 @@ const SolicitarTurnoPage = () => {
     };
     return colores[estado] || 'bg-gray-100 text-gray-800';
   };
-
-  const odontologoInfo = odontologos.find(o => o.id === parseInt(odontologoSeleccionado));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
@@ -214,18 +260,6 @@ const SolicitarTurnoPage = () => {
                   </select>
                 </div>
 
-                {odontologoSeleccionado && odontologoInfo && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <h3 className="font-semibold text-gray-800 mb-2">Información del Odontólogo</h3>
-                    <p className="text-sm text-gray-600">Especialidad: {odontologoInfo.especialidad}</p>
-                    <p className="text-sm text-gray-600">Matrícula: {odontologoInfo.matricula}</p>
-                    <p className="text-sm text-gray-600">Experiencia: {odontologoInfo.anos_experiencia} años</p>
-                    {odontologoInfo.horario_atencion && (
-                      <p className="text-sm text-gray-600">Horario: {odontologoInfo.horario_atencion}</p>
-                    )}
-                  </div>
-                )}
-
                 <Button onClick={buscarTurnos} disabled={loading || !odontologoSeleccionado}>
                   {loading ? 'Buscando...' : 'Buscar Turnos Disponibles'}
                 </Button>
@@ -235,11 +269,55 @@ const SolicitarTurnoPage = () => {
             {/* Turnos Disponibles */}
             {turnosDisponibles.length > 0 && (
               <Card>
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">
-                  Turnos Disponibles ({turnosDisponibles.length})
-                </h2>
+                <div className="mb-4">
+                  <h2 className="text-2xl font-bold mb-4 text-gray-800">
+                    Turnos Disponibles
+                  </h2>
+                  
+                  {/* Navegación por día */}
+                  <div className="flex items-center justify-between bg-gray-100 p-4 rounded-lg">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={retrocederDia}
+                    >
+                      ← Día Anterior
+                    </Button>
+                    
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="date"
+                        value={fechaFiltro}
+                        onChange={(e) => setFechaFiltro(e.target.value)}
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-medium"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={irHoy}
+                      >
+                        Hoy
+                      </Button>
+                    </div>
+                    
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={avanzarDia}
+                    >
+                      Día Siguiente →
+                    </Button>
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 mt-3 text-center">
+                    Mostrando <span className="font-semibold">{getTurnosFiltrados().length}</span> turnos disponibles para el {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                </div>
+                
+                {getTurnosFiltrados().length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">No hay turnos disponibles para esta fecha</p>
+                ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {turnosDisponibles.map((turno) => (
+                  {getTurnosFiltrados().map((turno) => (
                     <div
                       key={turno.id}
                       className="p-4 bg-gray-50 rounded-lg border-2 border-transparent hover:border-teal-500 transition-colors"
@@ -302,6 +380,7 @@ const SolicitarTurnoPage = () => {
                     </div>
                   ))}
                 </div>
+                )}
               </Card>
             )}
           </div>

@@ -3,12 +3,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
 from django.db.models import Q
+from datetime import datetime, timedelta
 from .models import Turno
 from .serializers import (
     TurnoSerializer, 
     TurnoCreateSerializer, 
     TurnoReservaSerializer,
-    TurnoUpdateSerializer
+    TurnoUpdateSerializer,
+    TurnoBatchCreateSerializer
 )
 from pacientes.models import Paciente
 from odontologos.models import Odontologo
@@ -97,6 +99,42 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 {'error': 'No se encontró el perfil de odontólogo'},
                 status=status.HTTP_404_NOT_FOUND
             )
+    
+    def update(self, request, *args, **kwargs):
+        """Actualizar un turno - solo odontólogo puede editar turnos disponibles"""
+        turno = self.get_object()
+        
+        if request.user.tipo_usuario != 'odontologo':
+            return Response(
+                {'error': 'Solo los odontólogos pueden editar turnos'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            odontologo = Odontologo.objects.get(user=request.user)
+            if turno.odontologo != odontologo:
+                return Response(
+                    {'error': 'No tienes permiso para editar este turno'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        except Odontologo.DoesNotExist:
+            return Response(
+                {'error': 'No se encontró el perfil de odontólogo'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Solo se pueden editar turnos disponibles o cambiar estado
+        if turno.estado != 'disponible' and 'fecha_hora' in request.data:
+            return Response(
+                {'error': 'Solo se pueden editar fecha/hora de turnos disponibles'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        return super().update(request, *args, **kwargs)
+    
+    def partial_update(self, request, *args, **kwargs):
+        """Actualización parcial de un turno"""
+        return self.update(request, *args, partial=True, **kwargs)
     
     @action(detail=True, methods=['post'])
     def reservar(self, request, pk=None):
@@ -292,3 +330,94 @@ class TurnoViewSet(viewsets.ModelViewSet):
         turnos = turnos.order_by('fecha_hora')
         serializer = TurnoSerializer(turnos, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['post'])
+    def crear_lote(self, request):
+        """Crear múltiples turnos en un rango de fechas y horas"""
+        if request.user.tipo_usuario != 'odontologo':
+            return Response(
+                {'error': 'Solo los odontólogos pueden crear turnos disponibles'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            odontologo = Odontologo.objects.get(user=request.user)
+        except Odontologo.DoesNotExist:
+            return Response(
+                {'error': 'No se encontró el perfil de odontólogo'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = TurnoBatchCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        data = serializer.validated_data
+        turnos_creados = []
+        errores = []
+        
+        # Generar todos los turnos
+        fecha_actual = data['fecha_inicio']
+        while fecha_actual <= data['fecha_fin']:
+            # Verificar si el día de la semana está en la lista
+            if fecha_actual.weekday() in data['dias_semana']:
+                # Generar turnos para ese día
+                hora_actual = datetime.combine(fecha_actual, data['hora_inicio'])
+                hora_fin = datetime.combine(fecha_actual, data['hora_fin'])
+                
+                while hora_actual < hora_fin:
+                    # Verificar si hay conflicto con turnos existentes
+                    turno_inicio = timezone.make_aware(hora_actual) if timezone.is_naive(hora_actual) else hora_actual
+                    turno_fin = turno_inicio + timedelta(minutes=data['duracion_minutos'])
+                    
+                    # Buscar turnos que se superpongan
+                    # Un turno existente se superpone si:
+                    # - Empieza antes de que termine el nuevo turno, Y
+                    # - Termina después de que empiece el nuevo turno
+                    turnos_existentes = Turno.objects.filter(
+                        odontologo=odontologo,
+                        estado__in=['disponible', 'reservado', 'confirmado'],
+                        fecha_hora__lt=turno_fin
+                    )
+                    
+                    conflicto = False
+                    for turno_existente in turnos_existentes:
+                        turno_existente_fin = turno_existente.fecha_hora + timedelta(minutes=turno_existente.duracion_minutos)
+                        if turno_existente_fin > turno_inicio:
+                            conflicto = True
+                            break
+                    
+                    if not conflicto:
+                        # Crear el turno
+                        turno = Turno.objects.create(
+                            odontologo=odontologo,
+                            fecha_hora=turno_inicio,
+                            duracion_minutos=data['duracion_minutos'],
+                            motivo=data.get('motivo', ''),
+                            estado='disponible'
+                        )
+                        turnos_creados.append(turno)
+                    else:
+                        errores.append(f"Conflicto en {hora_actual.strftime('%Y-%m-%d %H:%M')}")
+                    
+                    # Avanzar al siguiente turno
+                    hora_actual += timedelta(minutes=data['duracion_minutos'])
+            
+            # Avanzar al siguiente día
+            fecha_actual += timedelta(days=1)
+        
+        # Generar mensaje apropiado
+        if len(turnos_creados) == 0 and len(errores) > 0:
+            message = 'No se pudo crear ningún turno debido a conflictos de horario'
+        elif len(errores) > 0:
+            message = f'Se crearon {len(turnos_creados)} turnos exitosamente. {len(errores)} turnos no se pudieron crear por conflictos'
+        else:
+            message = f'Se crearon {len(turnos_creados)} turnos exitosamente'
+        
+        return Response({
+            'message': message,
+            'turnos_creados': len(turnos_creados),
+            'conflictos': len(errores),
+            'errores': errores if len(errores) <= 10 else errores[:10] + [f'... y {len(errores) - 10} conflictos más'],
+            'turnos': TurnoSerializer(turnos_creados, many=True).data
+        }, status=status.HTTP_201_CREATED if len(turnos_creados) > 0 else status.HTTP_400_BAD_REQUEST)

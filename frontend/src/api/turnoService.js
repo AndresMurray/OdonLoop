@@ -110,3 +110,25 @@ export const getTurno = async (turnoId) => {
     throw error;
   }
 };
+
+// Crear múltiples turnos en lote (solo odontólogos)
+export const crearTurnosLote = async (loteData) => {
+  try {
+    const response = await apiClient.post('/api/turnos/crear_lote/', loteData);
+    return response;
+  } catch (error) {
+    console.error('Error al crear turnos en lote:', error);
+    throw error;
+  }
+};
+
+// Actualizar un turno específico (solo odontólogos)
+export const actualizarTurno = async (turnoId, turnoData) => {
+  try {
+    const response = await apiClient.patch(`/api/turnos/${turnoId}/`, turnoData);
+    return response;
+  } catch (error) {
+    console.error('Error al actualizar turno:', error);
+    throw error;
+  }
+};
