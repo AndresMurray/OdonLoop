@@ -22,13 +22,8 @@ class UserLoginView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Buscar usuario por email
-        try:
-            user = CustomUser.objects.get(email=email)
-            # Autenticar con el username interno
-            user = authenticate(username=user.username, password=password)
-        except CustomUser.DoesNotExist:
-            user = None
+        # Autenticar directamente con email (USERNAME_FIELD = 'email')
+        user = authenticate(request, username=email, password=password)
         
         if user is None:
             return Response(
