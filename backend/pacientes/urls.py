@@ -1,9 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import PacienteViewSet
+from .views import PacienteViewSet, ObraSocialViewSet
 
 router = DefaultRouter()
-router.register(r'', PacienteViewSet) # El prefijo será 'pacientes' desde el urls.py principal
+router.register(r'obras-sociales', ObraSocialViewSet, basename='obra-social')
+router.register(r'', PacienteViewSet, basename='paciente')
 
 urlpatterns = [
     path('', include(router.urls)),

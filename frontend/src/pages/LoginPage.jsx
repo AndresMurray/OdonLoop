@@ -17,7 +17,7 @@ const LoginPage = () => {
   const [alert, setAlert] = useState({ type: '', message: '' });
 
   const validationRules = {
-    username: [validators.required],
+    email: [validators.required, validators.email],
     password: [validators.required],
   };
 
@@ -31,7 +31,7 @@ const LoginPage = () => {
     handleSubmit,
   } = useForm(
     {
-      username: '',
+      email: '',
       password: '',
     },
     validationRules
@@ -132,13 +132,14 @@ const LoginPage = () => {
             <Form onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-6">
                 <Input
-                  label="Nombre de usuario"
-                  name="username"
-                  value={values.username}
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={values.email}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  error={touched.username && errors.username}
-                  placeholder="usuario123"
+                  error={touched.email && errors.email}
+                  placeholder="correo@ejemplo.com"
                   required
                 />
 

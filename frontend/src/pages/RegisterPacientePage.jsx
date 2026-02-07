@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Users, ArrowLeft } from 'lucide-react';
 import { useForm } from '../hooks/useForm';
 import { validators } from '../utils/validators';
 import { userService } from '../api/userService';
+import { obraSocialService } from '../api/obraSocialService';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import Form from '../components/Form';
@@ -13,14 +14,36 @@ import { Card, CardContent } from '../components/Card';
 const RegisterPacientePage = () => {
   const navigate = useNavigate();
   const [alert, setAlert] = useState({ type: '', message: '' });
+  const [obrasSociales, setObrasSociales] = useState([]);
+  const [loadingOS, setLoadingOS] = useState(true);
+
+  // Cargar obras sociales al montar el componente
+  useEffect(() => {
+    const cargarObrasSociales = async () => {
+      try {
+        const data = await obraSocialService.getAll();
+        setObrasSociales(data);
+      } catch (error) {
+        console.error('Error al cargar obras sociales:', error);
+        setAlert({
+          type: 'error',
+          message: 'No se pudieron cargar las obras sociales',
+        });
+      } finally {
+        setLoadingOS(false);
+      }
+    };
+
+    cargarObrasSociales();
+  }, []);
 
   const validationRules = {
-    username: [validators.required, validators.username],
     email: [validators.required, validators.email],
     password: [validators.required, validators.minLength(8)],
     password2: [validators.required],
     first_name: [validators.required],
     last_name: [validators.required],
+    dni: [validators.required],
     telefono: [validators.required],
     fecha_nacimiento: [validators.required],
   };
@@ -35,14 +58,15 @@ const RegisterPacientePage = () => {
     handleSubmit,
   } = useForm(
     {
-      username: '',
       email: '',
       password: '',
       password2: '',
       first_name: '',
       last_name: '',
+      dni: '',
       telefono: '',
       fecha_nacimiento: '',
+      obra_social: '',
       tipo_usuario: 'paciente',
     },
     validationRules
@@ -55,7 +79,13 @@ const RegisterPacientePage = () => {
 
   const onSubmit = async (formValues) => {
     try {
-      await userService.register(formValues);
+      // Convertir obra_social a número o null
+      const dataToSend = {
+        ...formValues,
+        obra_social: formValues.obra_social ? parseInt(formValues.obra_social) : null,
+      };
+      
+      await userService.register(dataToSend);
       setAlert({
         type: 'success',
         message: '¡Registro exitoso! Redirigiendo al login...',
@@ -132,17 +162,6 @@ const RegisterPacientePage = () => {
                 </div>
 
                 <Input
-                  label="Nombre de usuario"
-                  name="username"
-                  value={values.username}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  error={touched.username && errors.username}
-                  placeholder="usuario123"
-                  required
-                />
-
-                <Input
                   label="Email"
                   name="email"
                   type="email"
@@ -151,6 +170,17 @@ const RegisterPacientePage = () => {
                   onBlur={handleBlur}
                   error={touched.email && errors.email}
                   placeholder="correo@ejemplo.com"
+                  required
+                />
+
+                <Input
+                  label="DNI"
+                  name="dni"
+                  value={values.dni}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.dni && errors.dni}
+                  placeholder="12345678"
                   required
                 />
 
@@ -176,6 +206,31 @@ const RegisterPacientePage = () => {
                     error={touched.fecha_nacimiento && errors.fecha_nacimiento}
                     required
                   />
+                </div>
+
+                <div>
+                  <label htmlFor="obra_social" className="block text-sm font-medium text-gray-700 mb-1">
+                    Obra Social (opcional)
+                  </label>
+                  <select
+                    id="obra_social"
+                    name="obra_social"
+                    value={values.obra_social}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    disabled={loadingOS}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Seleccione una obra social</option>
+                    {obrasSociales.map((os) => (
+                      <option key={os.id} value={os.id}>
+                        {os.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  {loadingOS && (
+                    <p className="text-sm text-gray-500 mt-1">Cargando obras sociales...</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

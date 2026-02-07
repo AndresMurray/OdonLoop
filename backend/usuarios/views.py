@@ -8,20 +8,27 @@ from .models import CustomUser
 from .serializers import UserSerializer, UserRegistrationSerializer
 
 
+
 class UserLoginView(APIView):
     permission_classes = [permissions.AllowAny]
     
     def post(self, request):
-        username = request.data.get('username')
+        email = request.data.get('email')
         password = request.data.get('password')
         
-        if not username or not password:
+        if not email or not password:
             return Response(
-                {'error': 'Por favor proporciona usuario y contraseña'},
+                {'error': 'Por favor proporciona email y contraseña'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        user = authenticate(username=username, password=password)
+        # Buscar usuario por email
+        try:
+            user = CustomUser.objects.get(email=email)
+            # Autenticar con el username interno
+            user = authenticate(username=user.username, password=password)
+        except CustomUser.DoesNotExist:
+            user = None
         
         if user is None:
             return Response(
@@ -42,10 +49,12 @@ class UserLoginView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
 class UserRegistrationView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
+
     
     @transaction.atomic
     def perform_create(self, serializer):
@@ -54,13 +63,31 @@ class UserRegistrationView(generics.CreateAPIView):
         
         # Crear el perfil correspondiente según el tipo de usuario
         if user.tipo_usuario == 'paciente':
-            from pacientes.models import Paciente
-            Paciente.objects.create(user=user)
+            from pacientes.models import Paciente, ObraSocial
+            
+            # Obtener datos adicionales del contexto del serializer
+            dni = serializer.context.get('dni')
+            obra_social_id = serializer.context.get('obra_social_id')
+            
+            # Obtener la obra social si se proporcionó un ID
+            obra_social = None
+            if obra_social_id:
+                try:
+                    obra_social = ObraSocial.objects.get(id=obra_social_id, activo=True)
+                except ObraSocial.DoesNotExist:
+                    pass
+            
+            Paciente.objects.create(
+                user=user,
+                dni=dni,
+                obra_social=obra_social
+            )
         elif user.tipo_usuario == 'odontologo':
             from odontologos.models import Odontologo
             Odontologo.objects.create(user=user)
         
         return user
+
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):

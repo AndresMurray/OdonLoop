@@ -15,7 +15,6 @@ const RegisterOdontologoPage = () => {
   const [alert, setAlert] = useState({ type: '', message: '' });
 
   const validationRules = {
-    username: [validators.required, validators.username],
     email: [validators.required, validators.email],
     password: [validators.required, validators.minLength(8)],
     password2: [validators.required],
@@ -35,7 +34,6 @@ const RegisterOdontologoPage = () => {
     handleSubmit,
   } = useForm(
     {
-      username: '',
       email: '',
       password: '',
       password2: '',
@@ -131,17 +129,6 @@ const RegisterOdontologoPage = () => {
                     required
                   />
                 </div>
-
-                <Input
-                  label="Nombre de usuario"
-                  name="username"
-                  value={values.username}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  error={touched.username && errors.username}
-                  placeholder="dr_usuario"
-                  required
-                />
 
                 <Input
                   label="Email"
