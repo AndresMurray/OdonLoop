@@ -14,7 +14,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     if (userData?.tipo_usuario === 'paciente') {
       return <Navigate to="/home-paciente" replace />;
     } else if (userData?.tipo_usuario === 'odontologo') {
-      return <Navigate to="/home-odonto" replace />;
+      return <Navigate to="/home-odontologo" replace />;
     }
     return <Navigate to="/" replace />;
   }

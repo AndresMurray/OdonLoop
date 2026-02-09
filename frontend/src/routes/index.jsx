@@ -11,31 +11,53 @@ import SolicitarTurnoPage from '../pages/SolicitarTurnoPage';
 import App from '../App';
 import HomePage from '../pages/HomePage';
 import ProtectedRoute from '../components/ProtectedRoute';
+import GuestRoute from '../components/GuestRoute';
+import RootRedirect from '../components/RootRedirect';
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/home" replace />,
+    element: <RootRedirect />,
   },
   {
     path: '/home',
-    element: <HomePage />,
+    element: (
+      <GuestRoute>
+        <HomePage />
+      </GuestRoute>
+    ),
   },
   {
     path: '/login',
-    element: <LoginPage />,
+    element: (
+      <GuestRoute>
+        <LoginPage />
+      </GuestRoute>
+    ),
   },
   {
     path: '/register',
-    element: <RegisterPage />,
+    element: (
+      <GuestRoute>
+        <RegisterPage />
+      </GuestRoute>
+    ),
   },
   {
     path: '/register/paciente',
-    element: <RegisterPacientePage />,
+    element: (
+      <GuestRoute>
+        <RegisterPacientePage />
+      </GuestRoute>
+    ),
   },
   {
     path: '/register/odontologo',
-    element: <RegisterOdontologoPage />,
+    element: (
+      <GuestRoute>
+        <RegisterOdontologoPage />
+      </GuestRoute>
+    ),
   },
   {
     path: '/home-paciente',

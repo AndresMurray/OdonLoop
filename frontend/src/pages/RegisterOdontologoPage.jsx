@@ -63,7 +63,7 @@ const RegisterOdontologoPage = () => {
       });
 
       setTimeout(() => {
-        navigate('/login?tipo=odontologo');
+        navigate('/login?tipo=odontologo', { replace: true });
       }, 2000);
     } catch (error) {
       setAlert({

@@ -23,7 +23,7 @@ const RegisterPage = () => {
       
       // Redirigir después de 2 segundos
       setTimeout(() => {
-        navigate('/login');
+        navigate('/login', { replace: true });
       }, 2000);
     } catch (error) {
       console.error('Error en handleSuccess:', error);

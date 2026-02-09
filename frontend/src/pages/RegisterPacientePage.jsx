@@ -94,7 +94,7 @@ const RegisterPacientePage = () => {
       });
 
       setTimeout(() => {
-        navigate('/login?tipo=paciente');
+        navigate('/login?tipo=paciente', { replace: true });
       }, 2000);
     } catch (error) {
       setAlert({

@@ -52,11 +52,11 @@ const LoginPage = () => {
       // Redirigir según el tipo de usuario
       setTimeout(() => {
         if (response.user.tipo_usuario === 'paciente') {
-          navigate('/home-paciente');
+          navigate('/home-paciente', { replace: true });
         } else if (response.user.tipo_usuario === 'odontologo') {
-          navigate('/home-odontologo');
+          navigate('/home-odontologo', { replace: true });
         } else {
-          navigate('/');
+          navigate('/', { replace: true });
         }
       }, 1000);
     } catch (error) {
