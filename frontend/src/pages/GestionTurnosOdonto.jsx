@@ -6,6 +6,7 @@ import Button from '../components/Button';
 import { Card } from '../components/Card';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import Pagination from '../components/Pagination';
 
 const GestionTurnosOdonto = () => {
   const navigate = useNavigate();
@@ -22,12 +23,17 @@ const GestionTurnosOdonto = () => {
     return hoy.toISOString().split('T')[0];
   }); // Filtro para turnos disponibles
   
+  // Estados de paginación
+  const [paginaDisponibles, setPaginaDisponibles] = useState(1);
+  const [paginaReservados, setPaginaReservados] = useState(1);
+  const [paginaConfirmados, setPaginaConfirmados] = useState(1);
+  const ITEMS_POR_PAGINA = 5;
+  
   // Estado del formulario para crear turno individual
   const [turnoIndividual, setTurnoIndividual] = useState({
     fecha: '',
     hora: '',
-    duracion_minutos: 20,
-    motivo: ''
+    duracion_minutos: 20
   });
   
   // Estado del formulario para crear turnos en lote
@@ -37,8 +43,7 @@ const GestionTurnosOdonto = () => {
     hora_inicio: '08:00',
     hora_fin: '12:00',
     duracion_minutos: 20,
-    dias_semana: [0, 1, 2, 3, 4], // Lunes a viernes por defecto
-    motivo: ''
+    dias_semana: [0, 1, 2, 3, 4] // Lunes a viernes por defecto
   });
 
   const userData = authService.getUserData();
@@ -63,6 +68,10 @@ const GestionTurnosOdonto = () => {
       const data = await getMisTurnos();
       setTurnos(data);
       setError('');
+      // Resetear paginación al recargar
+      setPaginaDisponibles(1);
+      setPaginaReservados(1);
+      setPaginaConfirmados(1);
     } catch (err) {
       setError('Error al cargar los turnos');
       console.error(err);
@@ -83,8 +92,7 @@ const GestionTurnosOdonto = () => {
       const turnoData = {
         odontologo: userData.perfil_id,
         fecha_hora: fechaHora,
-        duracion_minutos: parseInt(turnoIndividual.duracion_minutos),
-        motivo: turnoIndividual.motivo || ''
+        duracion_minutos: parseInt(turnoIndividual.duracion_minutos)
       };
 
       await crearTurno(turnoData);
@@ -93,8 +101,7 @@ const GestionTurnosOdonto = () => {
       setTurnoIndividual({
         fecha: '',
         hora: '',
-        duracion_minutos: 20,
-        motivo: ''
+        duracion_minutos: 20
       });
       cargarTurnos();
     } catch (err) {
@@ -131,8 +138,7 @@ const GestionTurnosOdonto = () => {
           hora_inicio: '08:00',
           hora_fin: '12:00',
           duracion_minutos: 20,
-          dias_semana: [0, 1, 2, 3, 4],
-          motivo: ''
+          dias_semana: [0, 1, 2, 3, 4]
         });
         cargarTurnos();
       }
@@ -310,21 +316,43 @@ const GestionTurnosOdonto = () => {
     return filtrados;
   };
 
+  // Funciones de paginación
+  const getTurnosPaginados = (estado, pagina) => {
+    const turnosFiltrados = getTurnosPorEstado(estado);
+    const inicio = (pagina - 1) * ITEMS_POR_PAGINA;
+    const fin = inicio + ITEMS_POR_PAGINA;
+    return turnosFiltrados.slice(inicio, fin);
+  };
+
+  const getTotalPaginas = (estado) => {
+    const turnosFiltrados = getTurnosPorEstado(estado);
+    return Math.ceil(turnosFiltrados.length / ITEMS_POR_PAGINA);
+  };
+
+  const resetearPagina = (estado) => {
+    if (estado === 'disponible') setPaginaDisponibles(1);
+    if (estado === 'reservado') setPaginaReservados(1);
+    if (estado === 'confirmado') setPaginaConfirmados(1);
+  };
+
   const avanzarDia = () => {
     const fecha = new Date(fechaFiltro);
     fecha.setDate(fecha.getDate() + 1);
     setFechaFiltro(fecha.toISOString().split('T')[0]);
+    setPaginaDisponibles(1); // Resetear paginación al cambiar de día
   };
 
   const retrocederDia = () => {
     const fecha = new Date(fechaFiltro);
     fecha.setDate(fecha.getDate() - 1);
     setFechaFiltro(fecha.toISOString().split('T')[0]);
+    setPaginaDisponibles(1); // Resetear paginación al cambiar de día
   };
 
   const irHoy = () => {
     const hoy = new Date();
     setFechaFiltro(hoy.toISOString().split('T')[0]);
+    setPaginaDisponibles(1); // Resetear paginación al ir a hoy
   };
 
   return (
@@ -440,19 +468,7 @@ const GestionTurnosOdonto = () => {
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notas (opcional)
-                  </label>
-                  <textarea
-                    value={turnoIndividual.motivo}
-                    onChange={(e) => setTurnoIndividual({ ...turnoIndividual, motivo: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    rows="2"
-                    placeholder="Ej: Consulta general, limpieza, etc."
-                  />
-                </div>
-                
+
                 <div className="flex gap-4">
                   <Button type="submit" disabled={loading}>
                     {loading ? 'Creando...' : 'Crear Turno'}
@@ -565,20 +581,6 @@ const GestionTurnosOdonto = () => {
                 />
                 <p className="text-sm text-gray-500 mt-1">Por defecto: 20 minutos</p>
               </div>
-
-              {/* Notas */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notas (opcional)
-                </label>
-                <textarea
-                  value={loteForm.motivo}
-                  onChange={(e) => setLoteForm({ ...loteForm, motivo: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows="2"
-                  placeholder="Ej: Consulta general, limpieza, etc."
-                />
-              </div>
               
               <div className="flex gap-4">
                 <Button type="submit" disabled={loading || loteForm.dias_semana.length === 0}>
@@ -650,8 +652,9 @@ const GestionTurnosOdonto = () => {
               {getTurnosPorEstado('disponible').length === 0 ? (
                 <p className="text-gray-500 text-center py-8">No hay turnos disponibles para esta fecha</p>
               ) : (
-                <div className="space-y-3">
-                  {getTurnosPorEstado('disponible').map((turno) => (
+                <>
+                  <div className="space-y-3">
+                    {getTurnosPaginados('disponible', paginaDisponibles).map((turno) => (
                     <div
                       key={turno.id}
                       className="p-4 bg-gray-50 rounded-lg"
@@ -782,6 +785,16 @@ const GestionTurnosOdonto = () => {
                     </div>
                   ))}
                 </div>
+                
+                {/* Paginación para turnos disponibles */}
+                <Pagination
+                  currentPage={paginaDisponibles}
+                  totalPages={getTotalPaginas('disponible')}
+                  onPageChange={setPaginaDisponibles}
+                  itemsPerPage={ITEMS_POR_PAGINA}
+                  totalItems={getTurnosPorEstado('disponible').length}
+                />
+              </>
               )}
             </Card>
 
@@ -793,8 +806,9 @@ const GestionTurnosOdonto = () => {
               {getTurnosPorEstado('reservado').length === 0 ? (
                 <p className="text-gray-500">No hay turnos reservados</p>
               ) : (
-                <div className="space-y-3">
-                  {getTurnosPorEstado('reservado').map((turno) => (
+                <>
+                  <div className="space-y-3">
+                    {getTurnosPaginados('reservado', paginaReservados).map((turno) => (
                     <div
                       key={turno.id}
                       className="flex justify-between items-center p-4 bg-blue-50 rounded-lg"
@@ -836,6 +850,16 @@ const GestionTurnosOdonto = () => {
                     </div>
                   ))}
                 </div>
+                
+                {/* Paginación para turnos reservados */}
+                <Pagination
+                  currentPage={paginaReservados}
+                  totalPages={getTotalPaginas('reservado')}
+                  onPageChange={setPaginaReservados}
+                  itemsPerPage={ITEMS_POR_PAGINA}
+                  totalItems={getTurnosPorEstado('reservado').length}
+                />
+              </>
               )}
             </Card>
 
@@ -847,8 +871,9 @@ const GestionTurnosOdonto = () => {
               {getTurnosPorEstado('confirmado').length === 0 ? (
                 <p className="text-gray-500">No hay turnos confirmados</p>
               ) : (
-                <div className="space-y-3">
-                  {getTurnosPorEstado('confirmado').map((turno) => (
+                <>
+                  <div className="space-y-3">
+                    {getTurnosPaginados('confirmado', paginaConfirmados).map((turno) => (
                     <div
                       key={turno.id}
                       className="flex justify-between items-center p-4 bg-purple-50 rounded-lg"
@@ -890,6 +915,16 @@ const GestionTurnosOdonto = () => {
                     </div>
                   ))}
                 </div>
+                
+                {/* Paginación para turnos confirmados */}
+                <Pagination
+                  currentPage={paginaConfirmados}
+                  totalPages={getTotalPaginas('confirmado')}
+                  onPageChange={setPaginaConfirmados}
+                  itemsPerPage={ITEMS_POR_PAGINA}
+                  totalItems={getTurnosPorEstado('confirmado').length}
+                />
+              </>
               )}
             </Card>
           </div>
