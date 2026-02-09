@@ -46,10 +46,14 @@ export const getMisTurnos = async () => {
 // Crear un turno disponible (solo odontólogos)
 export const crearTurno = async (turnoData) => {
   try {
+    console.log('Creando turno con datos:', turnoData);
+    console.log('URL completa:', '/api/turnos/');
     const response = await apiClient.post('/api/turnos/', turnoData);
+    console.log('Respuesta exitosa:', response);
     return response;
   } catch (error) {
     console.error('Error al crear turno:', error);
+    console.error('Error response:', error.response);
     throw error;
   }
 };
@@ -129,6 +133,17 @@ export const actualizarTurno = async (turnoId, turnoData) => {
     return response;
   } catch (error) {
     console.error('Error al actualizar turno:', error);
+    throw error;
+  }
+};
+
+// Obtener turnos de un día específico para verificar disponibilidad
+export const getTurnosPorFecha = async (fecha) => {
+  try {
+    const response = await apiClient.get(`/api/turnos/?fecha_desde=${fecha}T00:00:00&fecha_hasta=${fecha}T23:59:59`);
+    return response;
+  } catch (error) {
+    console.error('Error al obtener turnos por fecha:', error);
     throw error;
   }
 };

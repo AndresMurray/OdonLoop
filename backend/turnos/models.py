@@ -24,6 +24,7 @@ class Turno(models.Model):
     # Campos para reservas manuales (sin usuario paciente)
     nombre_paciente_manual = models.CharField(max_length=100, blank=True, null=True, verbose_name='Nombre del paciente')
     apellido_paciente_manual = models.CharField(max_length=100, blank=True, null=True, verbose_name='Apellido del paciente')
+    telefono_paciente_manual = models.CharField(max_length=20, blank=True, null=True, verbose_name='Teléfono del paciente')
 
     ESTADO_TURNO = [
         ('disponible', 'Disponible'),

@@ -3,6 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
 from django.db.models import Q
+from django.core.mail import send_mail
+from django.conf import settings
 from datetime import datetime, timedelta
 from .models import Turno
 from .serializers import (
@@ -86,19 +88,21 @@ class TurnoViewSet(viewsets.ModelViewSet):
         
         try:
             odontologo = Odontologo.objects.get(user=request.user)
-            data = request.data.copy()
-            data['odontologo'] = odontologo.id
-            
-            serializer = self.get_serializer(data=data)
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Odontologo.DoesNotExist:
             return Response(
-                {'error': 'No se encontró el perfil de odontólogo'},
+                {'error': 'No se encontró el perfil de odontólogo. Por favor contacta al administrador.'},
                 status=status.HTTP_404_NOT_FOUND
             )
+        
+        data = request.data.copy()
+        # Asegurarse de usar el odontólogo correcto del usuario autenticado
+        data['odontologo'] = odontologo.id
+        
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     def update(self, request, *args, **kwargs):
         """Actualizar un turno - solo odontólogo puede editar turnos disponibles"""
@@ -214,8 +218,42 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 )
         
         turno.cancelar()
+        
+        # Enviar email si el turno tiene un paciente registrado
+        email_sent = False
+        is_manual_booking = False
+        
+        if turno.paciente and turno.paciente.user:
+            # Es un turno con paciente registrado, enviar email
+            try:
+                paciente_email = turno.paciente.user.email
+                fecha_formateada = turno.fecha_hora.strftime('%d/%m/%Y %H:%M')
+                
+                send_mail(
+                    subject='Turno Cancelado - Consultorio Odontológico',
+                    message=f'Estimado/a {turno.paciente.nombre_completo},\n\n'
+                            f'Le informamos que su turno del día {fecha_formateada} ha sido cancelado.\n\n'
+                            f'Por favor, contacte con el consultorio para reprogramar su cita.\n\n'
+                            f'Saludos cordiales.',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[paciente_email],
+                    fail_silently=False,
+                )
+                email_sent = True
+            except Exception as e:
+                # Log del error pero no falla la cancelación
+                print(f"Error al enviar email: {str(e)}")
+        else:
+            # Es una reserva manual
+            is_manual_booking = True
+        
         serializer = TurnoSerializer(turno)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        response_data = {
+            **serializer.data,
+            'email_sent': email_sent,
+            'is_manual_booking': is_manual_booking
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
     
     @action(detail=True, methods=['post'])
     def confirmar(self, request, pk=None):

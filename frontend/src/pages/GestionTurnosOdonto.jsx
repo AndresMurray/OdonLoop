@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { crearTurno, crearTurnosLote, getMisTurnos, cancelarTurno, confirmarTurno, completarTurno, actualizarTurno } from '../api/turnoService';
+import { crearTurno, crearTurnosLote, getMisTurnos, cancelarTurno, completarTurno, actualizarTurno, getTurnosPorFecha } from '../api/turnoService';
 import { authService } from '../api/authService';
 import Button from '../components/Button';
 import { Card } from '../components/Card';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
+import ConfirmModal from '../components/ConfirmModal';
 
 const GestionTurnosOdonto = () => {
   const navigate = useNavigate();
@@ -26,8 +27,20 @@ const GestionTurnosOdonto = () => {
   // Estados de paginación
   const [paginaDisponibles, setPaginaDisponibles] = useState(1);
   const [paginaReservados, setPaginaReservados] = useState(1);
-  const [paginaConfirmados, setPaginaConfirmados] = useState(1);
   const ITEMS_POR_PAGINA = 5;
+  
+  // Estados para el modal de confirmación de cancelación
+  const [modalCancelar, setModalCancelar] = useState({
+    isOpen: false,
+    turnoId: null,
+    title: '',
+    message: '',
+    variant: 'danger'
+  });
+  
+  // Estados para verificar horarios ocupados
+  const [turnosDiaSeleccionado, setTurnosDiaSeleccionado] = useState([]);
+  const [horarioOcupadoWarning, setHorarioOcupadoWarning] = useState('');
   
   // Estado del formulario para crear turno individual
   const [turnoIndividual, setTurnoIndividual] = useState({
@@ -61,6 +74,13 @@ const GestionTurnosOdonto = () => {
   useEffect(() => {
     cargarTurnos();
   }, []);
+  
+  // Cargar turnos del día cuando se selecciona una fecha en el formulario individual
+  useEffect(() => {
+    if (showForm && modoCreacion === 'individual' && turnoIndividual.fecha) {
+      cargarTurnosDia(turnoIndividual.fecha);
+    }
+  }, [showForm, modoCreacion, turnoIndividual.fecha]);
 
   const cargarTurnos = async () => {
     setLoading(true);
@@ -71,7 +91,6 @@ const GestionTurnosOdonto = () => {
       // Resetear paginación al recargar
       setPaginaDisponibles(1);
       setPaginaReservados(1);
-      setPaginaConfirmados(1);
     } catch (err) {
       setError('Error al cargar los turnos');
       console.error(err);
@@ -79,23 +98,81 @@ const GestionTurnosOdonto = () => {
       setLoading(false);
     }
   };
+  
+  // Cargar turnos de un día específico para verificar disponibilidad
+  const cargarTurnosDia = async (fecha) => {
+    if (!fecha) return;
+    
+    try {
+      const data = await getTurnosPorFecha(fecha);
+      setTurnosDiaSeleccionado(data);
+    } catch (err) {
+      console.error('Error al cargar turnos del día:', err);
+      setTurnosDiaSeleccionado([]);
+    }
+  };
+  
+  // Verificar si un horario está ocupado
+  const verificarHorarioOcupado = (fecha, hora, duracion) => {
+    if (!fecha || !hora || !turnosDiaSeleccionado.length) return false;
+    
+    const [horaInicio, minutoInicio] = hora.split(':').map(Number);
+    const inicioMinutos = horaInicio * 60 + minutoInicio;
+    const finMinutos = inicioMinutos + duracion;
+    
+    for (const turno of turnosDiaSeleccionado) {
+      // Solo verificar turnos que no estén cancelados
+      if (turno.estado === 'cancelado') continue;
+      
+      const fechaTurno = new Date(turno.fecha_hora);
+      const turnoInicioMinutos = fechaTurno.getUTCHours() * 60 + fechaTurno.getUTCMinutes();
+      const turnoFinMinutos = turnoInicioMinutos + turno.duracion_minutos;
+      
+      // Verificar superposición
+      if (inicioMinutos < turnoFinMinutos && finMinutos > turnoInicioMinutos) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+  
+  // Actualizar warning cuando cambie la hora o duración
+  useEffect(() => {
+    if (turnoIndividual.fecha && turnoIndividual.hora && turnoIndividual.duracion_minutos) {
+      if (verificarHorarioOcupado(turnoIndividual.fecha, turnoIndividual.hora, parseInt(turnoIndividual.duracion_minutos))) {
+        setHorarioOcupadoWarning('⚠️ Este horario se superpone con un turno existente');
+      } else {
+        setHorarioOcupadoWarning('');
+      }
+    }
+  }, [turnoIndividual.fecha, turnoIndividual.hora, turnoIndividual.duracion_minutos, turnosDiaSeleccionado]);
 
   const handleCrearTurnoIndividual = async (e) => {
     e.preventDefault();
+    
+    // Verificar si el horario está ocupado antes de enviar
+    if (verificarHorarioOcupado(turnoIndividual.fecha, turnoIndividual.hora, parseInt(turnoIndividual.duracion_minutos))) {
+      setError('⚠️ El horario seleccionado se superpone con un turno existente. Por favor elige otro horario.');
+      return;
+    }
+    
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
+      // Crear fecha en formato ISO
       const fechaHora = `${turnoIndividual.fecha}T${turnoIndividual.hora}:00`;
       
+      // Solo enviamos fecha_hora y duración, el backend obtiene el odontólogo del token
       const turnoData = {
-        odontologo: userData.perfil_id,
         fecha_hora: fechaHora,
         duracion_minutos: parseInt(turnoIndividual.duracion_minutos)
       };
 
       await crearTurno(turnoData);
+      
       setSuccess('Turno creado exitosamente');
       setShowForm(false);
       setTurnoIndividual({
@@ -103,9 +180,27 @@ const GestionTurnosOdonto = () => {
         hora: '',
         duracion_minutos: 20
       });
+      setTurnosDiaSeleccionado([]); // Limpiar turnos del día
       cargarTurnos();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Error al crear el turno');
+      // Intentar obtener el mensaje de error más específico
+      let errorMessage = 'Error al crear el turno';
+      
+      if (err.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errorMessage = err.response.data;
+        } else if (err.response.data.detail) {
+          errorMessage = err.response.data.detail;
+        } else if (err.response.data.non_field_errors) {
+          errorMessage = err.response.data.non_field_errors[0];
+        } else if (err.response.data.fecha_hora) {
+          errorMessage = `Error en fecha/hora: ${err.response.data.fecha_hora[0]}`;
+        } else {
+          errorMessage = JSON.stringify(err.response.data);
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -175,7 +270,8 @@ const GestionTurnosOdonto = () => {
       duracion_minutos: turno.duracion_minutos,
       estado: turno.estado,
       nombre_paciente_manual: turno.nombre_paciente_manual || '',
-      apellido_paciente_manual: turno.apellido_paciente_manual || ''
+      apellido_paciente_manual: turno.apellido_paciente_manual || '',
+      telefono_paciente_manual: turno.telefono_paciente_manual || ''
     });
   };
 
@@ -198,6 +294,7 @@ const GestionTurnosOdonto = () => {
         updateData.estado = 'reservado';
         updateData.nombre_paciente_manual = turnoEditando.nombre_paciente_manual;
         updateData.apellido_paciente_manual = turnoEditando.apellido_paciente_manual;
+        updateData.telefono_paciente_manual = turnoEditando.telefono_paciente_manual || null;
       }
       
       await actualizarTurno(turnoEditando.id, updateData);
@@ -211,13 +308,73 @@ const GestionTurnosOdonto = () => {
     }
   };
 
-  const handleCancelarTurno = async (turnoId) => {
-    if (!window.confirm('¿Está seguro de cancelar este turno?')) return;
+  const handleCancelarTurno = (turnoId) => {
+    // Buscar el turno para determinar el tipo y mostrar mensaje apropiado
+    const turno = turnos.find(t => t.id === turnoId);
+    
+    if (!turno) {
+      setError('No se encontró el turno');
+      return;
+    }
+
+    let title = '';
+    let message = '';
+    let variant = 'danger';
+
+    // Determinar el tipo de turno y el mensaje de confirmación
+    if (turno.estado === 'disponible') {
+      // Turno no reservado
+      title = 'Cancelar turno disponible';
+      message = 'Este turno se sacará de la lista de turnos disponibles.\n\n¿Desea continuar con la cancelación?';
+      variant = 'info';
+    } else if (turno.nombre_paciente_manual && turno.apellido_paciente_manual) {
+      // Turno reservado manualmente
+      const nombreCompleto = `${turno.nombre_paciente_manual} ${turno.apellido_paciente_manual}`;
+      title = 'Cancelar turno - Reserva manual';
+      message = `⚠️ Este turno está reservado para: ${nombreCompleto}\n\nIMPORTANTE: Deberá avisar manualmente al paciente sobre la cancelación.\n\n¿Desea continuar?`;
+      variant = 'warning';
+    } else if (turno.paciente) {
+      // Turno con paciente registrado
+      title = 'Cancelar turno';
+      message = `Este turno está reservado para: ${turno.paciente.nombre_completo}\n\n✉️ Se enviará automáticamente un email al paciente notificando la cancelación.\n\n¿Desea continuar?`;
+      variant = 'danger';
+    } else {
+      // Caso por defecto
+      title = 'Cancelar turno';
+      message = '¿Está seguro de cancelar este turno?';
+      variant = 'danger';
+    }
+
+    // Abrir el modal con la información apropiada
+    setModalCancelar({
+      isOpen: true,
+      turnoId,
+      title,
+      message,
+      variant
+    });
+  };
+
+  const confirmarCancelacion = async () => {
+    const turnoId = modalCancelar.turnoId;
+    
+    // Cerrar el modal
+    setModalCancelar({ ...modalCancelar, isOpen: false });
     
     setLoading(true);
     try {
-      await cancelarTurno(turnoId);
-      setSuccess('Turno cancelado exitosamente');
+      const response = await cancelarTurno(turnoId);
+      
+      // Usar la respuesta del backend para determinar el mensaje de éxito
+      if (response.is_manual_booking) {
+        const nombreCompleto = `${response.nombre_paciente_manual} ${response.apellido_paciente_manual}`.trim();
+        setSuccess(`⚠️ Turno cancelado. IMPORTANTE: Debes avisar manualmente al paciente ${nombreCompleto} sobre la cancelación.`);
+      } else if (response.email_sent) {
+        setSuccess('✓ Turno cancelado exitosamente. Se ha enviado un email al paciente notificando la cancelación.');
+      } else {
+        setSuccess('Turno cancelado exitosamente');
+      }
+      
       cargarTurnos();
     } catch (err) {
       setError('Error al cancelar el turno');
@@ -227,19 +384,7 @@ const GestionTurnosOdonto = () => {
     }
   };
 
-  const handleConfirmarTurno = async (turnoId) => {
-    setLoading(true);
-    try {
-      await confirmarTurno(turnoId);
-      setSuccess('Turno confirmado exitosamente');
-      cargarTurnos();
-    } catch (err) {
-      setError('Error al confirmar el turno');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const handleCompletarTurno = async (turnoId) => {
     setLoading(true);
@@ -332,7 +477,6 @@ const GestionTurnosOdonto = () => {
   const resetearPagina = (estado) => {
     if (estado === 'disponible') setPaginaDisponibles(1);
     if (estado === 'reservado') setPaginaReservados(1);
-    if (estado === 'confirmado') setPaginaConfirmados(1);
   };
 
   const avanzarDia = () => {
@@ -433,7 +577,10 @@ const GestionTurnosOdonto = () => {
                       type="date"
                       required
                       value={turnoIndividual.fecha}
-                      onChange={(e) => setTurnoIndividual({ ...turnoIndividual, fecha: e.target.value })}
+                      onChange={(e) => {
+                        setTurnoIndividual({ ...turnoIndividual, fecha: e.target.value });
+                        cargarTurnosDia(e.target.value);
+                      }}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       min={new Date().toISOString().split('T')[0]}
                     />
@@ -451,6 +598,41 @@ const GestionTurnosOdonto = () => {
                     />
                   </div>
                 </div>
+                
+                {horarioOcupadoWarning && (
+                  <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3">
+                    <p className="text-sm text-yellow-800">{horarioOcupadoWarning}</p>
+                  </div>
+                )}
+                
+                {turnosDiaSeleccionado.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-blue-900 mb-2">
+                      Turnos del día seleccionado ({turnosDiaSeleccionado.filter(t => t.estado !== 'cancelado').length}):
+                    </p>
+                    <div className="text-xs text-blue-700 space-y-1 max-h-32 overflow-y-auto">
+                      {turnosDiaSeleccionado
+                        .filter(t => t.estado !== 'cancelado')
+                        .slice(0, 8)
+                        .map(turno => {
+                          const fecha = new Date(turno.fecha_hora);
+                          const hora = String(fecha.getUTCHours()).padStart(2, '0');
+                          const minuto = String(fecha.getUTCMinutes()).padStart(2, '0');
+                          return (
+                            <div key={turno.id}>
+                              • {hora}:{minuto} ({turno.duracion_minutos} min) - {turno.estado}
+                            </div>
+                          );
+                        })
+                      }
+                      {turnosDiaSeleccionado.filter(t => t.estado !== 'cancelado').length > 8 && (
+                        <div className="text-blue-600 font-medium pt-1">
+                          ... y {turnosDiaSeleccionado.filter(t => t.estado !== 'cancelado').length - 8} más
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -738,6 +920,16 @@ const GestionTurnosOdonto = () => {
                                     required
                                   />
                                 </div>
+                                <div className="md:col-span-2">
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">Teléfono (opcional)</label>
+                                  <input
+                                    type="tel"
+                                    value={turnoEditando.telefono_paciente_manual}
+                                    onChange={(e) => setTurnoEditando({ ...turnoEditando, telefono_paciente_manual: e.target.value })}
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                    placeholder="Teléfono de contacto"
+                                  />
+                                </div>
                               </div>
                             )}
                           </div>
@@ -820,9 +1012,12 @@ const GestionTurnosOdonto = () => {
                             Paciente: {turno.paciente.nombre_completo}
                           </p>
                         ) : turno.nombre_paciente_manual && turno.apellido_paciente_manual ? (
-                          <p className="text-sm text-gray-600">
-                            Paciente: {turno.nombre_paciente_manual} {turno.apellido_paciente_manual} <span className="text-xs text-blue-600">(reserva manual)</span>
-                          </p>
+                          <div className="text-sm text-gray-600">
+                            <p>Paciente: {turno.nombre_paciente_manual} {turno.apellido_paciente_manual} <span className="text-xs text-blue-600">(reserva manual)</span></p>
+                            {turno.telefono_paciente_manual && (
+                              <p className="text-xs text-gray-500 mt-0.5">📞 {turno.telefono_paciente_manual}</p>
+                            )}
+                          </div>
                         ) : null}
                         <p className="text-sm text-gray-600">{turno.duracion_minutos} minutos</p>
                         {turno.motivo && (
@@ -833,12 +1028,6 @@ const GestionTurnosOdonto = () => {
                         <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEstadoColor(turno.estado)}`}>
                           {turno.estado}
                         </span>
-                        <Button
-                          size="sm"
-                          onClick={() => handleConfirmarTurno(turno.id)}
-                        >
-                          Confirmar
-                        </Button>
                         <Button
                           size="sm"
                           variant="danger"
@@ -863,75 +1052,23 @@ const GestionTurnosOdonto = () => {
               )}
             </Card>
 
-            {/* Turnos Confirmados */}
-            <Card>
-              <h3 className="text-xl font-bold mb-4 text-gray-800">
-                Turnos Confirmados ({getTurnosPorEstado('confirmado').length})
-              </h3>
-              {getTurnosPorEstado('confirmado').length === 0 ? (
-                <p className="text-gray-500">No hay turnos confirmados</p>
-              ) : (
-                <>
-                  <div className="space-y-3">
-                    {getTurnosPaginados('confirmado', paginaConfirmados).map((turno) => (
-                    <div
-                      key={turno.id}
-                      className="flex justify-between items-center p-4 bg-purple-50 rounded-lg"
-                    >
-                      <div>
-                        <p className="font-semibold text-gray-800">{formatearFecha(turno.fecha_hora)}</p>
-                        {turno.paciente ? (
-                          <p className="text-sm text-gray-600">
-                            Paciente: {turno.paciente.nombre_completo}
-                          </p>
-                        ) : turno.nombre_paciente_manual && turno.apellido_paciente_manual ? (
-                          <p className="text-sm text-gray-600">
-                            Paciente: {turno.nombre_paciente_manual} {turno.apellido_paciente_manual} <span className="text-xs text-blue-600">(reserva manual)</span>
-                          </p>
-                        ) : null}
-                        <p className="text-sm text-gray-600">{turno.duracion_minutos} minutos</p>
-                        {turno.motivo && (
-                          <p className="text-sm text-gray-500 mt-1">{turno.motivo}</p>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEstadoColor(turno.estado)}`}>
-                          {turno.estado}
-                        </span>
-                        <Button
-                          size="sm"
-                          onClick={() => handleCompletarTurno(turno.id)}
-                        >
-                          Completar
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          onClick={() => handleCancelarTurno(turno.id)}
-                        >
-                          Cancelar
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Paginación para turnos confirmados */}
-                <Pagination
-                  currentPage={paginaConfirmados}
-                  totalPages={getTotalPaginas('confirmado')}
-                  onPageChange={setPaginaConfirmados}
-                  itemsPerPage={ITEMS_POR_PAGINA}
-                  totalItems={getTurnosPorEstado('confirmado').length}
-                />
-              </>
-              )}
-            </Card>
           </div>
         )}
       </div>
       </div>
       <Footer />
+      
+      {/* Modal de confirmación de cancelación */}
+      <ConfirmModal
+        isOpen={modalCancelar.isOpen}
+        onClose={() => setModalCancelar({ ...modalCancelar, isOpen: false })}
+        onConfirm={confirmarCancelacion}
+        title={modalCancelar.title}
+        message={modalCancelar.message}
+        confirmText="Sí, cancelar turno"
+        cancelText="No, mantener turno"
+        variant={modalCancelar.variant}
+      />
     </div>
   );
 };

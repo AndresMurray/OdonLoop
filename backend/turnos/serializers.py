@@ -41,7 +41,7 @@ class TurnoSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'odontologo', 'paciente', 'fecha_hora', 
             'duracion_minutos', 'motivo', 'estado', 'esta_disponible',
-            'nombre_paciente_manual', 'apellido_paciente_manual',
+            'nombre_paciente_manual', 'apellido_paciente_manual', 'telefono_paciente_manual',
             'fecha_creacion', 'fecha_actualizacion'
         ]
 
@@ -113,7 +113,7 @@ class TurnoUpdateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Turno
-        fields = ['estado', 'motivo', 'fecha_hora', 'duracion_minutos', 'nombre_paciente_manual', 'apellido_paciente_manual']
+        fields = ['estado', 'motivo', 'fecha_hora', 'duracion_minutos', 'nombre_paciente_manual', 'apellido_paciente_manual', 'telefono_paciente_manual']
     
     def validate_estado(self, value):
         allowed_transitions = {

@@ -20,19 +20,27 @@ class ApiClient {
 
     try {
       const url = this.baseURL ? `${this.baseURL}${endpoint}` : endpoint;
+      console.log('🌐 Llamando a:', url, 'con método:', options.method || 'GET');
+      console.log('📦 Datos:', options.body);
+      
       const response = await fetch(url, config);
       const data = await response.json();
+
+      console.log('📥 Respuesta status:', response.status);
+      console.log('📥 Respuesta data:', data);
 
       if (!response.ok) {
         throw {
           status: response.status,
           message: data.message || data.error || 'Error en la petición',
           errors: data,
+          response: { data }
         };
       }
 
       return data;
     } catch (error) {
+      console.error('❌ Error en request:', error);
       if (error.status) throw error;
       throw {
         status: 500,
@@ -58,6 +66,14 @@ class ApiClient {
     return this.request(endpoint, {
       ...options,
       method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  patch(endpoint, data, options = {}) {
+    return this.request(endpoint, {
+      ...options,
+      method: 'PATCH',
       body: JSON.stringify(data),
     });
   }
