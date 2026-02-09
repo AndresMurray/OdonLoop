@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { crearTurno, crearTurnosLote, getMisTurnos, cancelarTurno, completarTurno, actualizarTurno, getTurnosPorFecha } from '../api/turnoService';
@@ -386,19 +387,6 @@ const GestionTurnosOdonto = () => {
 
 
 
-  const handleCompletarTurno = async (turnoId) => {
-    setLoading(true);
-    try {
-      await completarTurno(turnoId);
-      setSuccess('Turno completado exitosamente');
-      cargarTurnos();
-    } catch (err) {
-      setError('Error al completar el turno');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatearFecha = (fechaHora) => {
     // El backend guarda las fechas en UTC, pero queremos mostrarlas como "hora local"
@@ -474,11 +462,7 @@ const GestionTurnosOdonto = () => {
     return Math.ceil(turnosFiltrados.length / ITEMS_POR_PAGINA);
   };
 
-  const resetearPagina = (estado) => {
-    if (estado === 'disponible') setPaginaDisponibles(1);
-    if (estado === 'reservado') setPaginaReservados(1);
-  };
-
+  
   const avanzarDia = () => {
     const fecha = new Date(fechaFiltro);
     fecha.setDate(fecha.getDate() + 1);

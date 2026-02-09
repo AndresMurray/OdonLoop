@@ -227,22 +227,40 @@ class TurnoViewSet(viewsets.ModelViewSet):
             # Es un turno con paciente registrado, enviar email
             try:
                 paciente_email = turno.paciente.user.email
+                nombre_completo = turno.paciente.get_nombre_completo()
                 fecha_formateada = turno.fecha_hora.strftime('%d/%m/%Y %H:%M')
                 
+                print("\n" + "="*80)
+                print("📧 ENVIANDO EMAIL DE CANCELACIÓN")
+                print(f"Para: {paciente_email}")
+                print(f"Paciente: {nombre_completo}")
+                print(f"Turno: {fecha_formateada}")
+                print("="*80 + "\n")
+                
                 send_mail(
-                    subject='Turno Cancelado - Consultorio Odontológico',
-                    message=f'Estimado/a {turno.paciente.nombre_completo},\n\n'
-                            f'Le informamos que su turno del día {fecha_formateada} ha sido cancelado.\n\n'
-                            f'Por favor, contacte con el consultorio para reprogramar su cita.\n\n'
-                            f'Saludos cordiales.',
+                    subject=f'Cancelación de Turno - {fecha_formateada}',
+                    message=f'Estimado/a {nombre_completo},\n\n'
+                            f'Le informamos que su turno programado para el día {fecha_formateada} ha sido cancelado.\n\n'
+                            f'Detalles de la cancelación:\n'
+                            f'- Fecha y hora original: {fecha_formateada}\n'
+                            f'- Estado: Cancelado\n\n'
+                            f'Si desea reprogramar su cita, por favor contáctenos a la brevedad.\n\n'
+                            f'Teléfono del consultorio: [AGREGAR TELEFONO]\n'
+                            f'WhatsApp: [AGREGAR WHATSAPP]\n\n'
+                            f'Atentamente,\n'
+                            f'Sistema Odontológico\n'
+                            f'Este es un mensaje automático, por favor no responder a este email.',
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[paciente_email],
                     fail_silently=False,
                 )
                 email_sent = True
+                
+                print("🚀 EMAIL ENVIADO EXITOSAMENTE (revisa la consola para ver el contenido)\n")
+                
             except Exception as e:
                 # Log del error pero no falla la cancelación
-                print(f"Error al enviar email: {str(e)}")
+                print(f"\n❌ ERROR al enviar email: {str(e)}\n")
         else:
             # Es una reserva manual
             is_manual_booking = True

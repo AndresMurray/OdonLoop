@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config as env_config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -199,17 +200,18 @@ SIMPLE_JWT = {
 """
 
 # Email configuration
-# Para desarrollo: muestra los emails en la consola
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'consultorio@odontologia.com'
+# IMPORTANTE: Para producción, usar variables de entorno por seguridad
+EMAIL_BACKEND = env_config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+DEFAULT_FROM_EMAIL = env_config('DEFAULT_FROM_EMAIL', default='sistemagestionodontologico@gmail.com')
 
-# Para producción: descomentar y configurar con credenciales reales
-"""
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'tu-email@gmail.com'
-EMAIL_HOST_PASSWORD = 'tu-password-de-aplicacion'
-DEFAULT_FROM_EMAIL = 'tu-email@gmail.com'
-"""
+# Configuración SMTP para SendGrid (cuando EMAIL_BACKEND sea smtp)
+EMAIL_HOST = env_config('EMAIL_HOST', default='smtp.sendgrid.net')
+EMAIL_PORT = env_config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = env_config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = env_config('EMAIL_HOST_USER', default='apikey')  # SendGrid siempre usa 'apikey'
+EMAIL_HOST_PASSWORD = env_config('EMAIL_HOST_PASSWORD', default='')  # Tu API Key de SendGrid
+
+# Configuración alternativa para Gmail (comentado - no recomendado para producción)
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_HOST_USER = 'tu-email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'tu-password-de-16-caracteres'
