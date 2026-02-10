@@ -5,7 +5,8 @@ from .views import (
     AdminOdontologoListView,
     aprobar_odontologo,
     suspender_odontologo,
-    activar_odontologo
+    activar_odontologo,
+    crear_paciente_rapido
 )
 
 app_name = 'odontologos'
@@ -14,6 +15,9 @@ urlpatterns = [
     # Endpoints públicos (solo odontólogos activos)
     path('', OdontologoListView.as_view(), name='list'),
     path('<int:pk>/', OdontologoDetailView.as_view(), name='detail'),
+    
+    # Endpoint para crear paciente rápido (solo odontólogos)
+    path('crear-paciente-rapido/', crear_paciente_rapido, name='crear-paciente-rapido'),
     
     # Endpoints del panel de administración
     path('admin/todos/', AdminOdontologoListView.as_view(), name='admin-list'),

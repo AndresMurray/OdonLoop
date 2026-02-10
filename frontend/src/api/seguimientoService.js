@@ -76,11 +76,23 @@ export const eliminarSeguimiento = async (id) => {
   }
 };
 
+// Crear paciente rápido (por odontólogo)
+export const crearPacienteRapido = async (pacienteData) => {
+  try {
+    const response = await apiClient.post('/api/odontologos/crear-paciente-rapido/', pacienteData);
+    return response;
+  } catch (error) {
+    console.error('Error al crear paciente rápido:', error);
+    throw error;
+  }
+};
+
 export default {
   getMisPacientes,
   getSeguimientosPorPaciente,
   crearSeguimiento,
   getMisSeguimientos,
   actualizarSeguimiento,
-  eliminarSeguimiento
+  eliminarSeguimiento,
+  crearPacienteRapido
 };

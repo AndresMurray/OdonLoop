@@ -35,6 +35,7 @@ class TurnoSerializer(serializers.ModelSerializer):
     odontologo = OdontologoTurnoSerializer(read_only=True)
     paciente = PacienteTurnoSerializer(read_only=True)
     esta_disponible = serializers.BooleanField(read_only=True)
+    fecha_hora = serializers.SerializerMethodField()
     
     class Meta:
         model = Turno
@@ -44,6 +45,18 @@ class TurnoSerializer(serializers.ModelSerializer):
             'nombre_paciente_manual', 'apellido_paciente_manual', 'telefono_paciente_manual',
             'fecha_creacion', 'fecha_actualizacion'
         ]
+    
+    def get_fecha_hora(self, obj):
+        """Retornar fecha_hora en zona horaria local (Argentina) sin conversión"""
+        from django.utils import timezone
+        import pytz
+        
+        # Convertir de UTC a zona horaria local
+        tz = pytz.timezone('America/Argentina/Buenos_Aires')
+        fecha_local = obj.fecha_hora.astimezone(tz)
+        
+        # Retornar como string ISO pero sin el offset de timezone
+        return fecha_local.strftime('%Y-%m-%dT%H:%M:%S')
 
 
 class TurnoCreateSerializer(serializers.ModelSerializer):
@@ -55,7 +68,16 @@ class TurnoCreateSerializer(serializers.ModelSerializer):
     
     def validate_fecha_hora(self, value):
         """Validar que la fecha no sea en el pasado"""
-        if value < timezone.now():
+        # Si value es naive, lo hacemos aware con la zona horaria actual
+        if timezone.is_naive(value):
+            value = timezone.make_aware(value)
+        
+        # Comparar solo hasta minutos para evitar problemas con segundos
+        now = timezone.now().replace(second=0, microsecond=0)
+        value_sin_segundos = value.replace(second=0, microsecond=0)
+        
+        # Permitir turnos desde el minuto actual en adelante
+        if value_sin_segundos < now:
             raise serializers.ValidationError("No se pueden crear turnos en el pasado.")
         return value
     
@@ -113,7 +135,7 @@ class TurnoUpdateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Turno
-        fields = ['estado', 'motivo', 'fecha_hora', 'duracion_minutos', 'nombre_paciente_manual', 'apellido_paciente_manual', 'telefono_paciente_manual']
+        fields = ['paciente', 'estado', 'motivo', 'fecha_hora', 'duracion_minutos', 'nombre_paciente_manual', 'apellido_paciente_manual', 'telefono_paciente_manual']
     
     def validate_estado(self, value):
         allowed_transitions = {
@@ -130,13 +152,21 @@ class TurnoUpdateSerializer(serializers.ModelSerializer):
         return value
     
     def validate(self, data):
-        """Validar que si se marca como reservado manualmente, se proporcione nombre y apellido"""
+        """Validar asignación de paciente o reserva manual"""
+        paciente = data.get('paciente')
         estado = data.get('estado', self.instance.estado)
         nombre = data.get('nombre_paciente_manual')
         apellido = data.get('apellido_paciente_manual')
         
-        # Si se marca como reservado y no hay paciente asociado, requerir nombre y apellido
-        if estado == 'reservado' and not self.instance.paciente:
+        # Si se asigna un paciente registrado, cambiar automáticamente a reservado
+        if paciente:
+            data['estado'] = 'reservado'
+            # Limpiar campos manuales si se asigna un paciente registrado
+            data['nombre_paciente_manual'] = None
+            data['apellido_paciente_manual'] = None
+            data['telefono_paciente_manual'] = None
+        # Si se marca como reservado manualmente sin paciente, requerir nombre y apellido
+        elif estado == 'reservado' and not self.instance.paciente and not paciente:
             if not nombre or not apellido:
                 raise serializers.ValidationError(
                     "Para reservar manualmente un turno, debe proporcionar nombre y apellido del paciente."

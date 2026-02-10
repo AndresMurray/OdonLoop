@@ -9,6 +9,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
 import ConfirmModal from '../components/ConfirmModal';
+import ModalAsignarPaciente from '../components/ModalAsignarPaciente';
 
 const GestionTurnosOdonto = () => {
   const navigate = useNavigate();
@@ -38,6 +39,9 @@ const GestionTurnosOdonto = () => {
     message: '',
     variant: 'danger'
   });
+  
+  // Estado para el modal de asignar paciente
+  const [modalAsignarPaciente, setModalAsignarPaciente] = useState(false);
   
   // Estados para verificar horarios ocupados
   const [turnosDiaSeleccionado, setTurnosDiaSeleccionado] = useState([]);
@@ -125,8 +129,10 @@ const GestionTurnosOdonto = () => {
       // Solo verificar turnos que no estén cancelados
       if (turno.estado === 'cancelado') continue;
       
-      const fechaTurno = new Date(turno.fecha_hora);
-      const turnoInicioMinutos = fechaTurno.getUTCHours() * 60 + fechaTurno.getUTCMinutes();
+      // Parsear directamente el string (formato: "2026-02-10T19:00:00")
+      const [, horaStr] = turno.fecha_hora.split('T');
+      const [turnoHora, turnoMinuto] = horaStr.split(':').map(Number);
+      const turnoInicioMinutos = turnoHora * 60 + turnoMinuto;
       const turnoFinMinutos = turnoInicioMinutos + turno.duracion_minutos;
       
       // Verificar superposición
@@ -255,25 +261,45 @@ const GestionTurnosOdonto = () => {
   };
 
   const handleEditarTurno = (turno) => {
-    const fecha = new Date(turno.fecha_hora);
-    
-    // Extraer componentes UTC para tratarlos como hora local
-    const año = fecha.getUTCFullYear();
-    const mes = String(fecha.getUTCMonth() + 1).padStart(2, '0');
-    const dia = String(fecha.getUTCDate()).padStart(2, '0');
-    const horas = String(fecha.getUTCHours()).padStart(2, '0');
-    const minutos = String(fecha.getUTCMinutes()).padStart(2, '0');
+    // El backend envía fecha_hora en formato: "2026-02-10T19:00:00" (hora Argentina, sin timezone)
+    // Parsear directamente el string sin conversión de timezone
+    const [fechaStr, horaStr] = turno.fecha_hora.split('T');
+    const [año, mes, dia] = fechaStr.split('-');
+    const [hora, minuto] = horaStr.split(':');
     
     setTurnoEditando({
       id: turno.id,
-      fecha: `${año}-${mes}-${dia}`,
-      hora: `${horas}:${minutos}`,
+      fecha: fechaStr, // Ya viene en formato YYYY-MM-DD
+      hora: `${hora}:${minuto}`, // HH:MM
       duracion_minutos: turno.duracion_minutos,
       estado: turno.estado,
+      paciente_id: turno.paciente?.id || null,
+      paciente_nombre: turno.paciente?.nombre_completo || '',
       nombre_paciente_manual: turno.nombre_paciente_manual || '',
       apellido_paciente_manual: turno.apellido_paciente_manual || '',
       telefono_paciente_manual: turno.telefono_paciente_manual || ''
     });
+  };
+  
+  const handleSeleccionarPaciente = (paciente) => {
+    setTurnoEditando(prev => ({
+      ...prev,
+      paciente_id: paciente.id,
+      paciente_nombre: paciente.nombre_completo,
+      estado: 'reservado',
+      nombre_paciente_manual: '',
+      apellido_paciente_manual: '',
+      telefono_paciente_manual: ''
+    }));
+  };
+  
+  const handleQuitarPaciente = () => {
+    setTurnoEditando(prev => ({
+      ...prev,
+      paciente_id: null,
+      paciente_nombre: '',
+      estado: 'disponible'
+    }));
   };
 
   const handleGuardarEdicion = async () => {
@@ -290,8 +316,13 @@ const GestionTurnosOdonto = () => {
         duracion_minutos: parseInt(turnoEditando.duracion_minutos)
       };
       
-      // Si se está marcando como reservado, incluir los datos del paciente manual
-      if (turnoEditando.estado === 'reservado') {
+      // Si tiene paciente_id asignado (paciente registrado)
+      if (turnoEditando.paciente_id) {
+        updateData.paciente = turnoEditando.paciente_id;
+        updateData.estado = 'reservado';
+      }
+      // Si se está marcando como reservado manualmente (sin usuario)
+      else if (turnoEditando.estado === 'reservado') {
         updateData.estado = 'reservado';
         updateData.nombre_paciente_manual = turnoEditando.nombre_paciente_manual;
         updateData.apellido_paciente_manual = turnoEditando.apellido_paciente_manual;
@@ -389,29 +420,32 @@ const GestionTurnosOdonto = () => {
 
 
   const formatearFecha = (fechaHora) => {
-    // El backend guarda las fechas en UTC, pero queremos mostrarlas como "hora local"
-    // sin conversión de zona horaria (la hora que el odontólogo eligió)
-    const fecha = new Date(fechaHora);
+    // El backend ahora envía la fecha en hora Argentina sin timezone
+    // Parsear directamente el string ISO
+    const [fechaStr, horaStr] = fechaHora.split('T');
+    const [año, mes, dia] = fechaStr.split('-');
+    const [hora, minuto] = horaStr.split(':');
     
-    // Si la fecha viene como ISO string con Z (UTC), extraer componentes UTC
-    // y tratarlos como hora local
-    const año = fecha.getUTCFullYear();
-    const mes = fecha.getUTCMonth();
-    const dia = fecha.getUTCDate();
-    const horas = fecha.getUTCHours();
-    const minutos = fecha.getUTCMinutes();
+    // Crear fecha local
+    const fechaLocal = new Date(
+      parseInt(año), 
+      parseInt(mes) - 1, 
+      parseInt(dia), 
+      parseInt(hora), 
+      parseInt(minuto)
+    );
     
-    // Crear nueva fecha con esos valores como hora local
-    const fechaLocal = new Date(año, mes, dia, horas, minutos);
-    
-    return fechaLocal.toLocaleDateString('es-AR', {
+    const opciones = {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+      day: 'numeric'
+    };
+    
+    const fechaFormateada = fechaLocal.toLocaleDateString('es-AR', opciones);
+    const horaFormateada = `${hora}:${minuto} hs`;
+    
+    return `${fechaFormateada}, ${horaFormateada}`;
   };
 
   const getEstadoColor = (estado) => {
@@ -432,13 +466,9 @@ const GestionTurnosOdonto = () => {
     if (estado === 'disponible') {
       if (fechaFiltro) {
         filtrados = filtrados.filter(t => {
-          const fechaTurno = new Date(t.fecha_hora);
-          const fechaFiltroDate = new Date(fechaFiltro + 'T00:00:00');
-          
-          // Comparar solo la fecha (día/mes/año) en UTC
-          return fechaTurno.getUTCFullYear() === fechaFiltroDate.getFullYear() &&
-                 fechaTurno.getUTCMonth() === fechaFiltroDate.getMonth() &&
-                 fechaTurno.getUTCDate() === fechaFiltroDate.getDate();
+          // Comparar directamente el string de fecha (formato: "2026-02-10T19:00:00")
+          const [fechaTurnoStr] = t.fecha_hora.split('T');
+          return fechaTurnoStr === fechaFiltro;
         });
       } else {
         // Si no hay filtro, no mostrar nada (evitar listado gigante)
@@ -599,9 +629,9 @@ const GestionTurnosOdonto = () => {
                         .filter(t => t.estado !== 'cancelado')
                         .slice(0, 8)
                         .map(turno => {
-                          const fecha = new Date(turno.fecha_hora);
-                          const hora = String(fecha.getUTCHours()).padStart(2, '0');
-                          const minuto = String(fecha.getUTCMinutes()).padStart(2, '0');
+                          // Parsear directamente el string de fecha_hora (formato: "2026-02-10T19:00:00")
+                          const [, horaStr] = turno.fecha_hora.split('T');
+                          const [hora, minuto] = horaStr.split(':');
                           return (
                             <div key={turno.id}>
                               • {hora}:{minuto} ({turno.duracion_minutos} min) - {turno.estado}
@@ -861,60 +891,102 @@ const GestionTurnosOdonto = () => {
                             </div>
                           </div>
                           
-                          {/* Opción de Reserva Manual */}
+                          {/* Opciones de Asignación de Paciente */}
                           <div className="border-t pt-3">
-                            <div className="flex items-center gap-3 mb-3">
-                              <label className="flex items-center cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={turnoEditando.estado === 'reservado'}
-                                  onChange={(e) => setTurnoEditando({ 
-                                    ...turnoEditando, 
-                                    estado: e.target.checked ? 'reservado' : 'disponible',
-                                    nombre_paciente_manual: e.target.checked ? turnoEditando.nombre_paciente_manual : '',
-                                    apellido_paciente_manual: e.target.checked ? turnoEditando.apellido_paciente_manual : ''
-                                  })}
-                                  className="mr-2 h-4 w-4 text-blue-600 rounded"
-                                />
-                                <span className="text-sm font-medium text-gray-700">Reservar manualmente (sin usuario)</span>
-                              </label>
-                            </div>
+                            <h4 className="text-sm font-medium text-gray-700 mb-3">Asignar Paciente</h4>
                             
-                            {turnoEditando.estado === 'reservado' && (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-700 mb-1">Nombre del Paciente *</label>
-                                  <input
-                                    type="text"
-                                    value={turnoEditando.nombre_paciente_manual}
-                                    onChange={(e) => setTurnoEditando({ ...turnoEditando, nombre_paciente_manual: e.target.value })}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
-                                    placeholder="Nombre"
-                                    required
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-700 mb-1">Apellido del Paciente *</label>
-                                  <input
-                                    type="text"
-                                    value={turnoEditando.apellido_paciente_manual}
-                                    onChange={(e) => setTurnoEditando({ ...turnoEditando, apellido_paciente_manual: e.target.value })}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
-                                    placeholder="Apellido"
-                                    required
-                                  />
-                                </div>
-                                <div className="md:col-span-2">
-                                  <label className="block text-xs font-medium text-gray-700 mb-1">Teléfono (opcional)</label>
-                                  <input
-                                    type="tel"
-                                    value={turnoEditando.telefono_paciente_manual}
-                                    onChange={(e) => setTurnoEditando({ ...turnoEditando, telefono_paciente_manual: e.target.value })}
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
-                                    placeholder="Teléfono de contacto"
-                                  />
+                            {/* Paciente Registrado Asignado */}
+                            {turnoEditando.paciente_id && (
+                              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-3">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-sm font-medium text-emerald-900">
+                                      Paciente Registrado
+                                    </p>
+                                    <p className="text-sm text-emerald-700 mt-1">
+                                      {turnoEditando.paciente_nombre}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={handleQuitarPaciente}
+                                  >
+                                    Quitar
+                                  </Button>
                                 </div>
                               </div>
+                            )}
+                            
+                            {/* Botón para abrir modal de asignación */}
+                            {!turnoEditando.paciente_id && (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => setModalAsignarPaciente(true)}
+                                className="mb-3 w-full"
+                              >
+                                🔍 Buscar o Crear Paciente
+                              </Button>
+                            )}
+                            
+                            {/* Opción de Reserva Manual (solo si no hay paciente registrado) */}
+                            {!turnoEditando.paciente_id && (
+                              <>
+                                <div className="flex items-center gap-3 mb-3">
+                                  <label className="flex items-center cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={turnoEditando.estado === 'reservado'}
+                                      onChange={(e) => setTurnoEditando({ 
+                                        ...turnoEditando, 
+                                        estado: e.target.checked ? 'reservado' : 'disponible',
+                                        nombre_paciente_manual: e.target.checked ? turnoEditando.nombre_paciente_manual : '',
+                                        apellido_paciente_manual: e.target.checked ? turnoEditando.apellido_paciente_manual : ''
+                                      })}
+                                      className="mr-2 h-4 w-4 text-blue-600 rounded"
+                                    />
+                                    <span className="text-sm font-medium text-gray-700">O reservar manualmente (sin usuario)</span>
+                                  </label>
+                                </div>
+                                
+                                {turnoEditando.estado === 'reservado' && (
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="block text-xs font-medium text-gray-700 mb-1">Nombre del Paciente *</label>
+                                      <input
+                                        type="text"
+                                        value={turnoEditando.nombre_paciente_manual}
+                                        onChange={(e) => setTurnoEditando({ ...turnoEditando, nombre_paciente_manual: e.target.value })}
+                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                        placeholder="Nombre"
+                                        required
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-medium text-gray-700 mb-1">Apellido del Paciente *</label>
+                                      <input
+                                        type="text"
+                                        value={turnoEditando.apellido_paciente_manual}
+                                        onChange={(e) => setTurnoEditando({ ...turnoEditando, apellido_paciente_manual: e.target.value })}
+                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                        placeholder="Apellido"
+                                        required
+                                      />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                      <label className="block text-xs font-medium text-gray-700 mb-1">Teléfono (opcional)</label>
+                                      <input
+                                        type="tel"
+                                        value={turnoEditando.telefono_paciente_manual}
+                                        onChange={(e) => setTurnoEditando({ ...turnoEditando, telefono_paciente_manual: e.target.value })}
+                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                        placeholder="Teléfono de contacto"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </>
                             )}
                           </div>
                           
@@ -1052,6 +1124,13 @@ const GestionTurnosOdonto = () => {
         confirmText="Sí, cancelar turno"
         cancelText="No, mantener turno"
         variant={modalCancelar.variant}
+      />
+      
+      {/* Modal de asignar paciente */}
+      <ModalAsignarPaciente
+        isOpen={modalAsignarPaciente}
+        onClose={() => setModalAsignarPaciente(false)}
+        onSeleccionar={handleSeleccionarPaciente}
       />
     </div>
   );

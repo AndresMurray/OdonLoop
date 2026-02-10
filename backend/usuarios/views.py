@@ -82,6 +82,90 @@ class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        """
+        Crear nuevo usuario o hacer upgrade de cuenta existente.
+        Si el DNI existe sin email, actualiza la cuenta (upgrade).
+        Si el DNI existe con email, retorna error.
+        Si no existe, crea nuevo usuario.
+        """
+        tipo_usuario = request.data.get('tipo_usuario', 'paciente')
+        
+        # Solo manejar upgrade para pacientes
+        if tipo_usuario == 'paciente':
+            dni = request.data.get('dni')
+            email = request.data.get('email')
+            
+            if dni:
+                from pacientes.models import Paciente
+                try:
+                    paciente_existente = Paciente.objects.select_related('user').get(dni=dni)
+                    
+                    # Verificar si es un upgrade (usuario sin email)
+                    if not paciente_existente.user.email:
+                        # UPGRADE: Activar cuenta existente
+                        user = paciente_existente.user
+                        
+                        # Verificar que el email no esté en uso por otro usuario
+                        if email and CustomUser.objects.filter(email=email).exists():
+                            return Response(
+                                {'error': 'Este email ya está registrado'},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                        
+                        # Actualizar datos del usuario
+                        user.email = email
+                        user.set_password(request.data.get('password'))
+                        user.username = email  # Cambiar username a email
+                        user.tipo_registro = 'autoregistro'
+                        user.cuenta_completa = True
+                        
+                        # Actualizar otros campos si vienen en el request
+                        if request.data.get('telefono'):
+                            user.telefono = request.data.get('telefono')
+                        if request.data.get('first_name'):
+                            user.first_name = request.data.get('first_name')
+                        if request.data.get('last_name'):
+                            user.last_name = request.data.get('last_name')
+                        
+                        user.save()
+                        
+                        # Actualizar obra social si viene en el request
+                        obra_social_id = request.data.get('obra_social_id')
+                        if obra_social_id:
+                            from pacientes.models import ObraSocial
+                            try:
+                                obra_social = ObraSocial.objects.get(id=obra_social_id, activo=True)
+                                paciente_existente.obra_social = obra_social
+                                paciente_existente.save()
+                            except ObraSocial.DoesNotExist:
+                                pass
+                        
+                        # Generar tokens JWT
+                        from rest_framework_simplejwt.tokens import RefreshToken
+                        refresh = RefreshToken.for_user(user)
+                        
+                        return Response({
+                            'message': 'Cuenta activada exitosamente',
+                            'upgrade': True,
+                            'refresh': str(refresh),
+                            'access': str(refresh.access_token),
+                            'user': UserSerializer(user).data
+                        }, status=status.HTTP_200_OK)
+                    else:
+                        # DNI existe y ya tiene cuenta completa
+                        return Response(
+                            {'error': 'Ya existe una cuenta registrada con este DNI'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                        
+                except Paciente.DoesNotExist:
+                    # DNI no existe, continuar con registro normal
+                    pass
+        
+        # Flujo normal de creación
+        return super().create(request, *args, **kwargs)
     
     @transaction.atomic
     def perform_create(self, serializer):
