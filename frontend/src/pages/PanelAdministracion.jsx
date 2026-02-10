@@ -10,15 +10,16 @@ import { UserCheck, UserX, Clock, CheckCircle, XCircle, AlertCircle } from 'luci
 
 const PanelAdministracion = () => {
   const navigate = useNavigate();
+  const userData = authService.getUserData();
+  
   const [odontologos, setOdontologos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [procesando, setProcesando] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [filtro, setFiltro] = useState('todos'); // 'todos', 'pendiente', 'activo', 'suspendido'
   const [motivoSuspension, setMotivoSuspension] = useState('');
   const [odontologoParaSuspender, setOdontologoParaSuspender] = useState(null);
-
-  const userData = authService.getUserData();
 
   useEffect(() => {
     if (!userData || userData.tipo_usuario !== 'admin') {
@@ -26,7 +27,8 @@ const PanelAdministracion = () => {
       return;
     }
     cargarOdontologos();
-  }, [navigate, userData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar el componente
 
   const cargarOdontologos = async () => {
     try {
@@ -45,14 +47,14 @@ const PanelAdministracion = () => {
     if (!window.confirm('¿Está seguro de aprobar este odontólogo?')) return;
 
     try {
-      setLoading(true);
+      setProcesando(true);
       const response = await aprobarOdontologo(id);
       setSuccess(response.message || 'Odontólogo aprobado exitosamente');
-      cargarOdontologos();
+      await cargarOdontologos();
     } catch (err) {
       setError(err.response?.data?.error || 'Error al aprobar odontólogo');
     } finally {
-      setLoading(false);
+      setProcesando(false);
     }
   };
 
@@ -60,16 +62,16 @@ const PanelAdministracion = () => {
     if (!odontologoParaSuspender) return;
 
     try {
-      setLoading(true);
+      setProcesando(true);
       const response = await suspenderOdontologo(odontologoParaSuspender, motivoSuspension || 'Falta de pago');
       setSuccess(response.message || 'Odontólogo suspendido exitosamente');
       setOdontologoParaSuspender(null);
       setMotivoSuspension('');
-      cargarOdontologos();
+      await cargarOdontologos();
     } catch (err) {
       setError(err.response?.data?.error || 'Error al suspender odontólogo');
     } finally {
-      setLoading(false);
+      setProcesando(false);
     }
   };
 
@@ -77,14 +79,14 @@ const PanelAdministracion = () => {
     if (!window.confirm('¿Está seguro de reactivar este odontólogo?')) return;
 
     try {
-      setLoading(true);
+      setProcesando(true);
       const response = await activarOdontologo(id);
       setSuccess(response.message || 'Odontólogo reactivado exitosamente');
-      cargarOdontologos();
+      await cargarOdontologos();
     } catch (err) {
       setError(err.response?.data?.error || 'Error al reactivar odontólogo');
     } finally {
-      setLoading(false);
+      setProcesando(false);
     }
   };
 
@@ -282,7 +284,7 @@ const PanelAdministracion = () => {
                             <Button
                               size="sm"
                               onClick={() => handleAprobar(odontologo.id)}
-                              disabled={loading}
+                              isLoading={procesando}
                               className="w-full"
                             >
                               <UserCheck className="w-4 h-4 mr-2" />
@@ -308,7 +310,7 @@ const PanelAdministracion = () => {
                             <Button
                               size="sm"
                               onClick={() => handleActivar(odontologo.id)}
-                              disabled={loading}
+                              isLoading={procesando}
                               className="w-full"
                             >
                               <CheckCircle className="w-4 h-4 mr-2" />
@@ -349,7 +351,7 @@ const PanelAdministracion = () => {
               <Button
                 variant="danger"
                 onClick={handleSuspender}
-                disabled={loading}
+                isLoading={procesando}
                 className="flex-1"
               >
                 Confirmar Suspensión
@@ -360,6 +362,7 @@ const PanelAdministracion = () => {
                   setOdontologoParaSuspender(null);
                   setMotivoSuspension('');
                 }}
+                disabled={procesando}
                 className="flex-1"
               >
                 Cancelar

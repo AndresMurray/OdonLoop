@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { useState } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { LogIn, ArrowLeft } from 'lucide-react';
 import { useForm } from '../hooks/useForm';
 import { validators } from '../utils/validators';
@@ -15,8 +15,6 @@ import Footer from '../components/Footer';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const tipoUsuario = searchParams.get('tipo');
   const [alert, setAlert] = useState({ type: '', message: '', detail: '' });
 
   const validationRules = {
@@ -88,34 +86,6 @@ const LoginPage = () => {
     }
   };
 
-  const getTitle = () => {
-    if (tipoUsuario === 'paciente') return 'Inicio de Sesión - Paciente';
-    if (tipoUsuario === 'odontologo') return 'Inicio de Sesión - Odontólogo';
-    return 'Iniciar Sesión';
-  };
-
-  const getRegisterLink = () => {
-    if (tipoUsuario === 'paciente') return '/register/paciente';
-    if (tipoUsuario === 'odontologo') return '/register/odontologo';
-    return '/register';
-  };
-
-
-  const getIconColor = () => {
-    if (tipoUsuario === 'odontologo') return 'bg-indigo-100';
-    return 'bg-blue-100';
-  };
-
-  const getIconTextColor = () => {
-    if (tipoUsuario === 'odontologo') return 'text-indigo-600';
-    return 'text-blue-600';
-  };
-
-  const getLinkColor = () => {
-    if (tipoUsuario === 'odontologo') return 'text-indigo-600 hover:text-indigo-700';
-    return 'text-blue-600 hover:text-blue-700';
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
       <Navbar />
@@ -133,15 +103,15 @@ const LoginPage = () => {
           <CardContent className="p-8">
             <div className="text-center mb-8">
               <div className="flex justify-center mb-4">
-                <div className={`p-4 ${getIconColor()} rounded-full`}>
-                  <LogIn className={`w-12 h-12 ${getIconTextColor()}`} />
+                <div className="p-4 bg-blue-100 rounded-full">
+                  <LogIn className="w-12 h-12 text-blue-600" />
                 </div>
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
-                {getTitle()}
+                Iniciar Sesión
               </h2>
               <p className="mt-2 text-sm text-gray-600">
-                Ingresa tus credenciales para acceder
+                Ingresa tus credenciales para acceder al sistema
               </p>
             </div>
 
@@ -181,11 +151,7 @@ const LoginPage = () => {
                 <Button
                   type="submit"
                   variant="primary"
-                  className={`w-full py-3 ${
-                    tipoUsuario === 'odontologo' 
-                      ? 'bg-slate-700 hover:bg-slate-800' 
-                      : 'bg-blue-700 hover:bg-blue-800'
-                  }`}
+                  className="w-full py-3 bg-blue-700 hover:bg-blue-800"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Iniciando sesión...' : 'Iniciar sesión'}
@@ -197,14 +163,10 @@ const LoginPage = () => {
               <p className="text-sm text-gray-600">
                 ¿No tienes cuenta?{' '}
                 <Link
-                  to={getRegisterLink()}
-                  className={`${
-                    tipoUsuario === 'odontologo' 
-                      ? 'text-slate-700 hover:text-slate-800' 
-                      : 'text-blue-700 hover:text-blue-800'
-                  } font-medium`}
+                  to="/"
+                  className="text-blue-700 hover:text-blue-800 font-medium"
                 >
-                  Regístrate
+                  Regístrate aquí
                 </Link>
               </p>
             </div>

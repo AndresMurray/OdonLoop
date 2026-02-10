@@ -3,7 +3,7 @@ import { Card, CardContent } from '../components/Card';
 import Button from '../components/Button';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Users, Stethoscope } from 'lucide-react';
+import { Users, Stethoscope, LogIn } from 'lucide-react';
 
 const HomePage = () => {
   return (
@@ -14,8 +14,23 @@ const HomePage = () => {
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
           Sistema de Gestión Odontológica
         </h1>
-        <p className="text-xl text-slate-200 mb-12 max-w-xl mx-auto">
-          Administra tu consultorio de manera simple y profesional
+
+
+        {/* Botón de Login General */}
+        <div className="mb-12">
+          <Link to="/login" className="inline-block">
+            <Button 
+              variant="primary" 
+              className="px-12 py-4 text-lg bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            >
+              <LogIn className="w-6 h-6 mr-3 inline" />
+              Iniciar Sesión
+            </Button>
+          </Link>
+        </div>
+
+        <p className="text-slate-300 mb-6 text-lg font-medium">
+          ¿No tenés cuenta? Registrate ahora:
         </p>
 
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
@@ -33,18 +48,11 @@ const HomePage = () => {
               <p className="text-gray-600 text-sm mb-4">
                 Gestiona tus turnos y consultas
               </p>
-              <div className="space-y-2">
-                <Link to="/login?tipo=paciente" className="block">
-                  <Button variant="primary" className="w-full bg-blue-700 hover:bg-blue-800">
-                    Iniciar Sesión
-                  </Button>
-                </Link>
-                <Link to="/register/paciente" className="block">
-                  <Button variant="outline" className="w-full border-blue-700 text-blue-700 hover:bg-blue-50">
-                    Registrarme
-                  </Button>
-                </Link>
-              </div>
+              <Link to="/register/paciente" className="block">
+                <Button variant="primary" className="w-full bg-blue-700 hover:bg-blue-800">
+                  Registrarme como Paciente
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
@@ -62,18 +70,11 @@ const HomePage = () => {
               <p className="text-gray-600 text-sm mb-4">
                 Administra tu consultorio
               </p>
-              <div className="space-y-2">
-                <Link to="/login?tipo=odontologo" className="block">
-                  <Button variant="primary" className="w-full bg-slate-700 hover:bg-slate-800">
-                    Iniciar Sesión
-                  </Button>
-                </Link>
-                <Link to="/register/odontologo" className="block">
-                  <Button variant="outline" className="w-full border-slate-700 text-slate-700 hover:bg-slate-50">
-                    Registrarme
-                  </Button>
-                </Link>
-              </div>
+              <Link to="/register/odontologo" className="block">
+                <Button variant="primary" className="w-full bg-slate-700 hover:bg-slate-800">
+                  Registrarme como Odontólogo
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>

@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import RegisterPage from '../pages/RegisterPage';
 import RegisterPacientePage from '../pages/RegisterPacientePage';
 import RegisterOdontologoPage from '../pages/RegisterOdontologoPage';
+import PendienteAprobacionPage from '../pages/PendienteAprobacionPage';
 import LoginPage from '../pages/LoginPage';
 import TurnosPage from '../pages/TurnosPage';
 import HomeOdonto from '../pages/HomeOdonto';
@@ -58,6 +59,14 @@ export const router = createBrowserRouter([
     element: (
       <GuestRoute>
         <RegisterOdontologoPage />
+      </GuestRoute>
+    ),
+  },
+  {
+    path: '/pendiente-aprobacion',
+    element: (
+      <GuestRoute>
+        <PendienteAprobacionPage />
       </GuestRoute>
     ),
   },

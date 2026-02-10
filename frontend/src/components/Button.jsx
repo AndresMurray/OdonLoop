@@ -8,7 +8,9 @@ const Button = ({
   onClick,
   className = '',
 }) => {
-  const baseStyles = 'rounded-lg font-medium transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles = 'rounded-lg font-medium transition duration-200';
+  
+  const cursorStyle = (disabled && !isLoading) ? 'cursor-not-allowed opacity-50' : isLoading ? 'cursor-wait' : 'cursor-pointer';
   
   const sizes = {
     sm: 'px-4 py-1.5 text-sm',
@@ -28,7 +30,7 @@ const Button = ({
       type={type}
       onClick={onClick}
       disabled={disabled || isLoading}
-      className={`${baseStyles} ${sizes[size]} ${variants[variant]} ${className}`}
+      className={`${baseStyles} ${sizes[size]} ${variants[variant]} ${cursorStyle} ${className}`}
     >
       {isLoading ? (
         <span className="flex items-center justify-center">

@@ -59,11 +59,11 @@ const RegisterOdontologoPage = () => {
       await userService.register(formValues);
       setAlert({
         type: 'success',
-        message: '¡Registro exitoso! Redirigiendo al login...',
+        message: '¡Registro exitoso! Redirigiendo...',
       });
 
       setTimeout(() => {
-        navigate('/login?tipo=odontologo', { replace: true });
+        navigate('/pendiente-aprobacion', { replace: true });
       }, 2000);
     } catch (error) {
       setAlert({
