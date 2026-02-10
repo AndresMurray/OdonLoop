@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getTurnosDisponibles, reservarTurno, getMisTurnos, cancelarTurno } from '../api/turnoService';
 import { getOdontologos } from '../api/odontologoService';
 import { authService } from '../api/authService';
@@ -7,9 +7,12 @@ import Button from '../components/Button';
 import { Card } from '../components/Card';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import Pagination from '../components/Pagination';
 
 const SolicitarTurnoPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const vistaInicial = location.state?.vistaInicial || 'buscar';
   const [odontologos, setOdontologos] = useState([]);
   const [odontologoSeleccionado, setOdontologoSeleccionado] = useState('');
   const [turnosDisponibles, setTurnosDisponibles] = useState([]);
@@ -17,7 +20,7 @@ const SolicitarTurnoPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [vistaActual, setVistaActual] = useState('buscar'); // 'buscar' o 'misTurnos'
+  const [vistaActual, setVistaActual] = useState(vistaInicial); // 'buscar' o 'misTurnos'
   const [motivo, setMotivo] = useState('');
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
   const [fechaFiltro, setFechaFiltro] = useState(() => {
@@ -25,6 +28,8 @@ const SolicitarTurnoPage = () => {
     const hoy = new Date();
     return hoy.toISOString().split('T')[0];
   });
+  const [paginaActual, setPaginaActual] = useState(1);
+  const turnosPorPagina = 5;
 
   const userData = authService.getUserData();
 
@@ -32,6 +37,11 @@ const SolicitarTurnoPage = () => {
     cargarOdontologos();
     cargarMisTurnos();
   }, []);
+
+  useEffect(() => {
+    // Resetear paginación cuando cambia la vista
+    setPaginaActual(1);
+  }, [vistaActual]);
 
   const cargarOdontologos = async () => {
     try {
@@ -46,6 +56,7 @@ const SolicitarTurnoPage = () => {
     try {
       const data = await getMisTurnos();
       setMisTurnos(data);
+      setPaginaActual(1); // Resetear a la primera página cuando cargan los turnos
     } catch (err) {
       console.error('Error al cargar mis turnos:', err);
     }
@@ -177,6 +188,28 @@ const SolicitarTurnoPage = () => {
     return colores[estado] || 'bg-gray-100 text-gray-800';
   };
 
+  const getTurnosOrganizados = () => {
+    // Separar turnos pendientes y pasados/cancelados
+    const pendientes = misTurnos.filter(t => 
+      t.estado === 'reservado' || t.estado === 'confirmado'
+    ).sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora));
+    
+    const pasados = misTurnos.filter(t => 
+      t.estado === 'completado' || t.estado === 'cancelado'
+    ).sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+    
+    return [...pendientes, ...pasados];
+  };
+
+  const getTurnosPaginados = () => {
+    const turnosOrganizados = getTurnosOrganizados();
+    const inicio = (paginaActual - 1) * turnosPorPagina;
+    const fin = inicio + turnosPorPagina;
+    return turnosOrganizados.slice(inicio, fin);
+  };
+
+  const totalPaginas = Math.ceil(misTurnos.length / turnosPorPagina);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
       <Navbar />
@@ -215,7 +248,7 @@ const SolicitarTurnoPage = () => {
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
-            Mis Turnos ({misTurnos.length})
+            Mis Turnos ({misTurnos.filter(t => t.estado === 'reservado' || t.estado === 'confirmado').length})
           </button>
         </div>
 
@@ -399,48 +432,58 @@ const SolicitarTurnoPage = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {misTurnos.map((turno) => (
-                    <div
-                      key={turno.id}
-                      className="p-4 bg-gray-50 rounded-lg"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <p className="font-semibold text-gray-800">
-                              {formatearFecha(turno.fecha_hora)}
-                            </p>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(turno.estado)}`}>
-                              {turno.estado}
-                            </span>
-                          </div>
-                          {turno.odontologo && (
+                <>
+                  <div className="space-y-4 mb-4">
+                    {getTurnosPaginados().map((turno) => (
+                      <div
+                        key={turno.id}
+                        className="p-4 bg-gray-50 rounded-lg"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <p className="font-semibold text-gray-800">
+                                {formatearFecha(turno.fecha_hora)}
+                              </p>
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(turno.estado)}`}>
+                                {turno.estado}
+                              </span>
+                            </div>
+                            {turno.odontologo && (
+                              <p className="text-sm text-gray-600">
+                                Odontólogo: {turno.odontologo.nombre_completo}
+                              </p>
+                            )}
                             <p className="text-sm text-gray-600">
-                              Odontólogo: {turno.odontologo.nombre_completo}
+                              Duración: {turno.duracion_minutos} minutos
                             </p>
-                          )}
-                          <p className="text-sm text-gray-600">
-                            Duración: {turno.duracion_minutos} minutos
-                          </p>
-                          {turno.motivo && (
-                            <p className="text-sm text-gray-500 mt-1">Motivo: {turno.motivo}</p>
+                            {turno.motivo && (
+                              <p className="text-sm text-gray-500 mt-1">Motivo: {turno.motivo}</p>
+                            )}
+                          </div>
+                          {(turno.estado === 'reservado' || turno.estado === 'confirmado') && (
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              onClick={() => handleCancelarTurno(turno.id)}
+                              disabled={loading}
+                            >
+                              Cancelar
+                            </Button>
                           )}
                         </div>
-                        {(turno.estado === 'reservado' || turno.estado === 'confirmado') && (
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            onClick={() => handleCancelarTurno(turno.id)}
-                            disabled={loading}
-                          >
-                            Cancelar
-                          </Button>
-                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  
+                  <Pagination
+                    currentPage={paginaActual}
+                    totalPages={totalPaginas}
+                    onPageChange={setPaginaActual}
+                    itemsPerPage={turnosPorPagina}
+                    totalItems={misTurnos.length}
+                  />
+                </>
               )}
             </Card>
           </div>

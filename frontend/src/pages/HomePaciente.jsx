@@ -2,24 +2,20 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
 import Button from '../components/Button';
-import { Calendar } from '../components/Calendar';
 import { 
-  Clock, 
   Calendar as CalendarIcon, 
-  Settings, 
-  LogOut,
-  FileText,
-  User,
-  Heart
+  LogOut
 } from 'lucide-react';
 import { authService } from '../api/authService';
+import { getMisTurnos } from '../api/turnoService';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 const HomePaciente = () => {
   const navigate = useNavigate();
-  const [selectedDate, setSelectedDate] = useState(new Date());
   const [userData] = useState(() => authService.getUserData());
+  const [proximoTurno, setProximoTurno] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!userData) {
@@ -30,7 +26,46 @@ const HomePaciente = () => {
       navigate('/');
       return;
     }
+    cargarProximoTurno();
   }, [navigate, userData]);
+
+  const cargarProximoTurno = async () => {
+    try {
+      setLoading(true);
+      const turnos = await getMisTurnos();
+      // Filtrar solo turnos reservados o confirmados y ordenar por fecha
+      const turnosPendientes = turnos
+        .filter(t => t.estado === 'reservado' || t.estado === 'confirmado')
+        .sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora));
+      
+      if (turnosPendientes.length > 0) {
+        setProximoTurno(turnosPendientes[0]);
+      }
+    } catch (error) {
+      console.error('Error al cargar próximo turno:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatearFecha = (fechaHora) => {
+    const fecha = new Date(fechaHora);
+    const año = fecha.getUTCFullYear();
+    const mes = fecha.getUTCMonth();
+    const dia = fecha.getUTCDate();
+    const horas = fecha.getUTCHours();
+    const minutos = fecha.getUTCMinutes();
+    const fechaLocal = new Date(año, mes, dia, horas, minutos);
+    
+    return fechaLocal.toLocaleDateString('es-AR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   const handleLogout = () => {
     authService.logout();
@@ -57,11 +92,7 @@ const HomePaciente = () => {
                 Bienvenido, {userData.first_name} {userData.last_name}
               </p>
             </div>
-            <div className="flex gap-3">
-              <Button variant="secondary">
-                <Settings className="w-5 h-5 mr-2 inline" />
-                Configuración
-              </Button>
+            <div>
               <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="w-5 h-5 mr-2 inline" />
                 Cerrar Sesión
@@ -98,8 +129,8 @@ const HomePaciente = () => {
           </Card>
         </div>
 
-        {/* Estadísticas - Se cargarán desde la API */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Próximo Turno */}
+        <div className="mb-8">
           <Card className="hover:shadow-lg transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -108,96 +139,52 @@ const HomePaciente = () => {
                 </div>
               </div>
               <h3 className="text-sm font-medium text-gray-600 mb-1">Próximo Turno</h3>
-              <p className="text-3xl font-bold text-gray-900 mb-1">-</p>
-              <p className="text-sm text-gray-500">Cargando...</p>
-            </CardContent>
-          </Card>
-          <Card className="hover:shadow-lg transition-shadow duration-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <FileText className="w-8 h-8 text-green-600" />
-                </div>
-              </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">Historial</h3>
-              <p className="text-3xl font-bold text-gray-900 mb-1">-</p>
-              <p className="text-sm text-gray-500">Consultas realizadas</p>
-            </CardContent>
-          </Card>
-          <Card className="hover:shadow-lg transition-shadow duration-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <Heart className="w-8 h-8 text-red-600" />
-                </div>
-              </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">Estado</h3>
-              <p className="text-3xl font-bold text-gray-900 mb-1">Activo</p>
-              <p className="text-sm text-gray-500">Sin tratamientos pendientes</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Grid de contenido */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Calendario */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Calendario</CardTitle>
-              <CardDescription>Selecciona una fecha para ver tus turnos</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-center">
-                <Calendar
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="rounded-md border"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Próximos turnos */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Próximos Turnos</CardTitle>
-              <CardDescription>Tus citas programadas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <CalendarIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No tienes turnos programados</p>
-                <p className="text-sm mt-2">Solicita un turno para comenzar</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Acciones rápidas */}
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Acciones Rápidas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Button className="py-6 flex flex-col items-center">
-                  <User className="w-6 h-6 mb-2" />
-                  Mi Perfil
-                </Button>
-                <Button variant="secondary" className="py-6 flex flex-col items-center">
-                  <FileText className="w-6 h-6 mb-2" />
-                  Historial Médico
-                </Button>
-                <Button variant="secondary" className="py-6 flex flex-col items-center">
-                  <CalendarIcon className="w-6 h-6 mb-2" />
-                  Mis Turnos
-                </Button>
-                <Button variant="secondary" className="py-6 flex flex-col items-center">
-                  <Settings className="w-6 h-6 mb-2" />
-                  Configuración
-                </Button>
-              </div>
+              {loading ? (
+                <>
+                  <p className="text-3xl font-bold text-gray-900 mb-1">-</p>
+                  <p className="text-sm text-gray-500">Cargando...</p>
+                </>
+              ) : proximoTurno ? (
+                <>
+                  <p className="text-xl font-bold text-gray-900 mb-1">
+                    {formatearFecha(proximoTurno.fecha_hora)}
+                  </p>
+                  {proximoTurno.odontologo && (
+                    <p className="text-sm text-gray-600 mb-1">
+                      Dr. {proximoTurno.odontologo.nombre_completo}
+                    </p>
+                  )}
+                  <p className="text-sm text-gray-500">
+                    Duración: {proximoTurno.duracion_minutos} minutos
+                  </p>
+                  {proximoTurno.motivo && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Motivo: {proximoTurno.motivo}
+                    </p>
+                  )}
+                  <div className="mt-4">
+                    <Button 
+                      size="sm"
+                      onClick={() => navigate('/solicitar-turno', { state: { vistaInicial: 'misTurnos' } })}
+                    >
+                      Ver todos mis turnos
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-3xl font-bold text-gray-900 mb-1">-</p>
+                  <p className="text-sm text-gray-500">No tienes turnos programados</p>
+                  <div className="mt-4">
+                    <Button 
+                      size="sm"
+                      onClick={() => navigate('/solicitar-turno')}
+                    >
+                      Solicitar turno
+                    </Button>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
