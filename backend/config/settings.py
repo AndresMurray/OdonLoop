@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_extensions',
 
     'corsheaders',
+    'cloudinary',
     'usuarios',
     'pacientes',
     'odontologos',
@@ -198,6 +199,18 @@ SIMPLE_JWT = {
     "https://tu-app-de-prueba.com",
 ]
 """
+
+# Cloudinary configuration
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+cloudinary.config(
+    cloud_name=env_config('CLOUDINARY_CLOUD_NAME', default=''),
+    api_key=env_config('CLOUDINARY_API_KEY', default=''),
+    api_secret=env_config('CLOUDINARY_API_SECRET', default=''),
+    secure=True
+)
 
 # Email configuration
 # IMPORTANTE: Para producción, usar variables de entorno por seguridad

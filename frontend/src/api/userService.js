@@ -37,3 +37,14 @@ export const userService = {
     return apiClient.get(API_ENDPOINTS.users.list);
   },
 };
+
+// Función adicional para obtener paciente por ID
+export const getPacienteById = async (pacienteId) => {
+  try {
+    const response = await apiClient.get(`/api/pacientes/${pacienteId}/`);
+    return response;
+  } catch (error) {
+    console.error('Error al obtener paciente:', error);
+    throw error;
+  }
+};

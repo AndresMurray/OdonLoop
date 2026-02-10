@@ -63,3 +63,40 @@ class Paciente(models.Model):
     def get_nombre_completo(self):
         return f"{self.user.first_name} {self.user.last_name}"
 
+
+class Seguimiento(models.Model):
+    """Modelo para el seguimiento odontológico del paciente"""
+    paciente = models.ForeignKey(
+        Paciente, 
+        on_delete=models.CASCADE, 
+        related_name='seguimientos',
+        verbose_name='Paciente'
+    )
+    odontologo = models.ForeignKey(
+        'odontologos.Odontologo', 
+        on_delete=models.CASCADE, 
+        related_name='seguimientos_realizados',
+        verbose_name='Odontólogo'
+    )
+    descripcion = models.TextField(verbose_name='Descripción del seguimiento')
+    imagen_url = models.URLField(
+        max_length=500, 
+        blank=True, 
+        null=True, 
+        verbose_name='URL de imagen'
+    )
+    fecha_atencion = models.DateField(verbose_name='Fecha de atención')
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name='Fecha de creación'
+    )
+    
+    class Meta:
+        verbose_name = 'Seguimiento'
+        verbose_name_plural = 'Seguimientos'
+        ordering = ['-fecha_atencion', '-fecha_creacion']
+    
+    def __str__(self):
+        return f"Seguimiento de {self.paciente.get_nombre_completo()} - {self.fecha_atencion}"
+
+

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
 import Button from '../components/Button';
-import { Calendar as CalendarIcon, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, LogOut, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { authService } from '../api/authService';
 import { getMisTurnos } from '../api/turnoService';
 import Navbar from '../components/Navbar';
@@ -196,6 +196,30 @@ const HomeOdonto = () => {
                   >
                     <CalendarIcon className="w-5 h-5 mr-2 inline" />
                     Ir a Gestión
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Botón destacado de Mis Pacientes */}
+          <div className="mb-8">
+            <Card className="bg-gradient-to-r from-emerald-600 to-teal-600 border-none">
+              <CardContent className="p-8">
+                <div className="flex flex-col md:flex-row items-center justify-between text-white">
+                  <div className="mb-4 md:mb-0">
+                    <h2 className="text-2xl font-bold mb-2">Mis Pacientes</h2>
+                    <p className="text-emerald-100">
+                      Accede al seguimiento de tus pacientes y su historial clínico
+                    </p>
+                  </div>
+                  <Button 
+                    variant="secondary" 
+                    className="bg-white text-emerald-600 hover:bg-gray-100 px-8 py-3 text-lg"
+                    onClick={() => navigate('/mis-pacientes')}
+                  >
+                    <Users className="w-5 h-5 mr-2 inline" />
+                    Ver Pacientes
                   </Button>
                 </div>
               </CardContent>
