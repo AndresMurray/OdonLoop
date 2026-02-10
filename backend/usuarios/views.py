@@ -31,6 +31,38 @@ class UserLoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
         
+        # Verificar estado si es odontólogo
+        if user.tipo_usuario == 'odontologo':
+            try:
+                odontologo = user.perfil_odontologo
+                
+                if odontologo.estado == 'pendiente':
+                    return Response(
+                        {
+                            'error': 'Tu cuenta está en proceso de aprobación',
+                            'detail': 'Tu registro como odontólogo está siendo revisado por nuestro equipo. Te notificaremos por email cuando tu cuenta sea aprobada.',
+                            'estado': 'pendiente'
+                        },
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                
+                if odontologo.estado == 'suspendido':
+                    return Response(
+                        {
+                            'error': 'Tu cuenta está temporalmente suspendida',
+                            'detail': 'Tu suscripción ha sido inhabilitada. Por favor contacta con el administrador para más información.',
+                            'motivo': odontologo.motivo_suspension or 'Por favor contacta con el administrador',
+                            'estado': 'suspendido'
+                        },
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                
+            except Exception as e:
+                return Response(
+                    {'error': 'Error al verificar el estado del odontólogo'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        
         # Generar tokens JWT
         refresh = RefreshToken.for_user(user)
         

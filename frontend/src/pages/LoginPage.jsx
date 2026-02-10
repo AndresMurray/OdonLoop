@@ -17,7 +17,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tipoUsuario = searchParams.get('tipo');
-  const [alert, setAlert] = useState({ type: '', message: '' });
+  const [alert, setAlert] = useState({ type: '', message: '', detail: '' });
 
   const validationRules = {
     email: [validators.required, validators.email],
@@ -55,15 +55,36 @@ const LoginPage = () => {
           navigate('/home-paciente', { replace: true });
         } else if (response.user.tipo_usuario === 'odontologo') {
           navigate('/home-odontologo', { replace: true });
+        } else if (response.user.tipo_usuario === 'admin') {
+          navigate('/home-admin', { replace: true });
         } else {
           navigate('/', { replace: true });
         }
       }, 1000);
     } catch (error) {
-      setAlert({
-        type: 'error',
-        message: error.message || 'Error al iniciar sesión',
-      });
+      // Manejar errores específicos de estado del odontólogo
+      if (error.response?.status === 403 && error.response?.data?.estado) {
+        const estado = error.response.data.estado;
+        
+        if (estado === 'pendiente') {
+          setAlert({
+            type: 'warning',
+            message: error.response.data.error || 'Tu cuenta está en proceso de aprobación',
+            detail: error.response.data.detail || 'Tu registro está siendo revisado por nuestro equipo. Te notificaremos por email cuando tu cuenta sea aprobada.',
+          });
+        } else if (estado === 'suspendido') {
+          setAlert({
+            type: 'error',
+            message: error.response.data.error || 'Tu cuenta está temporalmente suspendida',
+            detail: error.response.data.detail || 'Tu suscripción ha sido inhabilitada. Por favor contacta con el administrador.',
+          });
+        }
+      } else {
+        setAlert({
+          type: 'error',
+          message: error.message || 'Error al iniciar sesión',
+        });
+      }
     }
   };
 
@@ -127,7 +148,8 @@ const LoginPage = () => {
             <Alert
               type={alert.type}
               message={alert.message}
-              onClose={() => setAlert({ type: '', message: '' })}
+              detail={alert.detail}
+              onClose={() => setAlert({ type: '', message: '', detail: '' })}
             />
 
             <Form onSubmit={handleSubmit(onSubmit)}>

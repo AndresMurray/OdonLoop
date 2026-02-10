@@ -1,4 +1,4 @@
-const Alert = ({ type = 'info', message, onClose }) => {
+const Alert = ({ type = 'info', message, detail, onClose }) => {
   const types = {
     success: 'bg-green-100 border-green-400 text-green-700',
     error: 'bg-red-100 border-red-400 text-red-700',
@@ -11,6 +11,9 @@ const Alert = ({ type = 'info', message, onClose }) => {
   return (
     <div className={`border-l-4 p-4 mb-4 ${types[type]} relative`} role="alert">
       <p className="font-medium">{message}</p>
+      {detail && (
+        <p className="mt-2 text-sm">{detail}</p>
+      )}
       {onClose && (
         <button
           onClick={onClose}

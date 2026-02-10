@@ -2,6 +2,13 @@ from django.db import models
 from django.utils import timezone
 
 class Odontologo(models.Model):
+    # Estados posibles del odontólogo
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente de aprobación'),
+        ('activo', 'Activo'),
+        ('suspendido', 'Suspendido'),
+    ]
+    
     # Relación con el usuario (reutiliza: nombre, apellido, email, teléfono, fecha_nacimiento)
     user = models.OneToOneField('usuarios.CustomUser', on_delete=models.CASCADE, related_name='perfil_odontologo')
     
@@ -13,9 +20,23 @@ class Odontologo(models.Model):
     # Disponibilidad
     horario_atencion = models.TextField(blank=True, null=True, verbose_name='Horario de atención')
     
+    # Estado y gestión
+    estado = models.CharField(
+        max_length=20, 
+        choices=ESTADO_CHOICES, 
+        default='pendiente',
+        verbose_name='Estado',
+        help_text='Estado actual del odontólogo en el sistema'
+    )
+    
     # Metadata
     fecha_alta = models.DateTimeField(default=timezone.now, verbose_name='Fecha de alta')
-    activo = models.BooleanField(default=True, verbose_name='Activo')
+    fecha_aprobacion = models.DateTimeField(blank=True, null=True, verbose_name='Fecha de aprobación')
+    fecha_suspension = models.DateTimeField(blank=True, null=True, verbose_name='Fecha de suspensión')
+    motivo_suspension = models.TextField(blank=True, null=True, verbose_name='Motivo de suspensión')
+    
+    # Campo legacy - mantener por compatibilidad pero deprecado
+    activo = models.BooleanField(default=True, verbose_name='Activo (deprecado)')
     
     class Meta:
         verbose_name = 'Odontólogo'
@@ -27,3 +48,11 @@ class Odontologo(models.Model):
     
     def get_nombre_completo(self):
         return f"{self.user.first_name} {self.user.last_name}"
+    
+    def puede_atender(self):
+        """Verifica si el odontólogo puede atender pacientes (estado activo)"""
+        return self.estado == 'activo'
+    
+    def es_visible_para_pacientes(self):
+        """Verifica si el odontólogo debe aparecer en listados públicos"""
+        return self.estado == 'activo'

@@ -14,6 +14,8 @@ const RootRedirect = () => {
       return <Navigate to="/home-paciente" replace />;
     } else if (userData.tipo_usuario === 'odontologo') {
       return <Navigate to="/home-odontologo" replace />;
+    } else if (userData.tipo_usuario === 'admin') {
+      return <Navigate to="/home-admin" replace />;
     }
   }
 
