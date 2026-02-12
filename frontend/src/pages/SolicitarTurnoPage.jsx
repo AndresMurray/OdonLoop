@@ -29,7 +29,9 @@ const SolicitarTurnoPage = () => {
     return hoy.toISOString().split('T')[0];
   });
   const [paginaActual, setPaginaActual] = useState(1);
+  const [paginaActualDisponibles, setPaginaActualDisponibles] = useState(1);
   const turnosPorPagina = 5;
+  const turnosDisponiblesPorPagina = 6;
 
   const userData = authService.getUserData();
 
@@ -42,6 +44,11 @@ const SolicitarTurnoPage = () => {
     // Resetear paginación cuando cambia la vista
     setPaginaActual(1);
   }, [vistaActual]);
+
+  useEffect(() => {
+    // Resetear paginación de disponibles cuando cambia la fecha o búsqueda
+    setPaginaActualDisponibles(1);
+  }, [fechaFiltro, turnosDisponibles]);
 
   const cargarOdontologos = async () => {
     try {
@@ -123,22 +130,11 @@ const SolicitarTurnoPage = () => {
   };
 
   const formatearFecha = (fechaHora) => {
-    // El backend guarda las fechas en UTC, pero queremos mostrarlas como "hora local"
-    // sin conversión de zona horaria (la hora que el odontólogo eligió)
+    // El backend ya envía la fecha en hora local de Argentina
+    // Simplemente parseamos sin conversión de timezone
     const fecha = new Date(fechaHora);
     
-    // Si la fecha viene como ISO string con Z (UTC), extraer componentes UTC
-    // y tratarlos como hora local
-    const año = fecha.getUTCFullYear();
-    const mes = fecha.getUTCMonth();
-    const dia = fecha.getUTCDate();
-    const horas = fecha.getUTCHours();
-    const minutos = fecha.getUTCMinutes();
-    
-    // Crear nueva fecha con esos valores como hora local
-    const fechaLocal = new Date(año, mes, dia, horas, minutos);
-    
-    return fechaLocal.toLocaleDateString('es-AR', {
+    return fecha.toLocaleDateString('es-AR', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -170,12 +166,21 @@ const SolicitarTurnoPage = () => {
       const fechaTurno = new Date(turno.fecha_hora);
       const fechaFiltroDate = new Date(fechaFiltro + 'T00:00:00');
       
-      // Comparar solo la fecha (día/mes/año) en UTC
-      return fechaTurno.getUTCFullYear() === fechaFiltroDate.getFullYear() &&
-             fechaTurno.getUTCMonth() === fechaFiltroDate.getMonth() &&
-             fechaTurno.getUTCDate() === fechaFiltroDate.getDate();
+      // Comparar solo la fecha (día/mes/año) en hora local
+      return fechaTurno.getFullYear() === fechaFiltroDate.getFullYear() &&
+             fechaTurno.getMonth() === fechaFiltroDate.getMonth() &&
+             fechaTurno.getDate() === fechaFiltroDate.getDate();
     });
   };
+
+  const getTurnosDisponiblesPaginados = () => {
+    const turnosFiltrados = getTurnosFiltrados();
+    const inicio = (paginaActualDisponibles - 1) * turnosDisponiblesPorPagina;
+    const fin = inicio + turnosDisponiblesPorPagina;
+    return turnosFiltrados.slice(inicio, fin);
+  };
+
+  const totalPaginasDisponibles = Math.ceil(getTurnosFiltrados().length / turnosDisponiblesPorPagina);
 
   const getEstadoColor = (estado) => {
     const colores = {
@@ -349,8 +354,9 @@ const SolicitarTurnoPage = () => {
                 {getTurnosFiltrados().length === 0 ? (
                   <p className="text-gray-500 text-center py-8">No hay turnos disponibles para esta fecha</p>
                 ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {getTurnosFiltrados().map((turno) => (
+                <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {getTurnosDisponiblesPaginados().map((turno) => (
                     <div
                       key={turno.id}
                       className="p-4 bg-gray-50 rounded-lg border-2 border-transparent hover:border-teal-500 transition-colors"
@@ -413,6 +419,20 @@ const SolicitarTurnoPage = () => {
                     </div>
                   ))}
                 </div>
+                
+                {/* Paginación */}
+                {totalPaginasDisponibles > 1 && (
+                  <div className="mt-6">
+                    <Pagination
+                      currentPage={paginaActualDisponibles}
+                      totalPages={totalPaginasDisponibles}
+                      onPageChange={setPaginaActualDisponibles}
+                      itemsPerPage={turnosDisponiblesPorPagina}
+                      totalItems={getTurnosFiltrados().length}
+                    />
+                  </div>
+                )}
+                </>
                 )}
               </Card>
             )}
