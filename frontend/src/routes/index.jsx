@@ -14,6 +14,7 @@ import SolicitarTurnoPage from '../pages/SolicitarTurnoPage';
 import MisPacientesPage from '../pages/MisPacientesPage';
 import SeguimientoPacientePage from '../pages/SeguimientoPacientePage';
 import PerfilPacientePage from '../pages/PerfilPacientePage';
+import PerfilOdontologoPage from '../pages/PerfilOdontologoPage';
 import App from '../App';
 import HomePage from '../pages/HomePage';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -94,6 +95,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute requiredRole="odontologo">
         <HomeOdonto />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/mi-perfil-odontologo',
+    element: (
+      <ProtectedRoute requiredRole="odontologo">
+        <PerfilOdontologoPage />
       </ProtectedRoute>
     ),
   },

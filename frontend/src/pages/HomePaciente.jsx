@@ -11,12 +11,14 @@ import { authService } from '../api/authService';
 import { getMisTurnos } from '../api/turnoService';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ConfirmLogoutModal from '../components/ConfirmLogoutModal';
 
 const HomePaciente = () => {
   const navigate = useNavigate();
   const [userData] = useState(() => authService.getUserData());
   const [proximoTurno, setProximoTurno] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [mostrarLogoutModal, setMostrarLogoutModal] = useState(false);
 
   useEffect(() => {
     if (!userData) {
@@ -69,10 +71,12 @@ const HomePaciente = () => {
   };
 
   const handleLogout = () => {
-    if (window.confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-      authService.logout();
-      navigate('/');
-    }
+    setMostrarLogoutModal(true);
+  };
+
+  const confirmarLogout = () => {
+    authService.logout();
+    navigate('/');
   };
 
   if (!userData) {
@@ -198,6 +202,12 @@ const HomePaciente = () => {
         </div>
       </main>
       <Footer />
+      
+      <ConfirmLogoutModal 
+        isOpen={mostrarLogoutModal}
+        onConfirm={confirmarLogout}
+        onCancel={() => setMostrarLogoutModal(false)}
+      />
     </div>
   );
 };

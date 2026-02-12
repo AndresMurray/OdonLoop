@@ -28,3 +28,25 @@ export const getOdontologo = async (odontologoId) => {
     throw error;
   }
 };
+
+// Obtener mi perfil (odontólogo logueado)
+export const getMiPerfil = async () => {
+  try {
+    const response = await apiClient.get('/api/odontologos/mi-perfil/');
+    return response;
+  } catch (error) {
+    console.error('Error al obtener perfil:', error);
+    throw error;
+  }
+};
+
+// Actualizar mi perfil (odontólogo logueado)
+export const actualizarMiPerfil = async (data) => {
+  try {
+    const response = await apiClient.patch('/api/odontologos/mi-perfil/', data);
+    return response;
+  } catch (error) {
+    console.error('Error al actualizar perfil:', error);
+    throw error;
+  }
+};

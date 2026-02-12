@@ -1,11 +1,12 @@
 from rest_framework import generics, permissions, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.utils import timezone
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from .models import Odontologo
-from .serializers import OdontologoSerializer
+from .serializers import OdontologoSerializer, OdontologoPerfilSerializer
 
 User = get_user_model()
 
@@ -221,3 +222,60 @@ def crear_paciente_rapido(request):
             {'error': f'Error al crear paciente: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+class MiPerfilOdontologoView(APIView):
+    """Vista para que el odontólogo vea y edite su propio perfil"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        """Obtener el perfil del odontólogo logueado"""
+        try:
+            odontologo = request.user.perfil_odontologo
+            serializer = OdontologoPerfilSerializer(odontologo)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Odontologo.DoesNotExist:
+            return Response(
+                {'error': 'No tienes un perfil de odontólogo asociado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    def patch(self, request):
+        """Actualizar el perfil del odontólogo logueado"""
+        try:
+            odontologo = request.user.perfil_odontologo
+            user = request.user
+            
+            # Datos del usuario (first_name, last_name, telefono, fecha_nacimiento)
+            user_fields = ['first_name', 'last_name', 'telefono', 'fecha_nacimiento']
+            user_data = {k: v for k, v in request.data.items() if k in user_fields}
+            
+            # Actualizar campos del usuario
+            for field, value in user_data.items():
+                setattr(user, field, value)
+            user.save()
+            
+            # Datos del odontólogo (matricula, especialidad, anos_experiencia, horario_atencion)
+            odontologo_fields = ['matricula', 'especialidad', 'anos_experiencia', 'horario_atencion']
+            odontologo_data = {k: v for k, v in request.data.items() if k in odontologo_fields}
+            
+            # Actualizar campos del odontólogo
+            for field, value in odontologo_data.items():
+                setattr(odontologo, field, value)
+            
+            odontologo.save()
+            
+            # Retornar el perfil actualizado
+            serializer = OdontologoPerfilSerializer(odontologo)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Odontologo.DoesNotExist:
+            return Response(
+                {'error': 'No tienes un perfil de odontólogo asociado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
