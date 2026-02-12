@@ -17,6 +17,7 @@ const PerfilPacientePage = () => {
   const [saving, setSaving] = useState(false);
   const [editando, setEditando] = useState(false);
   const [alert, setAlert] = useState({ type: '', message: '' });
+  const [mostrarOtraOS, setMostrarOtraOS] = useState(false);
   
   // Estado del formulario de edición
   const [formData, setFormData] = useState({
@@ -27,7 +28,7 @@ const PerfilPacientePage = () => {
     dni: '',
     direccion: '',
     obra_social: '',
-    numero_afiliado: ''
+    obra_social_otra: ''
   });
 
   useEffect(() => {
@@ -54,8 +55,13 @@ const PerfilPacientePage = () => {
         dni: perfilData.dni || '',
         direccion: perfilData.direccion || '',
         obra_social: perfilData.obra_social || '',
-        numero_afiliado: perfilData.numero_afiliado || ''
+        obra_social_otra: perfilData.obra_social_otra || ''
       });
+      
+      // Si tiene obra_social_otra, mostrar el input manual
+      if (perfilData.obra_social_otra) {
+        setMostrarOtraOS(true);
+      }
       
     } catch (error) {
       setAlert({
@@ -80,7 +86,14 @@ const PerfilPacientePage = () => {
     setAlert({ type: '', message: '' });
     
     try {
-      const datosActualizados = await actualizarMiPerfil(formData);
+      // Preparar datos según si usa obra social de lista o manual
+      const datosAEnviar = {
+        ...formData,
+        obra_social: mostrarOtraOS ? null : formData.obra_social,
+        obra_social_otra: mostrarOtraOS ? formData.obra_social_otra : null
+      };
+      
+      const datosActualizados = await actualizarMiPerfil(datosAEnviar);
       setPerfil(datosActualizados);
       setEditando(false);
       setAlert({
@@ -108,8 +121,9 @@ const PerfilPacientePage = () => {
         dni: perfil.dni || '',
         direccion: perfil.direccion || '',
         obra_social: perfil.obra_social || '',
-        numero_afiliado: perfil.numero_afiliado || ''
+        obra_social_otra: perfil.obra_social_otra || ''
       });
+      setMostrarOtraOS(!!perfil.obra_social_otra);
     }
     setEditando(false);
   };
@@ -298,49 +312,68 @@ const PerfilPacientePage = () => {
               <CardContent className="space-y-4">
                 {editando ? (
                   <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Obra Social</label>
-                      <select
-                        name="obra_social"
-                        value={formData.obra_social}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="">Sin obra social</option>
-                        {obrasSociales.map(os => (
-                          <option key={os.id} value={os.id}>
-                            {os.sigla ? `${os.sigla} - ${os.nombre}` : os.nombre}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Número de Afiliado</label>
-                      <Input
-                        name="numero_afiliado"
-                        value={formData.numero_afiliado}
-                        onChange={handleInputChange}
-                        placeholder="Número de afiliado"
-                      />
-                    </div>
+                    {!mostrarOtraOS ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Obra Social</label>
+                        <select
+                          name="obra_social"
+                          value={formData.obra_social}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">Sin obra social</option>
+                          {obrasSociales.map(os => (
+                            <option key={os.id} value={os.id}>
+                              {os.sigla ? `${os.sigla} - ${os.nombre}` : os.nombre}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="mt-2 text-sm text-cyan-600 hover:text-cyan-800 underline"
+                          onClick={() => {
+                            setMostrarOtraOS(true);
+                            setFormData(prev => ({ ...prev, obra_social: '' }));
+                          }}
+                        >
+                          Mi obra social no está en la lista
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de tu Obra Social</label>
+                        <Input
+                          name="obra_social_otra"
+                          value={formData.obra_social_otra}
+                          onChange={handleInputChange}
+                          placeholder="Escribí el nombre de tu obra social"
+                        />
+                        <button
+                          type="button"
+                          className="mt-2 text-sm text-cyan-600 hover:text-cyan-800 underline"
+                          onClick={() => {
+                            setMostrarOtraOS(false);
+                            setFormData(prev => ({ ...prev, obra_social_otra: '' }));
+                          }}
+                        >
+                          Volver a seleccionar de la lista
+                        </button>
+                      </div>
+                    )}
                   </>
                 ) : (
-                  <>
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-gray-600">Obra Social</span>
-                      <span className="font-medium">
-                        {perfil?.obra_social_detalle 
+                  <div className="flex justify-between py-2">
+                    <span className="text-gray-600">Obra Social</span>
+                    <span className="font-medium">
+                      {perfil?.obra_social_otra 
+                        ? perfil.obra_social_otra
+                        : perfil?.obra_social_detalle 
                           ? (perfil.obra_social_detalle.sigla 
                             ? `${perfil.obra_social_detalle.sigla} - ${perfil.obra_social_detalle.nombre}`
                             : perfil.obra_social_detalle.nombre)
                           : 'Sin obra social'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="text-gray-600">Número de Afiliado</span>
-                      <span className="font-medium">{perfil?.numero_afiliado || '-'}</span>
-                    </div>
-                  </>
+                    </span>
+                  </div>
                 )}
               </CardContent>
             </Card>

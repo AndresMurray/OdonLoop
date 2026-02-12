@@ -121,18 +121,20 @@ class SeguimientoCreateSerializer(serializers.ModelSerializer):
 
 
 class MisPacientesSerializer(serializers.ModelSerializer):
-    """Serializer simplificado para listar pacientes del odontólogo"""
+    """Serializer completo para listar pacientes del odontólogo con todos sus datos"""
     nombre_completo = serializers.ReadOnlyField(source='get_nombre_completo')
     email = serializers.CharField(source='user.email', read_only=True)
     telefono = serializers.CharField(source='user.telefono', read_only=True)
+    fecha_nacimiento = serializers.DateField(source='user.fecha_nacimiento', read_only=True)
     obra_social_detalle = ObraSocialSerializer(source='obra_social', read_only=True)
     ultimo_seguimiento = serializers.SerializerMethodField()
     
     class Meta:
         model = Paciente
         fields = [
-            'id', 'nombre_completo', 'email', 'telefono', 
-            'dni', 'obra_social_detalle', 'ultimo_seguimiento'
+            'id', 'nombre_completo', 'email', 'telefono', 'fecha_nacimiento',
+            'dni', 'direccion', 'obra_social_detalle', 'obra_social_otra',
+            'alergias', 'antecedentes_medicos', 'ultimo_seguimiento'
         ]
     
     def get_ultimo_seguimiento(self, obj):

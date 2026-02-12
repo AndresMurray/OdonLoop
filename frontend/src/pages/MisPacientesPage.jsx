@@ -166,8 +166,8 @@ const MisPacientesPage = () => {
                   onClick={() => handleVerSeguimiento(paciente.id)}
                 >
                   <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-grow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4 flex-grow">
                         <div className="bg-emerald-100 p-3 rounded-full">
                           <User className="w-8 h-8 text-emerald-600" />
                         </div>
@@ -175,7 +175,9 @@ const MisPacientesPage = () => {
                           <h3 className="text-xl font-semibold text-gray-900">
                             {paciente.nombre_completo}
                           </h3>
-                          <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
+                          
+                          {/* Datos de contacto */}
+                          <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
                             {paciente.dni && (
                               <span>DNI: {paciente.dni}</span>
                             )}
@@ -185,12 +187,49 @@ const MisPacientesPage = () => {
                             {paciente.telefono && (
                               <span>📱 {paciente.telefono}</span>
                             )}
+                            {paciente.fecha_nacimiento && (
+                              <span>Nac: {formatearFecha(paciente.fecha_nacimiento)}</span>
+                            )}
                           </div>
-                          {paciente.obra_social_detalle && (
-                            <div className="mt-1 text-sm text-gray-600">
-                              <span className="font-medium">Obra Social:</span> {paciente.obra_social_detalle.nombre}
+                          
+                          {/* Dirección */}
+                          {paciente.direccion && (
+                            <div className="mt-2 text-sm text-gray-600">
+                              <span className="font-medium">Dirección:</span> {paciente.direccion}
                             </div>
                           )}
+                          
+                          {/* Obra Social */}
+                          {(paciente.obra_social_detalle || paciente.obra_social_otra) && (
+                            <div className="mt-2 text-sm text-gray-600">
+                              <span className="font-medium">Obra Social:</span>{' '}
+                              {paciente.obra_social_otra 
+                                ? paciente.obra_social_otra
+                                : paciente.obra_social_detalle?.sigla 
+                                  ? `${paciente.obra_social_detalle.sigla} - ${paciente.obra_social_detalle.nombre}`
+                                  : paciente.obra_social_detalle?.nombre
+                              }
+                            </div>
+                          )}
+                          
+                          {/* Información médica */}
+                          {(paciente.antecedentes_medicos || paciente.alergias) && (
+                            <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm">
+                              {paciente.antecedentes_medicos && (
+                                <div className="mb-2">
+                                  <span className="font-medium text-gray-700">Antecedentes:</span>{' '}
+                                  <span className="text-gray-600">{paciente.antecedentes_medicos}</span>
+                                </div>
+                              )}
+                              {paciente.alergias && (
+                                <div>
+                                  <span className="font-medium text-red-700">Alergias:</span>{' '}
+                                  <span className="text-red-600">{paciente.alergias}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
                           <div className="mt-2 text-sm">
                             <span className="text-gray-500">Último seguimiento: </span>
                             <span className="font-medium text-gray-700">
