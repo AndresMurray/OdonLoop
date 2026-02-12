@@ -4,6 +4,7 @@ import RegisterPacientePage from '../pages/RegisterPacientePage';
 import RegisterOdontologoPage from '../pages/RegisterOdontologoPage';
 import PendienteAprobacionPage from '../pages/PendienteAprobacionPage';
 import LoginPage from '../pages/LoginPage';
+import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import TurnosPage from '../pages/TurnosPage';
 import HomeOdonto from '../pages/HomeOdonto';
 import HomePaciente from '../pages/HomePaciente';
@@ -40,6 +41,14 @@ export const router = createBrowserRouter([
     element: (
       <GuestRoute>
         <LoginPage />
+      </GuestRoute>
+    ),
+  },
+  {
+    path: '/forgot-password',
+    element: (
+      <GuestRoute>
+        <ForgotPasswordPage />
       </GuestRoute>
     ),
   },

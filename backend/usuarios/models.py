@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
+import random
+import string
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True, blank=True, null=True, verbose_name='Email')
@@ -48,4 +51,42 @@ class CustomUser(AbstractUser):
             today = date.today()
             return today.year - self.fecha_nacimiento.year - ((today.month, today.day) < (self.fecha_nacimiento.month, self.fecha_nacimiento.day))
         return None
+
+
+class PasswordResetToken(models.Model):
+    """Modelo para tokens de recuperación de contraseña"""
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='password_reset_tokens'
+    )
+    code = models.CharField(max_length=6, verbose_name='Código de verificación')
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
     
+    class Meta:
+        verbose_name = 'Token de Recuperación de Contraseña'
+        verbose_name_plural = 'Tokens de Recuperación de Contraseña'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Token para {self.user.email} - {self.code}"
+    
+    @classmethod
+    def generate_code(cls):
+        """Genera un código numérico de 6 dígitos"""
+        return ''.join(random.choices(string.digits, k=6))
+    
+    def is_valid(self):
+        """Verifica si el token es válido (no usado y no expirado)"""
+        return not self.used and timezone.now() < self.expires_at
+    
+    def save(self, *args, **kwargs):
+        # Si es un nuevo token, establecer fecha de expiración (15 minutos)
+        if not self.pk:
+            if not self.code:
+                self.code = self.generate_code()
+            if not self.expires_at:
+                self.expires_at = timezone.now() + timezone.timedelta(minutes=15)
+        super().save(*args, **kwargs)

@@ -6,8 +6,9 @@ import Input from '../components/Input';
 import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { User, Save, ArrowLeft, Edit2, X } from 'lucide-react';
+import { User, Save, ArrowLeft, Edit2, X, Key } from 'lucide-react';
 import { getMiPerfil, actualizarMiPerfil } from '../api/odontologoService';
+import { changePassword } from '../api/passwordService';
 
 const PerfilOdontologoPage = () => {
   const navigate = useNavigate();
@@ -16,6 +17,16 @@ const PerfilOdontologoPage = () => {
   const [saving, setSaving] = useState(false);
   const [editando, setEditando] = useState(false);
   const [alert, setAlert] = useState({ type: '', message: '' });
+  
+  // Estados para cambiar contraseña
+  const [mostrarCambioPassword, setMostrarCambioPassword] = useState(false);
+  const [cambiandoPassword, setCambiandoPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
+  const [passwordAlert, setPasswordAlert] = useState({ type: '', message: '' });
   
   // Estado del formulario de edición
   const [formData, setFormData] = useState({
@@ -95,6 +106,75 @@ const PerfilOdontologoPage = () => {
       });
     }
     setEditando(false);
+  };
+
+  const handlePasswordChange = async () => {
+    setPasswordAlert({ type: '', message: '' });
+    
+    // Validaciones
+    if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) {
+      setPasswordAlert({
+        type: 'error',
+        message: 'Todos los campos son requeridos'
+      });
+      return;
+    }
+
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      setPasswordAlert({
+        type: 'error',
+        message: 'Las contraseñas nuevas no coinciden'
+      });
+      return;
+    }
+
+    if (passwordData.new_password.length < 8) {
+      setPasswordAlert({
+        type: 'error',
+        message: 'La nueva contraseña debe tener al menos 8 caracteres'
+      });
+      return;
+    }
+
+    setCambiandoPassword(true);
+    try {
+      await changePassword({
+        current_password: passwordData.current_password,
+        new_password: passwordData.new_password
+      });
+      
+      setPasswordAlert({
+        type: 'success',
+        message: 'Contraseña actualizada correctamente'
+      });
+      
+      // Limpiar formulario y ocultar después de 2 segundos
+      setPasswordData({
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
+      });
+      
+      setTimeout(() => {
+        setMostrarCambioPassword(false);
+        setPasswordAlert({ type: '', message: '' });
+      }, 2000);
+    } catch (error) {
+      setPasswordAlert({
+        type: 'error',
+        message: error.response?.data?.error || 'Error al cambiar la contraseña'
+      });
+    } finally {
+      setCambiandoPassword(false);
+    }
+  };
+
+  const handlePasswordInputChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const formatearFecha = (fecha) => {
@@ -257,6 +337,106 @@ const PerfilOdontologoPage = () => {
                     <div className="flex justify-between py-2">
                       <span className="text-gray-600">Fecha de Nacimiento</span>
                       <span className="font-medium">{formatearFecha(perfil?.fecha_nacimiento)}</span>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Cambiar Contraseña */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Key className="w-5 h-5" />
+                  Cambiar Contraseña
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!mostrarCambioPassword ? (
+                  <div>
+                    <p className="text-gray-600 mb-4">Modificá tu contraseña de acceso al sistema</p>
+                    <Button onClick={() => setMostrarCambioPassword(true)}>
+                      <Key className="w-4 h-4 mr-2" />
+                      Cambiar Contraseña
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    {passwordAlert.message && (
+                      <div className="mb-4">
+                        <Alert type={passwordAlert.type} message={passwordAlert.message} />
+                      </div>
+                    )}
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Contraseña Actual
+                        </label>
+                        <Input
+                          type="password"
+                          name="current_password"
+                          value={passwordData.current_password}
+                          onChange={handlePasswordInputChange}
+                          placeholder="Ingresá tu contraseña actual"
+                          disabled={cambiandoPassword}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Nueva Contraseña
+                        </label>
+                        <Input
+                          type="password"
+                          name="new_password"
+                          value={passwordData.new_password}
+                          onChange={handlePasswordInputChange}
+                          placeholder="Ingresá tu nueva contraseña"
+                          disabled={cambiandoPassword}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Mínimo 8 caracteres</p>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Confirmar Nueva Contraseña
+                        </label>
+                        <Input
+                          type="password"
+                          name="confirm_password"
+                          value={passwordData.confirm_password}
+                          onChange={handlePasswordInputChange}
+                          placeholder="Confirmá tu nueva contraseña"
+                          disabled={cambiandoPassword}
+                        />
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={handlePasswordChange}
+                          disabled={cambiandoPassword}
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {cambiandoPassword ? 'Cambiando...' : 'Guardar Nueva Contraseña'}
+                        </Button>
+                        <Button 
+                          variant="secondary"
+                          onClick={() => {
+                            setMostrarCambioPassword(false);
+                            setPasswordData({
+                              current_password: '',
+                              new_password: '',
+                              confirm_password: ''
+                            });
+                            setPasswordAlert({ type: '', message: '' });
+                          }}
+                          disabled={cambiandoPassword}
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Cancelar
+                        </Button>
+                      </div>
                     </div>
                   </>
                 )}

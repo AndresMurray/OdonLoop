@@ -4,7 +4,10 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.db import transaction
-from .models import CustomUser
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils import timezone
+from .models import CustomUser, PasswordResetToken
 from .serializers import UserSerializer, UserRegistrationSerializer
 
 
@@ -215,3 +218,204 @@ class UserListView(generics.ListAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+class RequestPasswordResetView(APIView):
+    """Vista para solicitar recuperación de contraseña (envía código por email)"""
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email')
+        
+        if not email:
+            return Response(
+                {'error': 'El email es requerido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            # Por seguridad, no revelar si el email existe o no
+            return Response(
+                {'message': 'Si el email existe en nuestro sistema, recibirás un código de recuperación'},
+                status=status.HTTP_200_OK
+            )
+        
+        # Invalidar tokens anteriores no usados
+        PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
+        
+        # Crear nuevo token
+        token = PasswordResetToken.objects.create(user=user)
+        
+        # Enviar email con el código
+        try:
+            send_mail(
+                subject='Recuperación de Contraseña - OdontoSystem',
+                message=f'Hola {user.first_name},\n\n'
+                        f'Recibimos una solicitud para recuperar tu contraseña.\n\n'
+                        f'Tu código de verificación es: {token.code}\n\n'
+                        f'Este código es válido por 15 minutos.\n\n'
+                        f'Si no solicitaste este cambio, puedes ignorar este mensaje.\n\n'
+                        f'Atentamente,\n'
+                        f'OdontoSystem',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            return Response(
+                {'error': 'Error al enviar el email'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        return Response(
+            {'message': 'Si el email existe en nuestro sistema, recibirás un código de recuperación'},
+            status=status.HTTP_200_OK
+        )
+
+
+class VerifyResetCodeView(APIView):
+    """Vista para verificar el código de recuperación"""
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email')
+        code = request.data.get('code')
+        
+        if not email or not code:
+            return Response(
+                {'error': 'Email y código son requeridos'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user = CustomUser.objects.get(email=email)
+            token = PasswordResetToken.objects.filter(
+                user=user,
+                code=code,
+                used=False
+            ).first()
+            
+            if not token:
+                return Response(
+                    {'error': 'Código inválido'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if not token.is_valid():
+                return Response(
+                    {'error': 'El código ha expirado'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            return Response(
+                {'message': 'Código verificado correctamente'},
+                status=status.HTTP_200_OK
+            )
+            
+        except CustomUser.DoesNotExist:
+            return Response(
+                {'error': 'Código inválido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class ResetPasswordView(APIView):
+    """Vista para cambiar contraseña con código de recuperación"""
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email')
+        code = request.data.get('code')
+        new_password = request.data.get('new_password')
+        
+        if not email or not code or not new_password:
+            return Response(
+                {'error': 'Email, código y nueva contraseña son requeridos'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if len(new_password) < 8:
+            return Response(
+                {'error': 'La contraseña debe tener al menos 8 caracteres'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user = CustomUser.objects.get(email=email)
+            token = PasswordResetToken.objects.filter(
+                user=user,
+                code=code,
+                used=False
+            ).first()
+            
+            if not token:
+                return Response(
+                    {'error': 'Código inválido'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if not token.is_valid():
+                return Response(
+                    {'error': 'El código ha expirado'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Cambiar contraseña
+            user.set_password(new_password)
+            user.save()
+            
+            # Marcar token como usado
+            token.used = True
+            token.save()
+            
+            return Response(
+                {'message': 'Contraseña cambiada correctamente'},
+                status=status.HTTP_200_OK
+            )
+            
+        except CustomUser.DoesNotExist:
+            return Response(
+                {'error': 'Código inválido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class ChangePasswordView(APIView):
+    """Vista para cambiar contraseña estando logueado (desde perfil)"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+        
+        if not current_password or not new_password:
+            return Response(
+                {'error': 'Contraseña actual y nueva contraseña son requeridas'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if len(new_password) < 8:
+            return Response(
+                {'error': 'La nueva contraseña debe tener al menos 8 caracteres'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        user = request.user
+        
+        # Verificar contraseña actual
+        if not user.check_password(current_password):
+            return Response(
+                {'error': 'La contraseña actual es incorrecta'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Cambiar contraseña
+        user.set_password(new_password)
+        user.save()
+        
+        return Response(
+            {'message': 'Contraseña cambiada correctamente'},
+            status=status.HTTP_200_OK
+        )

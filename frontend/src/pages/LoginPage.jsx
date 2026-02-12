@@ -159,6 +159,15 @@ const LoginPage = () => {
               </div>
             </Form>
 
+            <div className="mt-4 text-center">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-blue-700 hover:text-blue-800 font-medium"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
+
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 ¿No tienes cuenta?{' '}
