@@ -18,6 +18,7 @@ const RegisterPacientePage = () => {
   const [alert, setAlert] = useState({ type: '', message: '' });
   const [obrasSociales, setObrasSociales] = useState([]);
   const [loadingOS, setLoadingOS] = useState(true);
+  const [mostrarOtraOS, setMostrarOtraOS] = useState(false);
 
   // Cargar obras sociales al montar el componente
   useEffect(() => {
@@ -69,6 +70,7 @@ const RegisterPacientePage = () => {
       telefono: '',
       fecha_nacimiento: '',
       obra_social: '',
+      obra_social_otra: '',
       tipo_usuario: 'paciente',
     },
     validationRules
@@ -84,7 +86,8 @@ const RegisterPacientePage = () => {
       // Convertir obra_social a número o null
       const dataToSend = {
         ...formValues,
-        obra_social: formValues.obra_social ? parseInt(formValues.obra_social) : null,
+        obra_social: mostrarOtraOS ? null : (formValues.obra_social ? parseInt(formValues.obra_social) : null),
+        obra_social_otra: mostrarOtraOS ? formValues.obra_social_otra : null,
       };
       
       await userService.register(dataToSend);
@@ -216,24 +219,54 @@ const RegisterPacientePage = () => {
                   <label htmlFor="obra_social" className="block text-sm font-medium text-gray-700 mb-1">
                     Obra Social (opcional)
                   </label>
-                  <select
-                    id="obra_social"
-                    name="obra_social"
-                    value={values.obra_social}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    disabled={loadingOS}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  >
-                    <option value="">Seleccione una obra social</option>
-                    {obrasSociales.map((os) => (
-                      <option key={os.id} value={os.id}>
-                        {os.nombre}
-                      </option>
-                    ))}
-                  </select>
-                  {loadingOS && (
-                    <p className="text-sm text-gray-500 mt-1">Cargando obras sociales...</p>
+                  
+                  {!mostrarOtraOS ? (
+                    <>
+                      <select
+                        id="obra_social"
+                        name="obra_social"
+                        value={values.obra_social}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        disabled={loadingOS}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option value="">Seleccione una obra social</option>
+                        {obrasSociales.map((os) => (
+                          <option key={os.id} value={os.id}>
+                            {os.nombre}
+                          </option>
+                        ))}
+                      </select>
+                      {loadingOS && (
+                        <p className="text-sm text-gray-500 mt-1">Cargando obras sociales...</p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setMostrarOtraOS(true)}
+                        className="text-sm text-blue-600 hover:text-blue-800 mt-2 underline"
+                      >
+                        Mi obra social no está en la lista
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Input
+                        label=""
+                        name="obra_social_otra"
+                        value={values.obra_social_otra}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="Escriba el nombre de su obra social"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setMostrarOtraOS(false)}
+                        className="text-sm text-blue-600 hover:text-blue-800 mt-2 underline"
+                      >
+                        Volver a seleccionar de la lista
+                      </button>
+                    </>
                   )}
                 </div>
 

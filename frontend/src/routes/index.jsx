@@ -13,6 +13,7 @@ import GestionTurnosOdonto from '../pages/GestionTurnosOdonto';
 import SolicitarTurnoPage from '../pages/SolicitarTurnoPage';
 import MisPacientesPage from '../pages/MisPacientesPage';
 import SeguimientoPacientePage from '../pages/SeguimientoPacientePage';
+import PerfilPacientePage from '../pages/PerfilPacientePage';
 import App from '../App';
 import HomePage from '../pages/HomePage';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -77,6 +78,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute requiredRole="paciente">
         <HomePaciente />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/mi-perfil',
+    element: (
+      <ProtectedRoute requiredRole="paciente">
+        <PerfilPacientePage />
       </ProtectedRoute>
     ),
   },

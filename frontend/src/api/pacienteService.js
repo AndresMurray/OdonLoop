@@ -18,9 +18,49 @@ export const crearPacienteRapido = async (pacienteData) => {
   }
 };
 
+/**
+ * Servicio para el perfil del paciente
+ */
+
+// Obtener el perfil del paciente autenticado
+export const getMiPerfil = async () => {
+  try {
+    const response = await apiClient.get('/api/pacientes/mi-perfil/');
+    return response;
+  } catch (error) {
+    console.error('Error al obtener perfil:', error);
+    throw error;
+  }
+};
+
+// Actualizar el perfil del paciente autenticado
+export const actualizarMiPerfil = async (perfilData) => {
+  try {
+    const response = await apiClient.patch('/api/pacientes/mi-perfil/', perfilData);
+    return response;
+  } catch (error) {
+    console.error('Error al actualizar perfil:', error);
+    throw error;
+  }
+};
+
+// Obtener lista de obras sociales
+export const getObrasSociales = async () => {
+  try {
+    const response = await apiClient.get('/api/pacientes/obras-sociales/');
+    return response;
+  } catch (error) {
+    console.error('Error al obtener obras sociales:', error);
+    throw error;
+  }
+};
+
 // Obtener lista de pacientes del odontólogo (reutilizando de seguimientoService)
 export { getMisPacientes } from './seguimientoService';
 
 export default {
   crearPacienteRapido,
+  getMiPerfil,
+  actualizarMiPerfil,
+  getObrasSociales,
 };

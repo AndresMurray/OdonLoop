@@ -50,6 +50,29 @@ class PacienteCreateSerializer(serializers.ModelSerializer):
         fields = ['dni', 'obra_social']
 
 
+class PacientePerfilSerializer(serializers.ModelSerializer):
+    """Serializer para el perfil del paciente (vista y edición)"""
+    # Campos del usuario
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+    telefono = serializers.CharField(source='user.telefono', read_only=True)
+    fecha_nacimiento = serializers.DateField(source='user.fecha_nacimiento', read_only=True)
+    
+    # Campos del paciente
+    nombre_completo = serializers.ReadOnlyField(source='get_nombre_completo')
+    obra_social_detalle = ObraSocialSerializer(source='obra_social', read_only=True)
+    
+    class Meta:
+        model = Paciente
+        fields = [
+            'id', 'first_name', 'last_name', 'email', 'telefono', 'fecha_nacimiento',
+            'nombre_completo', 'dni', 'direccion', 'obra_social', 'obra_social_detalle',
+            'numero_afiliado', 'alergias', 'antecedentes_medicos', 'fecha_alta'
+        ]
+        read_only_fields = ['id', 'email', 'fecha_alta']
+
+
 class SeguimientoArchivoSerializer(serializers.ModelSerializer):
     """Serializer para archivos de seguimiento"""
     class Meta:

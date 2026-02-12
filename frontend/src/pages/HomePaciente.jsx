@@ -4,7 +4,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 import Button from '../components/Button';
 import { 
   Calendar as CalendarIcon, 
-  LogOut
+  LogOut,
+  User
 } from 'lucide-react';
 import { authService } from '../api/authService';
 import { getMisTurnos } from '../api/turnoService';
@@ -68,8 +69,10 @@ const HomePaciente = () => {
   };
 
   const handleLogout = () => {
-    authService.logout();
-    navigate('/');
+    if (window.confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+      authService.logout();
+      navigate('/');
+    }
   };
 
   if (!userData) {
@@ -92,7 +95,11 @@ const HomePaciente = () => {
                 Bienvenido, {userData.first_name} {userData.last_name}
               </p>
             </div>
-            <div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => navigate('/mi-perfil')}>
+                <User className="w-5 h-5 mr-2 inline" />
+                Mi Perfil
+              </Button>
               <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="w-5 h-5 mr-2 inline" />
                 Cerrar Sesión

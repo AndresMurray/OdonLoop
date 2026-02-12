@@ -29,11 +29,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     # Campos adicionales para pacientes
     dni = serializers.CharField(max_length=20, required=False, allow_blank=True)
     obra_social = serializers.IntegerField(required=False, allow_null=True)
+    obra_social_otra = serializers.CharField(max_length=200, required=False, allow_blank=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'password2', 'first_name', 'last_name', 
-                  'telefono', 'fecha_nacimiento', 'tipo_usuario', 'dni', 'obra_social']
+                  'telefono', 'fecha_nacimiento', 'tipo_usuario', 'dni', 'obra_social', 'obra_social_otra']
 
     def validate_email(self, value):
         """Validar que el email no exista"""
@@ -58,6 +59,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         validated_data.pop('password2')
         dni = validated_data.pop('dni', None)
         obra_social_id = validated_data.pop('obra_social', None)
+        obra_social_otra = validated_data.pop('obra_social_otra', None)
         
         # Generar username automáticamente desde el email
         email = validated_data.get('email')
@@ -77,5 +79,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         # Guardar los datos adicionales en el contexto para que la vista los use
         self.context['dni'] = dni
         self.context['obra_social_id'] = obra_social_id
+        self.context['obra_social_otra'] = obra_social_otra
         
         return user

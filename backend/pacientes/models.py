@@ -44,6 +44,13 @@ class Paciente(models.Model):
         related_name='pacientes',
         verbose_name='Obra Social'
     )
+    obra_social_otra = models.CharField(
+        max_length=200, 
+        blank=True, 
+        null=True, 
+        verbose_name='Otra Obra Social',
+        help_text='Nombre de obra social si no está en la lista'
+    )
    
     
    

@@ -52,8 +52,10 @@ const HomeOdonto = () => {
   };
 
   const handleLogout = () => {
-    authService.logout();
-    navigate('/');
+    if (window.confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+      authService.logout();
+      navigate('/');
+    }
   };
 
   const formatearFecha = (fechaHora) => {

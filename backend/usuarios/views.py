@@ -179,6 +179,7 @@ class UserRegistrationView(generics.CreateAPIView):
             # Obtener datos adicionales del contexto del serializer
             dni = serializer.context.get('dni')
             obra_social_id = serializer.context.get('obra_social_id')
+            obra_social_otra = serializer.context.get('obra_social_otra')
             
             # Obtener la obra social si se proporcionó un ID
             obra_social = None
@@ -191,7 +192,8 @@ class UserRegistrationView(generics.CreateAPIView):
             Paciente.objects.create(
                 user=user,
                 dni=dni,
-                obra_social=obra_social
+                obra_social=obra_social,
+                obra_social_otra=obra_social_otra if not obra_social else None
             )
         elif user.tipo_usuario == 'odontologo':
             from odontologos.models import Odontologo

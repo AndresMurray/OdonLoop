@@ -1,14 +1,15 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q, Max
 from .models import Paciente, ObraSocial, Seguimiento
 from .serializers import (
     PacienteSerializer, PacienteCreateSerializer, ObraSocialSerializer,
-    SeguimientoSerializer, SeguimientoCreateSerializer, MisPacientesSerializer
+    SeguimientoSerializer, SeguimientoCreateSerializer, MisPacientesSerializer,
+    PacientePerfilSerializer
 )
 from turnos.models import Turno
 
@@ -24,6 +25,7 @@ class ObraSocialViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet de solo lectura para obras sociales"""
     queryset = ObraSocial.objects.filter(activo=True)
     serializer_class = ObraSocialSerializer
+    permission_classes = [AllowAny]  # Público para registro
 
 
 class PacienteViewSet(viewsets.ModelViewSet):
@@ -182,5 +184,77 @@ class SeguimientoViewSet(viewsets.ModelViewSet):
             )
 
 
-
-
+class MiPerfilPacienteView(APIView):
+    """Vista para que el paciente vea y actualice su propio perfil"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Obtener el perfil del paciente autenticado"""
+        try:
+            if not hasattr(request.user, 'perfil_paciente'):
+                return Response(
+                    {'error': 'Usuario no es paciente'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            paciente = request.user.perfil_paciente
+            serializer = PacientePerfilSerializer(paciente)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def patch(self, request):
+        """Actualizar el perfil del paciente autenticado"""
+        try:
+            if not hasattr(request.user, 'perfil_paciente'):
+                return Response(
+                    {'error': 'Usuario no es paciente'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            paciente = request.user.perfil_paciente
+            user = request.user
+            
+            # Datos del usuario (first_name, last_name, telefono, fecha_nacimiento)
+            user_fields = ['first_name', 'last_name', 'telefono', 'fecha_nacimiento']
+            user_data = {k: v for k, v in request.data.items() if k in user_fields}
+            
+            # Actualizar campos del usuario
+            for field, value in user_data.items():
+                setattr(user, field, value)
+            user.save()
+            
+            # Datos del paciente (dni, direccion, obra_social, numero_afiliado, alergias, antecedentes_medicos)
+            paciente_fields = ['dni', 'direccion', 'obra_social', 'numero_afiliado', 'alergias', 'antecedentes_medicos']
+            paciente_data = {k: v for k, v in request.data.items() if k in paciente_fields}
+            
+            # Actualizar campos del paciente
+            for field, value in paciente_data.items():
+                if field == 'obra_social':
+                    # Manejar obra social como FK
+                    if value:
+                        try:
+                            obra = ObraSocial.objects.get(id=value)
+                            paciente.obra_social = obra
+                        except ObraSocial.DoesNotExist:
+                            pass
+                    else:
+                        paciente.obra_social = None
+                else:
+                    setattr(paciente, field, value)
+            
+            paciente.save()
+            
+            # Retornar el perfil actualizado
+            serializer = PacientePerfilSerializer(paciente)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
