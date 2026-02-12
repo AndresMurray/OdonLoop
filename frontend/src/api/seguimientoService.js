@@ -21,10 +21,13 @@ export const getMisPacientes = async (search = '') => {
   }
 };
 
-// Obtener seguimientos de un paciente específico
-export const getSeguimientosPorPaciente = async (pacienteId) => {
+// Obtener seguimientos de un paciente específico con paginación y filtros
+export const getSeguimientosPorPaciente = async (pacienteId, page = 1, fechaDesde = '', fechaHasta = '') => {
   try {
-    const response = await apiClient.get(`/api/pacientes/seguimientos/paciente/${pacienteId}/`);
+    let url = `/api/pacientes/seguimientos/paciente/${pacienteId}/?page=${page}`;
+    if (fechaDesde) url += `&fecha_desde=${fechaDesde}`;
+    if (fechaHasta) url += `&fecha_hasta=${fechaHasta}`;
+    const response = await apiClient.get(url);
     return response;
   } catch (error) {
     console.error('Error al obtener seguimientos del paciente:', error);

@@ -100,3 +100,51 @@ class Seguimiento(models.Model):
         return f"Seguimiento de {self.paciente.get_nombre_completo()} - {self.fecha_atencion}"
 
 
+class SeguimientoArchivo(models.Model):
+    """Modelo para almacenar múltiples archivos e imágenes por seguimiento"""
+    TIPO_CHOICES = [
+        ('imagen', 'Imagen'),
+        ('documento', 'Documento'),
+    ]
+    
+    seguimiento = models.ForeignKey(
+        Seguimiento,
+        on_delete=models.CASCADE,
+        related_name='archivos',
+        verbose_name='Seguimiento'
+    )
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPO_CHOICES,
+        verbose_name='Tipo de archivo'
+    )
+    url = models.URLField(
+        max_length=500,
+        verbose_name='URL del archivo en Cloudinary'
+    )
+    nombre_original = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name='Nombre original del archivo'
+    )
+    public_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name='Public ID de Cloudinary'
+    )
+    fecha_subida = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Fecha de subida'
+    )
+    
+    class Meta:
+        verbose_name = 'Archivo de Seguimiento'
+        verbose_name_plural = 'Archivos de Seguimiento'
+        ordering = ['fecha_subida']
+    
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.nombre_original or 'Sin nombre'}"
+
+

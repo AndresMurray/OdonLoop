@@ -1,5 +1,27 @@
 from django.contrib import admin
-from .models import Paciente, ObraSocial
+from .models import Paciente, ObraSocial, Seguimiento, SeguimientoArchivo
+
+
+class SeguimientoArchivoInline(admin.TabularInline):
+    model = SeguimientoArchivo
+    extra = 0
+    readonly_fields = ('fecha_subida',)
+
+
+@admin.register(Seguimiento)
+class SeguimientoAdmin(admin.ModelAdmin):
+    list_display = ('paciente', 'odontologo', 'fecha_atencion', 'fecha_creacion')
+    list_filter = ('fecha_atencion', 'fecha_creacion')
+    search_fields = ('paciente__user__first_name', 'paciente__user__last_name', 'descripcion')
+    readonly_fields = ('fecha_creacion',)
+    inlines = [SeguimientoArchivoInline]
+
+
+@admin.register(SeguimientoArchivo)
+class SeguimientoArchivoAdmin(admin.ModelAdmin):
+    list_display = ('seguimiento', 'tipo', 'nombre_original', 'fecha_subida')
+    list_filter = ('tipo', 'fecha_subida')
+    readonly_fields = ('fecha_subida',)
 
 
 @admin.register(ObraSocial)

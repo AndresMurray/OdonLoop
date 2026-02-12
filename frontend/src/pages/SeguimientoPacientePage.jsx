@@ -6,7 +6,8 @@ import Input from '../components/Input';
 import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User } from 'lucide-react';
+import Pagination from '../components/Pagination';
+import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter } from 'lucide-react';
 import { getSeguimientosPorPaciente, crearSeguimiento } from '../api/seguimientoService';
 import { getPacienteById } from '../api/userService';
 
@@ -21,22 +22,36 @@ const SeguimientoPacientePage = () => {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [alert, setAlert] = useState({ type: '', message: '', detail: '' });
   
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalSeguimientos, setTotalSeguimientos] = useState(0);
+  
+  // Modal de detalles
+  const [seguimientoSeleccionado, setSeguimientoSeleccionado] = useState(null);
+  const [mostrarDetalles, setMostrarDetalles] = useState(false);
+  
+  // Filtros de búsqueda
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
+  const [mostrarFiltros, setMostrarFiltros] = useState(false);
+  
   // Form state
   const [formData, setFormData] = useState({
     descripcion: '',
     fecha_atencion: new Date().toISOString().split('T')[0],
     imagen_url: ''
   });
-  const [imagenSeleccionada, setImagenSeleccionada] = useState(null);
-  const [subiendoImagen, setSubiendoImagen] = useState(false);
+  const [archivosSeleccionados, setArchivosSeleccionados] = useState([]);
+  const [subiendoArchivo, setSubiendoArchivo] = useState(false);
 
   useEffect(() => {
-    cargarDatos();
+    cargarPaciente();
   }, [pacienteId]);
 
-  const cargarDatos = async () => {
-    await Promise.all([cargarPaciente(), cargarSeguimientos()]);
-  };
+  useEffect(() => {
+    cargarSeguimientos();
+  }, [pacienteId, currentPage, fechaDesde, fechaHasta]);
 
   const cargarPaciente = async () => {
     setLoadingPaciente(true);
@@ -58,8 +73,10 @@ const SeguimientoPacientePage = () => {
   const cargarSeguimientos = async () => {
     setLoading(true);
     try {
-      const data = await getSeguimientosPorPaciente(pacienteId);
-      setSeguimientos(data);
+      const data = await getSeguimientosPorPaciente(pacienteId, currentPage, fechaDesde, fechaHasta);
+      setSeguimientos(data.results || []);
+      setTotalSeguimientos(data.count || 0);
+      setTotalPages(Math.ceil((data.count || 0) / 5));
     } catch (err) {
       console.error('Error al cargar seguimientos:', err);
       setAlert({
@@ -72,6 +89,11 @@ const SeguimientoPacientePage = () => {
     }
   };
 
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -80,18 +102,21 @@ const SeguimientoPacientePage = () => {
     }));
   };
 
-  const handleImageUpload = () => {
-    // Abrir el widget de Cloudinary
+  const handleFileUpload = (tipoArchivo = 'auto') => {
+    // Abrir el widget de Cloudinary para múltiples archivos
     if (window.cloudinary) {
+      const isImage = tipoArchivo === 'imagen';
       const widget = window.cloudinary.createUploadWidget(
         {
           cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'demo',
           uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_default',
           sources: ['local', 'camera'],
-          multiple: false,
-          maxFileSize: 5000000, // 5MB
-          clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-          resourceType: 'image',
+          multiple: true,
+          maxFileSize: 10000000, // 10MB
+          clientAllowedFormats: isImage 
+            ? ['jpg', 'jpeg', 'png', 'gif', 'webp']
+            : ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'txt'],
+          resourceType: isImage ? 'image' : 'auto',
           folder: 'seguimientos',
           cropping: false,
           showSkipCropButton: false,
@@ -111,46 +136,46 @@ const SeguimientoPacientePage = () => {
               },
               local: {
                 browse: 'Buscar',
-                dd_title_single: 'Arrastra y suelta una imagen aquí',
-                drop_title_single: 'Suelta la imagen para cargar'
+                dd_title_single: 'Arrastra y suelta archivos aquí',
+                drop_title_single: 'Suelta los archivos para cargar'
               }
             }
           }
         },
         (error, result) => {
           if (error) {
-            console.error('Error al subir imagen:', error);
+            console.error('Error al subir archivo:', error);
             setAlert({
               type: 'error',
-              message: 'Error al subir imagen',
+              message: 'Error al subir archivo',
               detail: error.message
             });
-            setSubiendoImagen(false);
+            setSubiendoArchivo(false);
           }
           
           if (result && result.event === 'success') {
-            setFormData(prev => ({
-              ...prev,
-              imagen_url: result.info.secure_url
-            }));
-            setImagenSeleccionada({
+            const nuevoArchivo = {
+              tipo: result.info.resource_type === 'image' ? 'imagen' : 'documento',
               url: result.info.secure_url,
-              thumbnail: result.info.thumbnail_url
-            });
-            setSubiendoImagen(false);
+              nombre_original: result.info.original_filename,
+              public_id: result.info.public_id
+            };
+            
+            setArchivosSeleccionados(prev => [...prev, nuevoArchivo]);
+            
             setAlert({
               type: 'success',
-              message: 'Imagen cargada exitosamente'
+              message: 'Archivo cargado exitosamente'
             });
           }
           
           if (result && result.event === 'queues-end') {
-            setSubiendoImagen(false);
+            setSubiendoArchivo(false);
           }
         }
       );
       
-      setSubiendoImagen(true);
+      setSubiendoArchivo(true);
       widget.open();
     } else {
       setAlert({
@@ -159,6 +184,10 @@ const SeguimientoPacientePage = () => {
         detail: 'El widget de Cloudinary no está disponible'
       });
     }
+  };
+
+  const eliminarArchivo = (index) => {
+    setArchivosSeleccionados(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -178,7 +207,8 @@ const SeguimientoPacientePage = () => {
         paciente: parseInt(pacienteId),
         descripcion: formData.descripcion,
         fecha_atencion: formData.fecha_atencion,
-        imagen_url: formData.imagen_url || null
+        imagen_url: formData.imagen_url || null,
+        archivos: archivosSeleccionados
       };
 
       await crearSeguimiento(dataToSend);
@@ -194,10 +224,11 @@ const SeguimientoPacientePage = () => {
         fecha_atencion: new Date().toISOString().split('T')[0],
         imagen_url: ''
       });
-      setImagenSeleccionada(null);
+      setArchivosSeleccionados([]);
       setMostrarFormulario(false);
       
-      // Recargar seguimientos
+      // Recargar seguimientos desde la primera página
+      setCurrentPage(1);
       await cargarSeguimientos();
       
     } catch (err) {
@@ -213,12 +244,30 @@ const SeguimientoPacientePage = () => {
   };
 
   const formatearFecha = (fecha) => {
-    const date = new Date(fecha);
+    // Parsear la fecha sin conversión de timezone
+    const [year, month, day] = fecha.split('-');
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('es-AR', {
       day: '2-digit',
       month: 'long',
       year: 'numeric'
     });
+  };
+
+  const limpiarFiltros = () => {
+    setFechaDesde('');
+    setFechaHasta('');
+    setCurrentPage(1);
+  };
+
+  const verDetalles = (seguimiento) => {
+    setSeguimientoSeleccionado(seguimiento);
+    setMostrarDetalles(true);
+  };
+
+  const cerrarDetalles = () => {
+    setSeguimientoSeleccionado(null);
+    setMostrarDetalles(false);
   };
 
   return (
@@ -329,31 +378,64 @@ const SeguimientoPacientePage = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Imagen (Opcional)
+                      Archivos e Imágenes (Opcional)
                     </label>
-                    <div className="flex items-center gap-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleImageUpload}
-                        disabled={subiendoImagen}
-                      >
-                        <ImageIcon className="w-5 h-5 mr-2" />
-                        {subiendoImagen ? 'Subiendo...' : 'Seleccionar Imagen'}
-                      </Button>
-                      {imagenSeleccionada && (
-                        <div className="flex items-center gap-2">
-                          <img 
-                            src={imagenSeleccionada.url} 
-                            alt="Preview" 
-                            className="w-16 h-16 object-cover rounded border"
-                          />
-                          <span className="text-sm text-green-600">✓ Imagen cargada</span>
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleFileUpload('imagen')}
+                          disabled={subiendoArchivo}
+                        >
+                          <ImageIcon className="w-5 h-5 mr-2" />
+                          {subiendoArchivo ? 'Subiendo...' : 'Agregar Imagen'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleFileUpload('auto')}
+                          disabled={subiendoArchivo}
+                        >
+                          <File className="w-5 h-5 mr-2" />
+                          Agregar Archivo
+                        </Button>
+                      </div>
+                      
+                      {archivosSeleccionados.length > 0 && (
+                        <div className="grid grid-cols-2 gap-3">
+                          {archivosSeleccionados.map((archivo, index) => (
+                            <div 
+                              key={index}
+                              className="relative border rounded-lg p-3 bg-gray-50 group"
+                            >
+                              {archivo.tipo === 'imagen' ? (
+                                <img 
+                                  src={archivo.url} 
+                                  alt={archivo.nombre_original} 
+                                  className="w-full h-24 object-cover rounded mb-2"
+                                />
+                              ) : (
+                                <div className="w-full h-24 bg-blue-100 rounded mb-2 flex items-center justify-center">
+                                  <File className="w-10 h-10 text-blue-600" />
+                                </div>
+                              )}
+                              <p className="text-xs text-gray-600 truncate">
+                                {archivo.nombre_original}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => eliminarArchivo(index)}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
                   </div>
-
                   <div className="flex justify-end gap-3 pt-4">
                     <Button
                       type="button"
@@ -365,7 +447,7 @@ const SeguimientoPacientePage = () => {
                           fecha_atencion: new Date().toISOString().split('T')[0],
                           imagen_url: ''
                         });
-                        setImagenSeleccionada(null);
+                        setArchivosSeleccionados([]);
                       }}
                     >
                       Cancelar
@@ -373,7 +455,7 @@ const SeguimientoPacientePage = () => {
                     <Button
                       type="submit"
                       variant="primary"
-                      disabled={loading || subiendoImagen}
+                      disabled={loading || subiendoArchivo}
                     >
                       {loading ? 'Guardando...' : 'Guardar Seguimiento'}
                     </Button>
@@ -386,10 +468,68 @@ const SeguimientoPacientePage = () => {
           {/* Lista de seguimientos */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-6 h-6 text-emerald-600" />
-                Historial de Seguimientos
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-6 h-6 text-emerald-600" />
+                  Historial de Seguimientos
+                  {(fechaDesde || fechaHasta) && (
+                    <span className="text-sm font-normal text-gray-500">
+                      ({totalSeguimientos} resultados)
+                    </span>
+                  )}
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMostrarFiltros(!mostrarFiltros)}
+                >
+                  <Filter className="w-4 h-4 mr-2" />
+                  {mostrarFiltros ? 'Ocultar Filtros' : 'Filtrar por Fecha'}
+                </Button>
+              </div>
+              
+              {/* Panel de filtros */}
+              {mostrarFiltros && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex flex-wrap items-end gap-4">
+                    <div className="flex-1 min-w-[200px]">
+                      <Input
+                        label="Fecha Desde"
+                        type="date"
+                        value={fechaDesde}
+                        onChange={(e) => {
+                          setFechaDesde(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-[200px]">
+                      <Input
+                        label="Fecha Hasta"
+                        type="date"
+                        value={fechaHasta}
+                        onChange={(e) => {
+                          setFechaHasta(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={limpiarFiltros}
+                      disabled={!fechaDesde && !fechaHasta}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Limpiar
+                    </Button>
+                  </div>
+                  {(fechaDesde || fechaHasta) && (
+                    <div className="mt-3 text-sm text-gray-600">
+                      Mostrando seguimientos {fechaDesde && `desde el ${formatearFecha(fechaDesde)}`} {fechaHasta && `hasta el ${formatearFecha(fechaHasta)}`}
+                    </div>
+                  )}
+                </div>
+              )}
             </CardHeader>
             <CardContent className="p-6">
               {loading && seguimientos.length === 0 ? (
@@ -406,48 +546,58 @@ const SeguimientoPacientePage = () => {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {seguimientos.map((seguimiento) => (
                     <div 
                       key={seguimiento.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-5 h-5 text-emerald-600" />
-                          <span className="font-semibold text-lg text-gray-900">
-                            {formatearFecha(seguimiento.fecha_atencion)}
-                          </span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <Calendar className="w-5 h-5 text-emerald-600" />
+                            <span className="font-semibold text-lg text-gray-900">
+                              {formatearFecha(seguimiento.fecha_atencion)}
+                            </span>
+                            {(seguimiento.archivos?.length > 0 || seguimiento.imagen_url) && (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                <ImageIcon className="w-3 h-3" />
+                                {seguimiento.archivos?.length || 1} archivo(s)
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-gray-600 text-sm line-clamp-2 mb-2">
+                            {seguimiento.descripcion}
+                          </p>
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <span>Registrado: {new Date(seguimiento.fecha_creacion).toLocaleDateString('es-AR')}</span>
+                            <span>Por: {seguimiento.odontologo_nombre}</span>
+                          </div>
                         </div>
-                        <span className="text-sm text-gray-500">
-                          Registrado: {new Date(seguimiento.fecha_creacion).toLocaleString('es-AR')}
-                        </span>
-                      </div>
-                      
-                      <div className="bg-gray-50 p-4 rounded-lg mb-3">
-                        <p className="text-gray-800 whitespace-pre-wrap">
-                          {seguimiento.descripcion}
-                        </p>
-                      </div>
-                      
-                      {seguimiento.imagen_url && (
-                        <div className="mt-3">
-                          <img 
-                            src={seguimiento.imagen_url}
-                            alt="Imagen del seguimiento"
-                            className="max-w-md w-full rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity"
-                            onClick={() => window.open(seguimiento.imagen_url, '_blank')}
-                          />
-                        </div>
-                      )}
-                      
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <span className="text-sm text-gray-600">
-                          Atendido por: <span className="font-medium">{seguimiento.odontologo_nombre}</span>
-                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => verDetalles(seguimiento)}
+                          className="ml-4"
+                        >
+                          Ver Detalles
+                        </Button>
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+              
+              {/* Paginación */}
+              {totalPages > 1 && (
+                <div className="mt-6">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    itemsPerPage={5}
+                    totalItems={totalSeguimientos}
+                  />
                 </div>
               )}
             </CardContent>
@@ -455,6 +605,110 @@ const SeguimientoPacientePage = () => {
 
         </div>
       </main>
+
+      {/* Modal de detalles del seguimiento */}
+      {mostrarDetalles && seguimientoSeleccionado && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-2xl font-bold text-gray-900">
+                Detalles del Seguimiento
+              </h3>
+              <button
+                onClick={cerrarDetalles}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              {/* Fecha */}
+              <div className="flex items-center gap-2 mb-4">
+                <Calendar className="w-6 h-6 text-emerald-600" />
+                <span className="font-semibold text-xl text-gray-900">
+                  {formatearFecha(seguimientoSeleccionado.fecha_atencion)}
+                </span>
+              </div>
+
+              {/* Descripción */}
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <h4 className="font-medium text-gray-700 mb-2">Descripción:</h4>
+                <p className="text-gray-800 whitespace-pre-wrap">
+                  {seguimientoSeleccionado.descripcion}
+                </p>
+              </div>
+
+              {/* Archivos e imágenes */}
+              {seguimientoSeleccionado.archivos && seguimientoSeleccionado.archivos.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="font-medium text-gray-700 mb-3">
+                    Archivos adjuntos ({seguimientoSeleccionado.archivos.length}):
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {seguimientoSeleccionado.archivos.map((archivo) => (
+                      <div 
+                        key={archivo.id}
+                        className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                        onClick={() => window.open(archivo.url, '_blank')}
+                      >
+                        {archivo.tipo === 'imagen' ? (
+                          <img 
+                            src={archivo.url}
+                            alt={archivo.nombre_original || 'Imagen'}
+                            className="w-full h-48 object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-48 bg-blue-50 flex flex-col items-center justify-center p-4">
+                            <File className="w-16 h-16 text-blue-600 mb-3" />
+                            <span className="text-sm text-gray-600 text-center break-words">
+                              {archivo.nombre_original || 'Documento'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Imagen legacy (para seguimientos antiguos) */}
+              {seguimientoSeleccionado.imagen_url && (!seguimientoSeleccionado.archivos || seguimientoSeleccionado.archivos.length === 0) && (
+                <div className="mb-4">
+                  <h4 className="font-medium text-gray-700 mb-3">Imagen:</h4>
+                  <img 
+                    src={seguimientoSeleccionado.imagen_url}
+                    alt="Imagen del seguimiento"
+                    className="max-w-full rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => window.open(seguimientoSeleccionado.imagen_url, '_blank')}
+                  />
+                </div>
+              )}
+
+              {/* Información adicional */}
+              <div className="border-t border-gray-200 pt-4 space-y-2">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <User className="w-4 h-4" />
+                  <span>Atendido por: <span className="font-medium">{seguimientoSeleccionado.odontologo_nombre}</span></span>
+                </div>
+                <div className="text-sm text-gray-500">
+                  Registrado: {new Date(seguimientoSeleccionado.fecha_creacion).toLocaleString('es-AR')}
+                </div>
+              </div>
+
+              {/* Botón cerrar */}
+              <div className="mt-6 flex justify-end">
+                <Button
+                  variant="primary"
+                  onClick={cerrarDetalles}
+                >
+                  Cerrar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       <Footer />
     </div>

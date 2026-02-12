@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q, Max
 from .models import Paciente, ObraSocial, Seguimiento
 from .serializers import (
@@ -10,6 +11,13 @@ from .serializers import (
     SeguimientoSerializer, SeguimientoCreateSerializer, MisPacientesSerializer
 )
 from turnos.models import Turno
+
+
+class SeguimientoPagination(PageNumberPagination):
+    """Paginación personalizada para seguimientos"""
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 50
 
 
 class ObraSocialViewSet(viewsets.ReadOnlyModelViewSet):
@@ -84,6 +92,7 @@ class MisPacientesView(APIView):
 class SeguimientoViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar seguimientos de pacientes"""
     permission_classes = [IsAuthenticated]
+    pagination_class = SeguimientoPagination
     
     def get_queryset(self):
         """Filtrar seguimientos según el tipo de usuario"""
@@ -93,12 +102,12 @@ class SeguimientoViewSet(viewsets.ModelViewSet):
             # Odontólogo ve solo sus seguimientos
             return Seguimiento.objects.filter(
                 odontologo=user.perfil_odontologo
-            ).select_related('paciente__user', 'odontologo__user')
+            ).select_related('paciente__user', 'odontologo__user').prefetch_related('archivos')
         elif hasattr(user, 'perfil_paciente'):
             # Paciente ve solo sus seguimientos
             return Seguimiento.objects.filter(
                 paciente=user.perfil_paciente
-            ).select_related('paciente__user', 'odontologo__user')
+            ).select_related('paciente__user', 'odontologo__user').prefetch_related('archivos')
         
         return Seguimiento.objects.none()
     
@@ -109,7 +118,7 @@ class SeguimientoViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'], url_path='paciente/(?P<paciente_id>[^/.]+)')
     def por_paciente(self, request, paciente_id=None):
-        """Obtener seguimientos de un paciente específico"""
+        """Obtener seguimientos de un paciente específico con paginación y filtros"""
         try:
             # Verificar que el usuario sea odontólogo
             if not hasattr(request.user, 'perfil_odontologo'):
@@ -124,7 +133,26 @@ class SeguimientoViewSet(viewsets.ModelViewSet):
             seguimientos = Seguimiento.objects.filter(
                 paciente_id=paciente_id,
                 odontologo=odontologo
-            ).select_related('paciente__user', 'odontologo__user').order_by('-fecha_atencion')
+            ).select_related('paciente__user', 'odontologo__user').prefetch_related('archivos')
+            
+            # Aplicar filtros de fecha si existen
+            fecha_desde = request.query_params.get('fecha_desde')
+            fecha_hasta = request.query_params.get('fecha_hasta')
+            
+            if fecha_desde:
+                seguimientos = seguimientos.filter(fecha_atencion__gte=fecha_desde)
+            if fecha_hasta:
+                seguimientos = seguimientos.filter(fecha_atencion__lte=fecha_hasta)
+            
+            seguimientos = seguimientos.order_by('-fecha_atencion')
+            
+            # Aplicar paginación
+            paginator = self.pagination_class()
+            page = paginator.paginate_queryset(seguimientos, request)
+            
+            if page is not None:
+                serializer = SeguimientoSerializer(page, many=True)
+                return paginator.get_paginated_response(serializer.data)
             
             serializer = SeguimientoSerializer(seguimientos, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Paciente, ObraSocial, Seguimiento
+from .models import Paciente, ObraSocial, Seguimiento, SeguimientoArchivo
 from django.contrib.auth import get_user_model
 from usuarios.serializers import UserSerializer
 
@@ -50,33 +50,51 @@ class PacienteCreateSerializer(serializers.ModelSerializer):
         fields = ['dni', 'obra_social']
 
 
+class SeguimientoArchivoSerializer(serializers.ModelSerializer):
+    """Serializer para archivos de seguimiento"""
+    class Meta:
+        model = SeguimientoArchivo
+        fields = ['id', 'tipo', 'url', 'nombre_original', 'public_id', 'fecha_subida']
+        read_only_fields = ['id', 'fecha_subida']
+
+
 class SeguimientoSerializer(serializers.ModelSerializer):
     """Serializer para listar seguimientos con información completa"""
     paciente_nombre = serializers.CharField(source='paciente.get_nombre_completo', read_only=True)
     odontologo_nombre = serializers.CharField(source='odontologo.user.get_full_name', read_only=True)
     paciente_detalle = PacienteSerializer(source='paciente', read_only=True)
+    archivos = SeguimientoArchivoSerializer(many=True, read_only=True)
     
     class Meta:
         model = Seguimiento
         fields = [
             'id', 'paciente', 'paciente_nombre', 'paciente_detalle',
             'odontologo', 'odontologo_nombre', 'descripcion', 
-            'imagen_url', 'fecha_atencion', 'fecha_creacion'
+            'imagen_url', 'archivos', 'fecha_atencion', 'fecha_creacion'
         ]
         read_only_fields = ['id', 'fecha_creacion']
 
 
 class SeguimientoCreateSerializer(serializers.ModelSerializer):
     """Serializer para crear seguimientos"""
+    archivos = SeguimientoArchivoSerializer(many=True, required=False)
+    
     class Meta:
         model = Seguimiento
-        fields = ['paciente', 'descripcion', 'imagen_url', 'fecha_atencion']
+        fields = ['paciente', 'descripcion', 'imagen_url', 'fecha_atencion', 'archivos']
     
     def create(self, validated_data):
         # El odontólogo se toma del contexto (request.user)
+        archivos_data = validated_data.pop('archivos', [])
         odontologo = self.context['request'].user.perfil_odontologo
         validated_data['odontologo'] = odontologo
-        return super().create(validated_data)
+        seguimiento = super().create(validated_data)
+        
+        # Crear archivos asociados
+        for archivo_data in archivos_data:
+            SeguimientoArchivo.objects.create(seguimiento=seguimiento, **archivo_data)
+        
+        return seguimiento
 
 
 class MisPacientesSerializer(serializers.ModelSerializer):
