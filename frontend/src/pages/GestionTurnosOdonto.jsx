@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { crearTurno, crearTurnosLote, getMisTurnos, cancelarTurno, completarTurno, actualizarTurno, getTurnosPorFecha } from '../api/turnoService';
 import { authService } from '../api/authService';
@@ -30,6 +30,9 @@ const GestionTurnosOdonto = () => {
   const [paginaDisponibles, setPaginaDisponibles] = useState(1);
   const [paginaReservados, setPaginaReservados] = useState(1);
   const ITEMS_POR_PAGINA = 5;
+  
+  // Tab activa para no renderizar todo a la vez
+  const [tabActiva, setTabActiva] = useState('disponibles'); // 'disponibles' | 'reservados' | 'crear'
   
   // Estados para el modal de confirmación de cancelación
   const [modalCancelar, setModalCancelar] = useState({
@@ -459,58 +462,79 @@ const GestionTurnosOdonto = () => {
     return colores[estado] || 'bg-gray-100 text-gray-800';
   };
 
-  const getTurnosPorEstado = (estado) => {
-    let filtrados = turnos.filter(t => t.estado === estado);
-    
-    // Para turnos disponibles, SIEMPRE aplicar filtro por fecha
-    if (estado === 'disponible') {
-      if (fechaFiltro) {
-        filtrados = filtrados.filter(t => {
-          // Comparar directamente el string de fecha (formato: "2026-02-10T19:00:00")
-          const [fechaTurnoStr] = t.fecha_hora.split('T');
-          return fechaTurnoStr === fechaFiltro;
-        });
-      } else {
-        // Si no hay filtro, no mostrar nada (evitar listado gigante)
-        filtrados = [];
-      }
-    }
-    
-    return filtrados;
-  };
+  // Memoizar turnos filtrados para evitar recálculos
+  const turnosDisponibles = useMemo(() => {
+    if (!fechaFiltro) return [];
+    return turnos.filter(t => {
+      if (t.estado !== 'disponible') return false;
+      const [fechaTurnoStr] = t.fecha_hora.split('T');
+      return fechaTurnoStr === fechaFiltro;
+    });
+  }, [turnos, fechaFiltro]);
+  
+  const turnosReservados = useMemo(() => {
+    if (!fechaFiltro) return [];
+    return turnos.filter(t => {
+      if (t.estado !== 'reservado') return false;
+      const [fechaTurnoStr] = t.fecha_hora.split('T');
+      return fechaTurnoStr === fechaFiltro;
+    });
+  }, [turnos, fechaFiltro]);
+  
+  // Contadores memoizados
+  const contadores = useMemo(() => ({
+    disponibles: turnosDisponibles.length,
+    reservados: turnosReservados.length
+  }), [turnosDisponibles, turnosReservados]);
 
-  // Funciones de paginación
-  const getTurnosPaginados = (estado, pagina) => {
-    const turnosFiltrados = getTurnosPorEstado(estado);
-    const inicio = (pagina - 1) * ITEMS_POR_PAGINA;
-    const fin = inicio + ITEMS_POR_PAGINA;
-    return turnosFiltrados.slice(inicio, fin);
-  };
+  // Funciones de paginación memoizadas
+  const turnosDisponiblesPaginados = useMemo(() => {
+    const inicio = (paginaDisponibles - 1) * ITEMS_POR_PAGINA;
+    return turnosDisponibles.slice(inicio, inicio + ITEMS_POR_PAGINA);
+  }, [turnosDisponibles, paginaDisponibles]);
+  
+  const turnosReservadosPaginados = useMemo(() => {
+    const inicio = (paginaReservados - 1) * ITEMS_POR_PAGINA;
+    return turnosReservados.slice(inicio, inicio + ITEMS_POR_PAGINA);
+  }, [turnosReservados, paginaReservados]);
+  
+  const totalPaginasDisponibles = useMemo(() => 
+    Math.ceil(turnosDisponibles.length / ITEMS_POR_PAGINA)
+  , [turnosDisponibles.length]);
+  
+  const totalPaginasReservados = useMemo(() => 
+    Math.ceil(turnosReservados.length / ITEMS_POR_PAGINA)
+  , [turnosReservados.length]);
+  
+  // Compatibilidad con código existente
+  const getTurnosPorEstado = useCallback((estado) => {
+    if (estado === 'disponible') return turnosDisponibles;
+    if (estado === 'reservado') return turnosReservados;
+    return turnos.filter(t => t.estado === estado);
+  }, [turnos, turnosDisponibles, turnosReservados]);
 
-  const getTotalPaginas = (estado) => {
-    const turnosFiltrados = getTurnosPorEstado(estado);
-    return Math.ceil(turnosFiltrados.length / ITEMS_POR_PAGINA);
+  
+  const cambiarFecha = (nuevaFecha) => {
+    setFechaFiltro(nuevaFecha);
+    setPaginaDisponibles(1);
+    setPaginaReservados(1);
   };
-
   
   const avanzarDia = () => {
     const fecha = new Date(fechaFiltro);
     fecha.setDate(fecha.getDate() + 1);
-    setFechaFiltro(fecha.toISOString().split('T')[0]);
-    setPaginaDisponibles(1); // Resetear paginación al cambiar de día
+    cambiarFecha(fecha.toISOString().split('T')[0]);
   };
 
   const retrocederDia = () => {
     const fecha = new Date(fechaFiltro);
     fecha.setDate(fecha.getDate() - 1);
-    setFechaFiltro(fecha.toISOString().split('T')[0]);
-    setPaginaDisponibles(1); // Resetear paginación al cambiar de día
+    cambiarFecha(fecha.toISOString().split('T')[0]);
   };
 
   const irHoy = () => {
     const hoy = new Date();
-    setFechaFiltro(hoy.toISOString().split('T')[0]);
-    setPaginaDisponibles(1); // Resetear paginación al ir a hoy
+    cambiarFecha(hoy.toISOString().split('T')[0]);
   };
 
   return (
@@ -524,14 +548,49 @@ const GestionTurnosOdonto = () => {
             <h1 className="text-3xl font-bold text-white">Gestión de Turnos</h1>
             <p className="text-slate-200 mt-2">Dr. {userData.nombre} {userData.apellido}</p>
           </div>
-          <div className="flex gap-4">
-            <Button onClick={() => navigate('/home-odontologo')} variant="secondary">
-              Volver al Inicio
-            </Button>
-            <Button onClick={() => { setShowForm(!showForm); setModoCreacion('individual'); }}>
-              {showForm ? 'Cancelar' : '+ Crear Turno'}
-            </Button>
-          </div>
+          <Button onClick={() => navigate('/home-odontologo')} variant="secondary">
+            Volver al Inicio
+          </Button>
+        </div>
+        
+        {/* Tabs de navegación */}
+        <div className="flex gap-2 mb-6 bg-white/10 p-2 rounded-lg">
+          <button
+            onClick={() => { setTabActiva('disponibles'); setShowForm(false); }}
+            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+              tabActiva === 'disponibles'
+                ? 'bg-green-600 text-white shadow-lg'
+                : 'bg-white/20 text-white hover:bg-white/30'
+            }`}
+          >
+            📅 Disponibles
+            <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-sm">
+              {contadores.disponibles}
+            </span>
+          </button>
+          <button
+            onClick={() => { setTabActiva('reservados'); setShowForm(false); }}
+            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+              tabActiva === 'reservados'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-white/20 text-white hover:bg-white/30'
+            }`}
+          >
+            👤 Reservados
+            <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-sm">
+              {contadores.reservados}
+            </span>
+          </button>
+          <button
+            onClick={() => { setTabActiva('crear'); setShowForm(true); setModoCreacion('individual'); }}
+            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+              tabActiva === 'crear'
+                ? 'bg-purple-600 text-white shadow-lg'
+                : 'bg-white/20 text-white hover:bg-white/30'
+            }`}
+          >
+            ➕ Crear Turno
+          </button>
         </div>
 
         {/* Mensajes */}
@@ -547,7 +606,7 @@ const GestionTurnosOdonto = () => {
         )}
 
         {/* Formulario Crear Turnos */}
-        {showForm && (
+        {tabActiva === 'crear' && showForm && (
           <Card className="mb-8">
             <div className="mb-6">
               <h2 className="text-2xl font-bold mb-4 text-gray-800">Crear Turno</h2>
@@ -795,11 +854,12 @@ const GestionTurnosOdonto = () => {
         {loading && !turnos.length ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando turnos...</p>
+            <p className="mt-4 text-white">Cargando turnos...</p>
           </div>
         ) : (
           <div className="space-y-6">
             {/* Turnos Disponibles */}
+            {tabActiva === 'disponibles' && (
             <Card>
               <div className="mb-4">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">
@@ -820,7 +880,7 @@ const GestionTurnosOdonto = () => {
                     <input
                       type="date"
                       value={fechaFiltro}
-                      onChange={(e) => setFechaFiltro(e.target.value)}
+                      onChange={(e) => cambiarFecha(e.target.value)}
                       className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-medium"
                     />
                     <Button
@@ -845,12 +905,12 @@ const GestionTurnosOdonto = () => {
                 </p>
               </div>
               
-              {getTurnosPorEstado('disponible').length === 0 ? (
+              {turnosDisponibles.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">No hay turnos disponibles para esta fecha</p>
               ) : (
                 <>
                   <div className="space-y-3">
-                    {getTurnosPaginados('disponible', paginaDisponibles).map((turno) => (
+                    {turnosDisponiblesPaginados.map((turno) => (
                     <div
                       key={turno.id}
                       className="p-4 bg-gray-50 rounded-lg"
@@ -946,7 +1006,7 @@ const GestionTurnosOdonto = () => {
                                       })}
                                       className="mr-2 h-4 w-4 text-blue-600 rounded"
                                     />
-                                    <span className="text-sm font-medium text-gray-700">O reservar manualmente (sin usuario)</span>
+                                    <span className="text-sm font-medium text-gray-700">O reservar manualmente </span>
                                   </label>
                                 </div>
                                 
@@ -1037,26 +1097,69 @@ const GestionTurnosOdonto = () => {
                 {/* Paginación para turnos disponibles */}
                 <Pagination
                   currentPage={paginaDisponibles}
-                  totalPages={getTotalPaginas('disponible')}
+                  totalPages={totalPaginasDisponibles}
                   onPageChange={setPaginaDisponibles}
                   itemsPerPage={ITEMS_POR_PAGINA}
-                  totalItems={getTurnosPorEstado('disponible').length}
+                  totalItems={turnosDisponibles.length}
                 />
               </>
               )}
             </Card>
+            )}
 
             {/* Turnos Reservados */}
+            {tabActiva === 'reservados' && (
             <Card>
-              <h3 className="text-xl font-bold mb-4 text-gray-800">
-                Turnos Reservados ({getTurnosPorEstado('reservado').length})
-              </h3>
-              {getTurnosPorEstado('reservado').length === 0 ? (
-                <p className="text-gray-500">No hay turnos reservados</p>
+              <div className="mb-4">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">
+                  Turnos Reservados
+                </h3>
+                
+                {/* Navegación por día */}
+                <div className="flex items-center justify-between bg-gray-100 p-4 rounded-lg">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={retrocederDia}
+                  >
+                    ← Día Anterior
+                  </Button>
+                  
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="date"
+                      value={fechaFiltro}
+                      onChange={(e) => cambiarFecha(e.target.value)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-medium"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={irHoy}
+                    >
+                      Hoy
+                    </Button>
+                  </div>
+                  
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={avanzarDia}
+                  >
+                    Día Siguiente →
+                  </Button>
+                </div>
+                
+                <p className="text-sm text-gray-600 mt-3 text-center">
+                  Mostrando <span className="font-semibold">{contadores.reservados}</span> turnos reservados para el {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                </p>
+              </div>
+              
+              {turnosReservados.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No hay turnos reservados para esta fecha</p>
               ) : (
                 <>
                   <div className="space-y-3">
-                    {getTurnosPaginados('reservado', paginaReservados).map((turno) => (
+                    {turnosReservadosPaginados.map((turno) => (
                     <div
                       key={turno.id}
                       className="flex justify-between items-center p-4 bg-blue-50 rounded-lg"
@@ -1099,14 +1202,15 @@ const GestionTurnosOdonto = () => {
                 {/* Paginación para turnos reservados */}
                 <Pagination
                   currentPage={paginaReservados}
-                  totalPages={getTotalPaginas('reservado')}
+                  totalPages={totalPaginasReservados}
                   onPageChange={setPaginaReservados}
                   itemsPerPage={ITEMS_POR_PAGINA}
-                  totalItems={getTurnosPorEstado('reservado').length}
+                  totalItems={turnosReservados.length}
                 />
               </>
               )}
             </Card>
+            )}
 
           </div>
         )}

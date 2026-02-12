@@ -4,7 +4,7 @@ import Button from './Button';
 import Input from './Input';
 import { Card, CardContent, CardHeader, CardTitle } from './Card';
 import Alert from './Alert';
-import { getMisPacientes, crearPacienteRapido } from '../api/seguimientoService';
+import { getMisPacientes, getTodosPacientes, crearPacienteRapido } from '../api/seguimientoService';
 
 const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar }) => {
   const [modo, setModo] = useState('buscar'); // 'buscar' o 'crear'
@@ -31,7 +31,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar }) => {
   const cargarPacientes = async () => {
     setLoading(true);
     try {
-      const data = await getMisPacientes(searchTerm);
+      const data = await getTodosPacientes(searchTerm);
       setPacientes(data);
       setAlert({ type: '', message: '', detail: '' });
     } catch (err) {

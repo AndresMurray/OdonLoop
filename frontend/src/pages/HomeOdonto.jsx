@@ -22,7 +22,7 @@ const HomeOdonto = () => {
   // Estados de paginación
   const [paginaReservados, setPaginaReservados] = useState(1);
   const [paginaDisponibles, setPaginaDisponibles] = useState(1);
-  const ITEMS_POR_PAGINA = 5;
+  const ITEMS_POR_PAGINA = 3;
 
   useEffect(() => {
     if (!userData) {

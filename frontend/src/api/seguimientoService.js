@@ -21,6 +21,20 @@ export const getMisPacientes = async (search = '') => {
   }
 };
 
+// Obtener lista de TODOS los pacientes del sistema
+export const getTodosPacientes = async (search = '') => {
+  try {
+    const url = search 
+      ? `/api/pacientes/?search=${encodeURIComponent(search)}`
+      : '/api/pacientes/';
+    const response = await apiClient.get(url);
+    return response;
+  } catch (error) {
+    console.error('Error al obtener todos los pacientes:', error);
+    throw error;
+  }
+};
+
 // Obtener seguimientos de un paciente específico con paginación y filtros
 export const getSeguimientosPorPaciente = async (pacienteId, page = 1, fechaDesde = '', fechaHasta = '') => {
   try {
@@ -92,6 +106,7 @@ export const crearPacienteRapido = async (pacienteData) => {
 
 export default {
   getMisPacientes,
+  getTodosPacientes,
   getSeguimientosPorPaciente,
   crearSeguimiento,
   getMisSeguimientos,

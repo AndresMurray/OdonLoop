@@ -27,12 +27,30 @@ class ObraSocialViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class PacienteViewSet(viewsets.ModelViewSet):
-    queryset = Paciente.objects.select_related('user', 'obra_social').all()
+    """ViewSet para gestionar pacientes - acceso para odontólogos"""
+    queryset = Paciente.objects.select_related('user', 'obra_social').filter(activo=True)
+    permission_classes = [IsAuthenticated]
     
     def get_serializer_class(self):
         if self.action == 'create':
             return PacienteCreateSerializer
         return PacienteSerializer
+    
+    def get_queryset(self):
+        """Filtrar pacientes con búsqueda opcional"""
+        queryset = Paciente.objects.select_related('user', 'obra_social').filter(activo=True)
+        
+        # Obtener parámetro de búsqueda si existe
+        search = self.request.query_params.get('search', '')
+        
+        if search:
+            queryset = queryset.filter(
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(dni__icontains=search)
+            )
+        
+        return queryset.order_by('user__last_name', 'user__first_name')
 
 
 class MisPacientesView(APIView):
