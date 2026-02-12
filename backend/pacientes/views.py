@@ -5,11 +5,11 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q, Max
-from .models import Paciente, ObraSocial, Seguimiento
+from .models import Paciente, ObraSocial, Seguimiento, RegistroDental
 from .serializers import (
     PacienteSerializer, PacienteCreateSerializer, ObraSocialSerializer,
     SeguimientoSerializer, SeguimientoCreateSerializer, MisPacientesSerializer,
-    PacientePerfilSerializer
+    PacientePerfilSerializer, RegistroDentalSerializer, RegistroDentalCreateSerializer
 )
 from turnos.models import Turno
 
@@ -258,3 +258,130 @@ class MiPerfilPacienteView(APIView):
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class OdontogramaView(APIView):
+    """Vista para obtener el odontograma completo de un paciente"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, paciente_id):
+        """Obtener el resumen del odontograma (último registro por pieza)"""
+        try:
+            # Verificar que el usuario sea odontólogo
+            if not hasattr(request.user, 'perfil_odontologo'):
+                return Response(
+                    {'error': 'Solo odontólogos pueden acceder'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Verificar que el paciente existe
+            try:
+                paciente = Paciente.objects.get(id=paciente_id)
+            except Paciente.DoesNotExist:
+                return Response(
+                    {'error': 'Paciente no encontrado'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Obtener todas las piezas dentales definidas
+            piezas = [p[0] for p in RegistroDental.PIEZAS_DENTALES]
+            
+            # Construir el odontograma con el último registro de cada pieza
+            odontograma = {}
+            for pieza in piezas:
+                ultimo_registro = RegistroDental.objects.filter(
+                    paciente=paciente,
+                    pieza_dental=pieza
+                ).first()  # Ya ordenado por -fecha_registro
+                
+                if ultimo_registro:
+                    odontograma[pieza] = RegistroDentalSerializer(ultimo_registro).data
+                else:
+                    odontograma[pieza] = None
+            
+            # Obtener datos del paciente
+            paciente_data = {
+                'id': paciente.id,
+                'nombre_completo': paciente.get_nombre_completo(),
+                'dni': paciente.dni
+            }
+            
+            return Response({
+                'paciente': paciente_data,
+                'odontograma': odontograma
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class HistorialPiezaDentalView(APIView):
+    """Vista para obtener el historial de una pieza dental específica"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, paciente_id, pieza):
+        """Obtener historial de registros de una pieza dental"""
+        try:
+            # Verificar que el usuario sea odontólogo
+            if not hasattr(request.user, 'perfil_odontologo'):
+                return Response(
+                    {'error': 'Solo odontólogos pueden acceder'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Verificar que el paciente existe
+            try:
+                paciente = Paciente.objects.get(id=paciente_id)
+            except Paciente.DoesNotExist:
+                return Response(
+                    {'error': 'Paciente no encontrado'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Obtener nombre de la pieza
+            pieza_nombre = dict(RegistroDental.PIEZAS_DENTALES).get(int(pieza), f'Pieza {pieza}')
+            
+            # Obtener historial de la pieza
+            registros = RegistroDental.objects.filter(
+                paciente=paciente,
+                pieza_dental=pieza
+            ).select_related('odontologo__user')
+            
+            serializer = RegistroDentalSerializer(registros, many=True)
+            
+            return Response({
+                'pieza_dental': int(pieza),
+                'pieza_nombre': pieza_nombre,
+                'paciente_nombre': paciente.get_nombre_completo(),
+                'historial': serializer.data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class RegistroDentalViewSet(viewsets.ModelViewSet):
+    """ViewSet para gestionar registros dentales"""
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        """Filtrar registros dentales del odontólogo"""
+        user = self.request.user
+        
+        if hasattr(user, 'perfil_odontologo'):
+            return RegistroDental.objects.filter(
+                odontologo=user.perfil_odontologo
+            ).select_related('paciente__user', 'odontologo__user')
+        
+        return RegistroDental.objects.none()
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return RegistroDentalCreateSerializer
+        return RegistroDentalSerializer

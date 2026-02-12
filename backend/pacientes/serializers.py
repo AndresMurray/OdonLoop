@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Paciente, ObraSocial, Seguimiento, SeguimientoArchivo
+from .models import Paciente, ObraSocial, Seguimiento, SeguimientoArchivo, RegistroDental
 from django.contrib.auth import get_user_model
 from usuarios.serializers import UserSerializer
 
@@ -145,4 +145,39 @@ class MisPacientesSerializer(serializers.ModelSerializer):
         
         ultimo = obj.seguimientos.filter(odontologo=odontologo).first()
         return ultimo.fecha_atencion.isoformat() if ultimo else None
+
+
+class RegistroDentalSerializer(serializers.ModelSerializer):
+    """Serializer para registros dentales individuales"""
+    odontologo_nombre = serializers.CharField(source='odontologo.user.get_full_name', read_only=True)
+    estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+    pieza_nombre = serializers.CharField(source='get_pieza_dental_display', read_only=True)
+    
+    class Meta:
+        model = RegistroDental
+        fields = [
+            'id', 'paciente', 'odontologo', 'odontologo_nombre',
+            'pieza_dental', 'pieza_nombre', 'estado', 'estado_display',
+            'descripcion', 'fecha_registro'
+        ]
+        read_only_fields = ['id', 'odontologo', 'fecha_registro']
+
+
+class RegistroDentalCreateSerializer(serializers.ModelSerializer):
+    """Serializer para crear registros dentales"""
+    
+    class Meta:
+        model = RegistroDental
+        fields = ['paciente', 'pieza_dental', 'estado', 'descripcion']
+    
+    def create(self, validated_data):
+        odontologo = self.context['request'].user.perfil_odontologo
+        validated_data['odontologo'] = odontologo
+        return super().create(validated_data)
+
+
+class OdontogramaResumenSerializer(serializers.Serializer):
+    """Serializer para el resumen del odontograma (último registro por pieza)"""
+    pieza_dental = serializers.IntegerField()
+    ultimo_registro = RegistroDentalSerializer(allow_null=True)
 

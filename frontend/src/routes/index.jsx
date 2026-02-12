@@ -15,6 +15,7 @@ import MisPacientesPage from '../pages/MisPacientesPage';
 import SeguimientoPacientePage from '../pages/SeguimientoPacientePage';
 import PerfilPacientePage from '../pages/PerfilPacientePage';
 import PerfilOdontologoPage from '../pages/PerfilOdontologoPage';
+import OdontogramaPage from '../pages/OdontogramaPage';
 import App from '../App';
 import HomePage from '../pages/HomePage';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -143,6 +144,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute requiredRole="odontologo">
         <SeguimientoPacientePage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/odontograma/:pacienteId',
+    element: (
+      <ProtectedRoute requiredRole="odontologo">
+        <OdontogramaPage />
       </ProtectedRoute>
     ),
   },

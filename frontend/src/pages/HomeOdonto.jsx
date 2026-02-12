@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
 import Button from '../components/Button';
-import { Calendar as CalendarIcon, LogOut, ChevronLeft, ChevronRight, Users, User } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { authService } from '../api/authService';
 import { getMisTurnos } from '../api/turnoService';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
-import ConfirmLogoutModal from '../components/ConfirmLogoutModal';
 
 const HomeOdonto = () => {
   const navigate = useNavigate();
@@ -23,7 +22,6 @@ const HomeOdonto = () => {
   // Estados de paginación
   const [paginaReservados, setPaginaReservados] = useState(1);
   const [paginaDisponibles, setPaginaDisponibles] = useState(1);
-  const [mostrarLogoutModal, setMostrarLogoutModal] = useState(false);
   const ITEMS_POR_PAGINA = 3;
 
   useEffect(() => {
@@ -51,15 +49,6 @@ const HomeOdonto = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    setMostrarLogoutModal(true);
-  };
-
-  const confirmarLogout = () => {
-    authService.logout();
-    navigate('/');
   };
 
   const formatearFecha = (fechaHora) => {
@@ -170,16 +159,6 @@ const HomeOdonto = () => {
               <p className="text-gray-600 mt-1">
                 Bienvenido, Dr. {userData.first_name} {userData.last_name}
               </p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => navigate('/mi-perfil-odontologo')}>
-                <User className="w-5 h-5 mr-2 inline" />
-                Mi Perfil
-              </Button>
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="w-5 h-5 mr-2 inline" />
-                Cerrar Sesión
-              </Button>
             </div>
           </div>
         </div>
@@ -417,12 +396,6 @@ const HomeOdonto = () => {
         </div>
       </main>
       <Footer />
-      
-      <ConfirmLogoutModal 
-        isOpen={mostrarLogoutModal}
-        onConfirm={confirmarLogout}
-        onCancel={() => setMostrarLogoutModal(false)}
-      />
     </div>
   );
 };

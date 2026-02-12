@@ -155,3 +155,102 @@ class SeguimientoArchivo(models.Model):
         return f"{self.get_tipo_display()} - {self.nombre_original or 'Sin nombre'}"
 
 
+class RegistroDental(models.Model):
+    """Modelo para el registro de cada pieza dental del paciente (Odontograma)"""
+    
+    # Numeración FDI (Federación Dental Internacional)
+    # Cuadrante 1 (superior derecho): 11-18
+    # Cuadrante 2 (superior izquierdo): 21-28
+    # Cuadrante 3 (inferior izquierdo): 31-38
+    # Cuadrante 4 (inferior derecho): 41-48
+    PIEZAS_DENTALES = [
+        # Cuadrante 1 - Superior Derecho
+        (11, '11 - Incisivo Central Superior Derecho'),
+        (12, '12 - Incisivo Lateral Superior Derecho'),
+        (13, '13 - Canino Superior Derecho'),
+        (14, '14 - Primer Premolar Superior Derecho'),
+        (15, '15 - Segundo Premolar Superior Derecho'),
+        (16, '16 - Primer Molar Superior Derecho'),
+        (17, '17 - Segundo Molar Superior Derecho'),
+        (18, '18 - Tercer Molar Superior Derecho'),
+        # Cuadrante 2 - Superior Izquierdo
+        (21, '21 - Incisivo Central Superior Izquierdo'),
+        (22, '22 - Incisivo Lateral Superior Izquierdo'),
+        (23, '23 - Canino Superior Izquierdo'),
+        (24, '24 - Primer Premolar Superior Izquierdo'),
+        (25, '25 - Segundo Premolar Superior Izquierdo'),
+        (26, '26 - Primer Molar Superior Izquierdo'),
+        (27, '27 - Segundo Molar Superior Izquierdo'),
+        (28, '28 - Tercer Molar Superior Izquierdo'),
+        # Cuadrante 3 - Inferior Izquierdo
+        (31, '31 - Incisivo Central Inferior Izquierdo'),
+        (32, '32 - Incisivo Lateral Inferior Izquierdo'),
+        (33, '33 - Canino Inferior Izquierdo'),
+        (34, '34 - Primer Premolar Inferior Izquierdo'),
+        (35, '35 - Segundo Premolar Inferior Izquierdo'),
+        (36, '36 - Primer Molar Inferior Izquierdo'),
+        (37, '37 - Segundo Molar Inferior Izquierdo'),
+        (38, '38 - Tercer Molar Inferior Izquierdo'),
+        # Cuadrante 4 - Inferior Derecho
+        (41, '41 - Incisivo Central Inferior Derecho'),
+        (42, '42 - Incisivo Lateral Inferior Derecho'),
+        (43, '43 - Canino Inferior Derecho'),
+        (44, '44 - Primer Premolar Inferior Derecho'),
+        (45, '45 - Segundo Premolar Inferior Derecho'),
+        (46, '46 - Primer Molar Inferior Derecho'),
+        (47, '47 - Segundo Molar Inferior Derecho'),
+        (48, '48 - Tercer Molar Inferior Derecho'),
+    ]
+    
+    ESTADO_CHOICES = [
+        ('sano', 'Sano'),
+        ('caries', 'Caries'),
+        ('obturado', 'Obturado'),
+        ('extraccion', 'Extracción indicada'),
+        ('ausente', 'Ausente'),
+        ('corona', 'Corona'),
+        ('endodoncia', 'Endodoncia'),
+        ('protesis', 'Prótesis'),
+        ('implante', 'Implante'),
+        ('otro', 'Otro'),
+    ]
+    
+    paciente = models.ForeignKey(
+        Paciente,
+        on_delete=models.CASCADE,
+        related_name='registros_dentales',
+        verbose_name='Paciente'
+    )
+    odontologo = models.ForeignKey(
+        'odontologos.Odontologo',
+        on_delete=models.CASCADE,
+        related_name='registros_dentales_realizados',
+        verbose_name='Odontólogo'
+    )
+    pieza_dental = models.IntegerField(
+        choices=PIEZAS_DENTALES,
+        verbose_name='Pieza Dental'
+    )
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default='sano',
+        verbose_name='Estado'
+    )
+    descripcion = models.TextField(
+        verbose_name='Descripción/Observaciones'
+    )
+    fecha_registro = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Fecha de registro'
+    )
+    
+    class Meta:
+        verbose_name = 'Registro Dental'
+        verbose_name_plural = 'Registros Dentales'
+        ordering = ['-fecha_registro']
+    
+    def __str__(self):
+        return f"Pieza {self.pieza_dental} - {self.paciente.get_nombre_completo()} - {self.fecha_registro.strftime('%d/%m/%Y')}"
+
+

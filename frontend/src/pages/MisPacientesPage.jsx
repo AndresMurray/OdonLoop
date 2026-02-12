@@ -6,7 +6,7 @@ import Input from '../components/Input';
 import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { ArrowLeft, Search, User, FileText } from 'lucide-react';
+import { ArrowLeft, Search, User, FileText, Smile } from 'lucide-react';
 import { getMisPacientes } from '../api/seguimientoService';
 
 const MisPacientesPage = () => {
@@ -54,6 +54,10 @@ const MisPacientesPage = () => {
 
   const handleVerSeguimiento = (pacienteId) => {
     navigate(`/seguimiento-paciente/${pacienteId}`);
+  };
+
+  const handleVerOdontograma = (pacienteId) => {
+    navigate(`/odontograma/${pacienteId}`);
   };
 
   const formatearFecha = (fecha) => {
@@ -238,17 +242,30 @@ const MisPacientesPage = () => {
                           </div>
                         </div>
                       </div>
-                      <Button 
-                        variant="primary"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleVerSeguimiento(paciente.id);
-                        }}
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Ver Seguimiento
-                      </Button>
+                      <div className="flex flex-col gap-2">
+                        <Button 
+                          variant="primary"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleVerSeguimiento(paciente.id);
+                          }}
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Seguimiento
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleVerOdontograma(paciente.id);
+                          }}
+                        >
+                          <Smile className="w-4 h-4 mr-2" />
+                          Odontograma
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

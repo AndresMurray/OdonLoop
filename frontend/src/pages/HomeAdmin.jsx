@@ -4,18 +4,15 @@ import { Card, CardContent } from '../components/Card';
 import Button from '../components/Button';
 import { 
   Users,
-  LogOut,
   Settings
 } from 'lucide-react';
 import { authService } from '../api/authService';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import ConfirmLogoutModal from '../components/ConfirmLogoutModal';
 
 const HomeAdmin = () => {
   const navigate = useNavigate();
   const [userData] = useState(() => authService.getUserData());
-  const [mostrarLogoutModal, setMostrarLogoutModal] = useState(false);
 
   useEffect(() => {
     if (!userData) {
@@ -27,15 +24,6 @@ const HomeAdmin = () => {
       return;
     }
   }, [navigate, userData]);
-
-  const handleLogout = () => {
-    setMostrarLogoutModal(true);
-  };
-
-  const confirmarLogout = () => {
-    authService.logout();
-    navigate('/');
-  };
 
   if (!userData) {
     return null;
@@ -56,12 +44,6 @@ const HomeAdmin = () => {
               <p className="text-gray-600 mt-1">
                 Bienvenido, {userData.first_name} {userData.last_name}
               </p>
-            </div>
-            <div>
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="w-5 h-5 mr-2 inline" />
-                Cerrar Sesión
-              </Button>
             </div>
           </div>
         </div>
@@ -118,12 +100,6 @@ const HomeAdmin = () => {
       </main>
       
       <Footer />
-      
-      <ConfirmLogoutModal 
-        isOpen={mostrarLogoutModal}
-        onConfirm={confirmarLogout}
-        onCancel={() => setMostrarLogoutModal(false)}
-      />
     </div>
   );
 };

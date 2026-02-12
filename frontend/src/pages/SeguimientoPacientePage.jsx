@@ -7,7 +7,7 @@ import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
-import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter, Smile } from 'lucide-react';
 import { getSeguimientosPorPaciente, crearSeguimiento } from '../api/seguimientoService';
 import { getPacienteById } from '../api/userService';
 
@@ -296,13 +296,22 @@ const SeguimientoPacientePage = () => {
                 </p>
               </div>
             </div>
-            <Button
-              variant="primary"
-              onClick={() => setMostrarFormulario(!mostrarFormulario)}
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              {mostrarFormulario ? 'Cancelar' : 'Nuevo Seguimiento'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/odontograma/${pacienteId}`)}
+              >
+                <Smile className="w-5 h-5 mr-2" />
+                Odontograma
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => setMostrarFormulario(!mostrarFormulario)}
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                {mostrarFormulario ? 'Cancelar' : 'Nuevo Seguimiento'}
+              </Button>
+            </div>
           </div>
         </div>
       </header>
