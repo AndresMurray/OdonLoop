@@ -52,16 +52,17 @@ const HomeOdonto = () => {
   };
 
   const formatearFecha = (fechaHora) => {
+    // El backend ya envía la fecha en hora local de Argentina (sin timezone)
+    // Solo necesitamos parsearla y formatearla directamente
     const fecha = new Date(fechaHora);
     
-    // Extraer componentes UTC para evitar problemas de zona horaria
-    const dia = String(fecha.getUTCDate()).padStart(2, '0');
-    const mes = String(fecha.getUTCMonth() + 1).padStart(2, '0');
-    const año = fecha.getUTCFullYear();
-    const horas = String(fecha.getUTCHours()).padStart(2, '0');
-    const minutos = String(fecha.getUTCMinutes()).padStart(2, '0');
+    const horaStr = String(fecha.getHours()).padStart(2, '0');
+    const minStr = String(fecha.getMinutes()).padStart(2, '0');
+    const diaStr = String(fecha.getDate()).padStart(2, '0');
+    const mesStr = String(fecha.getMonth() + 1).padStart(2, '0');
+    const año = fecha.getFullYear();
     
-    return `${horas}:${minutos} - ${dia}/${mes}/${año}`;
+    return `${horaStr}:${minStr} - ${diaStr}/${mesStr}/${año}`;
   };
 
   const formatearFechaLarga = (fechaISO) => {

@@ -90,6 +90,12 @@ const RegisterPacientePage = () => {
         obra_social_otra: mostrarOtraOS ? formValues.obra_social_otra : null,
       };
       
+      // Eliminar campos vacíos/null para evitar errores del backend
+      if (!dataToSend.obra_social) delete dataToSend.obra_social;
+      if (!dataToSend.obra_social_otra) delete dataToSend.obra_social_otra;
+      
+      console.log('📤 Datos a enviar:', dataToSend);
+      
       await userService.register(dataToSend);
       setAlert({
         type: 'success',

@@ -28,13 +28,22 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     
     # Campos adicionales para pacientes
     dni = serializers.CharField(max_length=20, required=False, allow_blank=True)
-    obra_social = serializers.IntegerField(required=False, allow_null=True)
+    obra_social = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
     obra_social_otra = serializers.CharField(max_length=200, required=False, allow_blank=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'password2', 'first_name', 'last_name', 
                   'telefono', 'fecha_nacimiento', 'tipo_usuario', 'dni', 'obra_social', 'obra_social_otra']
+
+    def validate_obra_social(self, value):
+        """Convertir a entero o None"""
+        if not value or value == '':
+            return None
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("Debe ser un número válido")
 
     def validate_email(self, value):
         """Validar que el email no exista"""
