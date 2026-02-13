@@ -219,12 +219,12 @@ class TurnoViewSet(viewsets.ModelViewSet):
         
         turno.cancelar()
         
-        # Enviar email si el turno tiene un paciente registrado
+        # Enviar email si el turno tiene un paciente registrado CON EMAIL
         email_sent = False
         is_manual_booking = False
         
-        if turno.paciente and turno.paciente.user:
-            # Es un turno con paciente registrado, enviar email
+        if turno.paciente and turno.paciente.user and turno.paciente.user.email:
+            # Es un turno con paciente registrado que tiene email, enviar email
             try:
                 paciente_email = turno.paciente.user.email
                 nombre_completo = turno.paciente.get_nombre_completo()
@@ -258,8 +258,12 @@ class TurnoViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 # Log del error pero no falla la cancelación
                 print(f"\n❌ ERROR al enviar email: {str(e)}\n")
+        elif turno.paciente and turno.paciente.user:
+            # Es un paciente registrado pero sin email
+            is_manual_booking = True
+            print(f"\n⚠️ PACIENTE SIN EMAIL: {turno.paciente.get_nombre_completo()} - No se envió email de cancelación\n")
         else:
-            # Es una reserva manual
+            # Es una reserva manual (sin paciente registrado)
             is_manual_booking = True
         
         serializer = TurnoSerializer(turno)

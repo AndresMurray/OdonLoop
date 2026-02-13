@@ -362,17 +362,22 @@ const GestionTurnosOdonto = () => {
       title = 'Cancelar turno disponible';
       message = 'Este turno se sacará de la lista de turnos disponibles.\n\n¿Desea continuar con la cancelación?';
       variant = 'info';
-    } else if (turno.nombre_paciente_manual && turno.apellido_paciente_manual) {
-      // Turno reservado manualmente
-      const nombreCompleto = `${turno.nombre_paciente_manual} ${turno.apellido_paciente_manual}`;
-      title = 'Cancelar turno - Reserva manual';
-      message = `⚠️ Este turno está reservado para: ${nombreCompleto}\n\nIMPORTANTE: Deberá avisar manualmente al paciente sobre la cancelación.\n\n¿Desea continuar?`;
-      variant = 'warning';
-    } else if (turno.paciente) {
-      // Turno con paciente registrado
+    } else if (turno.paciente && turno.paciente.nombre_completo && turno.paciente.email) {
+      // Turno con paciente registrado que TIENE email
       title = 'Cancelar turno';
       message = `Este turno está reservado para: ${turno.paciente.nombre_completo}\n\n✉️ Se enviará automáticamente un email al paciente notificando la cancelación.\n\n¿Desea continuar?`;
       variant = 'danger';
+    } else if (turno.paciente && turno.paciente.nombre_completo) {
+      // Turno con paciente registrado pero SIN email (creado manualmente)
+      title = 'Cancelar turno';
+      message = `⚠️ Este turno está reservado para: ${turno.paciente.nombre_completo}\n\nIMPORTANTE: Este paciente no tiene email registrado. Deberá contactarse con el paciente para notificar la cancelación.\n\n¿Desea continuar?`;
+      variant = 'warning';
+    } else if (turno.nombre_paciente_manual && turno.apellido_paciente_manual) {
+      // Turno con reserva manual antigua (campos nombre_paciente_manual)
+      const nombreCompleto = `${turno.nombre_paciente_manual} ${turno.apellido_paciente_manual}`;
+      title = 'Cancelar turno - Reserva manual';
+      message = `⚠️ Este turno está reservado para: ${nombreCompleto}\n\nIMPORTANTE: Deberá contactarse con el paciente para notificar la cancelación.\n\n¿Desea continuar?`;
+      variant = 'warning';
     } else {
       // Caso por defecto
       title = 'Cancelar turno';
@@ -402,8 +407,18 @@ const GestionTurnosOdonto = () => {
       
       // Usar la respuesta del backend para determinar el mensaje de éxito
       if (response.is_manual_booking) {
-        const nombreCompleto = `${response.nombre_paciente_manual} ${response.apellido_paciente_manual}`.trim();
-        setSuccess(`⚠️ Turno cancelado. IMPORTANTE: Debes avisar manualmente al paciente ${nombreCompleto} sobre la cancelación.`);
+        // Obtener el nombre del paciente según qué campos estén disponibles
+        let nombreCompleto = '';
+        if (response.nombre_paciente_manual && response.apellido_paciente_manual) {
+          // Reserva manual antigua
+          nombreCompleto = `${response.nombre_paciente_manual} ${response.apellido_paciente_manual}`.trim();
+        } else if (response.paciente && response.paciente.nombre_completo) {
+          // Paciente registrado sin email
+          nombreCompleto = response.paciente.nombre_completo;
+        } else {
+          nombreCompleto = 'el paciente';
+        }
+        setSuccess(`⚠️ Turno cancelado. IMPORTANTE: Debes avisar manualmente a ${nombreCompleto} sobre la cancelación.`);
       } else if (response.email_sent) {
         setSuccess('✓ Turno cancelado exitosamente. Se ha enviado un email al paciente notificando la cancelación.');
       } else {
