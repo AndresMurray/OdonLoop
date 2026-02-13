@@ -5,6 +5,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q, Max
+from django.http import HttpResponse
+import requests
+import mimetypes
+import os
 from .models import Paciente, ObraSocial, Seguimiento, RegistroDental
 from .serializers import (
     PacienteSerializer, PacienteCreateSerializer, ObraSocialSerializer,
@@ -385,3 +389,39 @@ class RegistroDentalViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return RegistroDentalCreateSerializer
         return RegistroDentalSerializer
+
+
+class DescargarArchivoView(APIView):
+    """Proxy para descargar archivos de Cloudinary evitando problemas de CORS"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        url = request.query_params.get('url', '')
+        
+        if not url or 'cloudinary.com' not in url:
+            return Response({'error': 'URL no válida'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Descargar el archivo desde Cloudinary (server-side, sin CORS)
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            
+            # Obtener nombre del archivo de la URL
+            nombre_archivo = os.path.basename(url.split('?')[0])
+            
+            # Detectar content-type
+            content_type = response.headers.get('Content-Type', 'application/octet-stream')
+            if nombre_archivo.lower().endswith('.pdf'):
+                content_type = 'application/pdf'
+            
+            # Crear respuesta con el archivo
+            http_response = HttpResponse(response.content, content_type=content_type)
+            http_response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
+            http_response['Content-Length'] = len(response.content)
+            return http_response
+            
+        except requests.exceptions.RequestException as e:
+            return Response(
+                {'error': f'Error al descargar archivo: {str(e)}'}, 
+                status=status.HTTP_502_BAD_GATEWAY
+            )

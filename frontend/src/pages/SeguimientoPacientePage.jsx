@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
 import Button from '../components/Button';
@@ -7,7 +7,7 @@ import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
-import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter, Smile } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter, Smile, Download } from 'lucide-react';
 import { getSeguimientosPorPaciente, crearSeguimiento } from '../api/seguimientoService';
 import { getPacienteById } from '../api/userService';
 
@@ -44,6 +44,7 @@ const SeguimientoPacientePage = () => {
   });
   const [archivosSeleccionados, setArchivosSeleccionados] = useState([]);
   const [subiendoArchivo, setSubiendoArchivo] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     cargarPaciente();
@@ -102,88 +103,67 @@ const SeguimientoPacientePage = () => {
     }));
   };
 
-  const handleFileUpload = (tipoArchivo = 'auto') => {
-    // Abrir el widget de Cloudinary para múltiples archivos
-    if (window.cloudinary) {
-      const isImage = tipoArchivo === 'imagen';
-      const widget = window.cloudinary.createUploadWidget(
-        {
-          cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'demo',
-          uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_default',
-          sources: ['local', 'camera'],
-          multiple: true,
-          maxFileSize: 10000000, // 10MB
-          clientAllowedFormats: isImage 
-            ? ['jpg', 'jpeg', 'png', 'gif', 'webp']
-            : ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'txt'],
-          resourceType: isImage ? 'image' : 'auto',
-          folder: 'seguimientos',
-          cropping: false,
-          showSkipCropButton: false,
-          language: 'es',
-          text: {
-            es: {
-              or: 'o',
-              back: 'Atrás',
-              close: 'Cerrar',
-              no_results: 'Sin resultados',
-              search_placeholder: 'Buscar archivos',
-              about_uw: 'Sobre el widget de carga',
-              menu: {
-                files: 'Mis archivos',
-                web: 'Dirección web',
-                camera: 'Cámara'
-              },
-              local: {
-                browse: 'Buscar',
-                dd_title_single: 'Arrastra y suelta archivos aquí',
-                drop_title_single: 'Suelta los archivos para cargar'
-              }
-            }
-          }
-        },
-        (error, result) => {
-          if (error) {
-            console.error('Error al subir archivo:', error);
-            setAlert({
-              type: 'error',
-              message: 'Error al subir archivo',
-              detail: error.message
-            });
-            setSubiendoArchivo(false);
-          }
-          
-          if (result && result.event === 'success') {
-            const nuevoArchivo = {
-              tipo: result.info.resource_type === 'image' ? 'imagen' : 'documento',
-              url: result.info.secure_url,
-              nombre_original: result.info.original_filename,
-              public_id: result.info.public_id
-            };
-            
-            setArchivosSeleccionados(prev => [...prev, nuevoArchivo]);
-            
-            setAlert({
-              type: 'success',
-              message: 'Archivo cargado exitosamente'
-            });
-          }
-          
-          if (result && result.event === 'queues-end') {
-            setSubiendoArchivo(false);
-          }
-        }
-      );
-      
-      setSubiendoArchivo(true);
-      widget.open();
-    } else {
-      setAlert({
-        type: 'error',
-        message: 'Error',
-        detail: 'El widget de Cloudinary no está disponible'
-      });
+  const handleFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFilesSelected = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+      setAlert({ type: 'error', message: 'Cloudinary no configurado', detail: 'Configurar VITE_CLOUDINARY_CLOUD_NAME y VITE_CLOUDINARY_UPLOAD_PRESET en .env' });
+      return;
     }
+
+    setSubiendoArchivo(true);
+
+    for (const file of files) {
+      try {
+        const esImagen = file.type.startsWith('image/');
+        // Usar 'image' para imágenes y 'raw' para documentos/PDFs
+        const resourceType = esImagen ? 'image' : 'raw';
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', uploadPreset);
+        formData.append('folder', 'seguimientos');
+
+        // Subir directamente a la API REST de Cloudinary con el resource_type correcto en la URL
+        const response = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+          { method: 'POST', body: formData }
+        );
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error?.message || 'Error al subir archivo');
+        }
+
+        const data = await response.json();
+        console.log('✅ Archivo subido:', { url: data.secure_url, resource_type: data.resource_type, format: data.format });
+
+        const nuevoArchivo = {
+          tipo: esImagen ? 'imagen' : 'documento',
+          url: data.secure_url,
+          nombre_original: file.name,
+          public_id: data.public_id
+        };
+
+        setArchivosSeleccionados(prev => [...prev, nuevoArchivo]);
+        setAlert({ type: 'success', message: `Archivo cargado: ${file.name}` });
+      } catch (err) {
+        console.error('❌ Error subiendo archivo:', err);
+        setAlert({ type: 'error', message: `Error al subir ${file.name}`, detail: err.message });
+      }
+    }
+
+    setSubiendoArchivo(false);
+    // Limpiar el input para poder subir el mismo archivo de nuevo
+    e.target.value = '';
   };
 
   const eliminarArchivo = (index) => {
@@ -390,57 +370,78 @@ const SeguimientoPacientePage = () => {
                       Archivos e Imágenes (Opcional)
                     </label>
                     <div className="space-y-3">
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => handleFileUpload('imagen')}
-                          disabled={subiendoArchivo}
-                        >
-                          <ImageIcon className="w-5 h-5 mr-2" />
-                          {subiendoArchivo ? 'Subiendo...' : 'Agregar Imagen'}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => handleFileUpload('auto')}
-                          disabled={subiendoArchivo}
-                        >
-                          <File className="w-5 h-5 mr-2" />
-                          Agregar Archivo
-                        </Button>
-                      </div>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFilesSelected}
+                        multiple
+                        accept="image/*,.pdf,.doc,.docx,.txt"
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleFileUpload}
+                        disabled={subiendoArchivo}
+                        className="w-full border-2 border-dashed border-emerald-300 rounded-lg p-4 hover:border-emerald-500 hover:bg-emerald-50 transition-all duration-200 flex flex-col items-center justify-center gap-2 text-emerald-600 hover:text-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {subiendoArchivo ? (
+                          <>
+                            <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                            <span className="text-sm font-medium">Subiendo archivos...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-6 h-6" />
+                            <span className="text-sm font-medium">Agregar Archivos o Imágenes</span>
+                            <span className="text-xs text-gray-400">JPG, PNG, PDF, DOC, DOCX, TXT</span>
+                          </>
+                        )}
+                      </button>
                       
                       {archivosSeleccionados.length > 0 && (
-                        <div className="grid grid-cols-2 gap-3">
-                          {archivosSeleccionados.map((archivo, index) => (
-                            <div 
-                              key={index}
-                              className="relative border rounded-lg p-3 bg-gray-50 group"
-                            >
-                              {archivo.tipo === 'imagen' ? (
-                                <img 
-                                  src={archivo.url} 
-                                  alt={archivo.nombre_original} 
-                                  className="w-full h-24 object-cover rounded mb-2"
-                                />
-                              ) : (
-                                <div className="w-full h-24 bg-blue-100 rounded mb-2 flex items-center justify-center">
-                                  <File className="w-10 h-10 text-blue-600" />
-                                </div>
-                              )}
-                              <p className="text-xs text-gray-600 truncate">
-                                {archivo.nombre_original}
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => eliminarArchivo(index)}
-                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        <div className="grid grid-cols-3 gap-2">
+                          {archivosSeleccionados.map((archivo, index) => {
+                            const esImg = archivo.tipo === 'imagen' && 
+                              !archivo.nombre_original?.toLowerCase().endsWith('.pdf');
+                            
+                            return (
+                              <div 
+                                key={index}
+                                className="relative border rounded-lg p-2 bg-gray-50 group"
                               >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ))}
+                                {esImg ? (
+                                  <img 
+                                    src={archivo.url} 
+                                    alt={archivo.nombre_original} 
+                                    className="w-full h-16 object-cover rounded mb-1"
+                                  />
+                                ) : (
+                                  <div className="w-full h-16 bg-red-50 rounded mb-1 flex flex-col items-center justify-center">
+                                    <FileText className="w-6 h-6 text-red-500" />
+                                    <span className="text-xs text-red-600 font-semibold mt-1">
+                                      {(() => {
+                                        const extension = archivo.nombre_original?.split('.').pop()?.toUpperCase();
+                                        if (extension === 'PDF') return 'PDF';
+                                        if (['DOC', 'DOCX'].includes(extension)) return 'DOC';
+                                        if (['TXT'].includes(extension)) return 'TXT';
+                                        return 'ARCHIVO';
+                                      })()}
+                                    </span>
+                                  </div>
+                                )}
+                                <p className="text-xs text-gray-600 truncate">
+                                  {archivo.nombre_original}
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => eliminarArchivo(index)}
+                                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -474,7 +475,8 @@ const SeguimientoPacientePage = () => {
             </Card>
           )}
 
-          {/* Lista de seguimientos */}
+          {/* Lista de seguimientos - se oculta cuando se muestra el formulario */}
+          {!mostrarFormulario && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -611,6 +613,7 @@ const SeguimientoPacientePage = () => {
               )}
             </CardContent>
           </Card>
+          )}
 
         </div>
       </main>
@@ -655,28 +658,78 @@ const SeguimientoPacientePage = () => {
                     Archivos adjuntos ({seguimientoSeleccionado.archivos.length}):
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {seguimientoSeleccionado.archivos.map((archivo) => (
-                      <div 
-                        key={archivo.id}
-                        className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                        onClick={() => window.open(archivo.url, '_blank')}
-                      >
-                        {archivo.tipo === 'imagen' ? (
-                          <img 
-                            src={archivo.url}
-                            alt={archivo.nombre_original || 'Imagen'}
-                            className="w-full h-48 object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-48 bg-blue-50 flex flex-col items-center justify-center p-4">
-                            <File className="w-16 h-16 text-blue-600 mb-3" />
-                            <span className="text-sm text-gray-600 text-center break-words">
-                              {archivo.nombre_original || 'Documento'}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                    {seguimientoSeleccionado.archivos.map((archivo) => {
+                      // Detectar si es PDF por extensión o URL
+                      const esPDF = archivo.nombre_original?.toLowerCase().endsWith('.pdf') || 
+                                   archivo.url.toLowerCase().includes('.pdf');
+                      const esDoc = archivo.tipo === 'documento' || esPDF;
+                      const esImagen = archivo.tipo === 'imagen' && !esPDF;
+
+                      const handleOpenFile = async () => {
+                        if (esImagen) {
+                          window.open(archivo.url, '_blank');
+                          return;
+                        }
+                        
+                        // Para PDFs y documentos: descargar a través del backend (evita CORS)
+                        try {
+                          const token = localStorage.getItem('access_token');
+                          const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                          const proxyUrl = `${API_URL}/api/pacientes/descargar-archivo/?url=${encodeURIComponent(archivo.url)}`;
+                          
+                          const response = await fetch(proxyUrl, {
+                            headers: {
+                              'Authorization': `Bearer ${token}`
+                            }
+                          });
+                          
+                          if (!response.ok) throw new Error('Error en la descarga');
+                          
+                          const blob = await response.blob();
+                          const blobUrl = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = blobUrl;
+                          link.download = archivo.nombre_original || 'documento.pdf';
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(blobUrl);
+                        } catch (err) {
+                          console.error('Error descargando archivo:', err);
+                          window.open(archivo.url, '_blank');
+                        }
+                      };
+
+                      return (
+                        <div 
+                          key={archivo.id}
+                          className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                          onClick={handleOpenFile}
+                        >
+                          {esImagen ? (
+                            <img 
+                              src={archivo.url}
+                              alt={archivo.nombre_original || 'Imagen'}
+                              className="w-full h-48 object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-48 bg-red-50 flex flex-col items-center justify-center p-4">
+                              <FileText className="w-12 h-12 text-red-500 mb-2" />
+                              <span className="text-xs font-semibold text-red-600 uppercase mb-1">
+                                {esPDF ? 'PDF' : 'DOC'}
+                              </span>
+                              <span className="text-xs text-gray-600 text-center break-words line-clamp-2">
+                                {archivo.nombre_original || 'Documento'}
+                              </span>
+                              <div className="flex items-center gap-1 mt-2 text-blue-600">
+                                <Download className="w-4 h-4" />
+                                <span className="text-xs font-medium">Descargar</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
