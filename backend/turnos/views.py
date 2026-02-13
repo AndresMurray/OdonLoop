@@ -229,24 +229,21 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 paciente_email = turno.paciente.user.email
                 nombre_completo = turno.paciente.get_nombre_completo()
                 fecha_formateada = turno.fecha_hora.strftime('%d/%m/%Y %H:%M')
+                nombre_odontologo = turno.odontologo.get_nombre_completo()
                 
                 print("\n" + "="*80)
                 print("📧 ENVIANDO EMAIL DE CANCELACIÓN")
                 print(f"Para: {paciente_email}")
                 print(f"Paciente: {nombre_completo}")
                 print(f"Turno: {fecha_formateada}")
+                print(f"Odontólogo: {nombre_odontologo}")
                 print("="*80 + "\n")
                 
                 send_mail(
                     subject=f'Cancelación de Turno - {fecha_formateada}',
                     message=f'Estimado/a {nombre_completo},\n\n'
-                            f'Le informamos que su turno programado para el día {fecha_formateada} ha sido cancelado.\n\n'
-                            f'Detalles de la cancelación:\n'
-                            f'- Fecha y hora original: {fecha_formateada}\n'
-                            f'- Estado: Cancelado\n\n'
-                            f'Si desea reprogramar su cita, por favor contáctenos a la brevedad.\n\n'
-                            f'Teléfono del consultorio: [AGREGAR TELEFONO]\n'
-                            f'WhatsApp: [AGREGAR WHATSAPP]\n\n'
+                            f'Su turno con el Dr./Dra. {nombre_odontologo} ha sido cancelado.\n\n'
+                            f'Por favor, comuníquese con su secretaria para solucionarlo o saque un nuevo turno.\n\n'
                             f'Atentamente,\n'
                             f'Sistema Odontológico\n'
                             f'Este es un mensaje automático, por favor no responder a este email.',

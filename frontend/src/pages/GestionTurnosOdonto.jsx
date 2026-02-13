@@ -989,65 +989,6 @@ const GestionTurnosOdonto = () => {
                                 🔍 Buscar o Crear Paciente
                               </Button>
                             )}
-                            
-                            {/* Opción de Reserva Manual (solo si no hay paciente registrado) */}
-                            {!turnoEditando.paciente_id && (
-                              <>
-                                <div className="flex items-center gap-3 mb-3">
-                                  <label className="flex items-center cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={turnoEditando.estado === 'reservado'}
-                                      onChange={(e) => setTurnoEditando({ 
-                                        ...turnoEditando, 
-                                        estado: e.target.checked ? 'reservado' : 'disponible',
-                                        nombre_paciente_manual: e.target.checked ? turnoEditando.nombre_paciente_manual : '',
-                                        apellido_paciente_manual: e.target.checked ? turnoEditando.apellido_paciente_manual : ''
-                                      })}
-                                      className="mr-2 h-4 w-4 text-blue-600 rounded"
-                                    />
-                                    <span className="text-sm font-medium text-gray-700">O reservar manualmente </span>
-                                  </label>
-                                </div>
-                                
-                                {turnoEditando.estado === 'reservado' && (
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div>
-                                      <label className="block text-xs font-medium text-gray-700 mb-1">Nombre del Paciente *</label>
-                                      <input
-                                        type="text"
-                                        value={turnoEditando.nombre_paciente_manual}
-                                        onChange={(e) => setTurnoEditando({ ...turnoEditando, nombre_paciente_manual: e.target.value })}
-                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
-                                        placeholder="Nombre"
-                                        required
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="block text-xs font-medium text-gray-700 mb-1">Apellido del Paciente *</label>
-                                      <input
-                                        type="text"
-                                        value={turnoEditando.apellido_paciente_manual}
-                                        onChange={(e) => setTurnoEditando({ ...turnoEditando, apellido_paciente_manual: e.target.value })}
-                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
-                                        placeholder="Apellido"
-                                        required
-                                      />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                      <label className="block text-xs font-medium text-gray-700 mb-1">Teléfono (opcional)</label>
-                                      <input
-                                        type="tel"
-                                        value={turnoEditando.telefono_paciente_manual}
-                                        onChange={(e) => setTurnoEditando({ ...turnoEditando, telefono_paciente_manual: e.target.value })}
-                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
-                                        placeholder="Teléfono de contacto"
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-                              </>
-                            )}
                           </div>
                           
                           <div className="flex gap-2">
