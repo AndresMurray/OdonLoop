@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from datetime import timedelta
+from zoneinfo import ZoneInfo
 from .models import Turno
 from pacientes.models import Paciente
 from odontologos.models import Odontologo
@@ -39,7 +40,6 @@ class TurnoSerializer(serializers.ModelSerializer):
     odontologo = OdontologoTurnoSerializer(read_only=True)
     paciente = PacienteTurnoSerializer(read_only=True)
     esta_disponible = serializers.BooleanField(read_only=True)
-    fecha_hora = serializers.SerializerMethodField()
     
     class Meta:
         model = Turno
@@ -49,18 +49,6 @@ class TurnoSerializer(serializers.ModelSerializer):
             'nombre_paciente_manual', 'apellido_paciente_manual', 'telefono_paciente_manual',
             'fecha_creacion', 'fecha_actualizacion'
         ]
-    
-    def get_fecha_hora(self, obj):
-        """Retornar fecha_hora en zona horaria local (Argentina) sin conversión"""
-        from django.utils import timezone
-        from zoneinfo import ZoneInfo
-        
-        # Convertir de UTC a zona horaria local
-        tz = ZoneInfo('America/Argentina/Buenos_Aires')
-        fecha_local = obj.fecha_hora.astimezone(tz)
-        
-        # Retornar como string ISO pero sin el offset de timezone
-        return fecha_local.strftime('%Y-%m-%dT%H:%M:%S')
 
 
 class TurnoCreateSerializer(serializers.ModelSerializer):
@@ -72,13 +60,11 @@ class TurnoCreateSerializer(serializers.ModelSerializer):
     
     def validate_fecha_hora(self, value):
         """Validar que la fecha no sea en el pasado"""
-        # Si value es naive, lo hacemos aware con la zona horaria actual
-        if timezone.is_naive(value):
-            value = timezone.make_aware(value)
+        tz_bsas = ZoneInfo('America/Argentina/Buenos_Aires')
         
-        # Siempre asegurar que retornamos un datetime aware
+        # Si value es naive, asignarle zona horaria de Buenos Aires
         if timezone.is_naive(value):
-            value = timezone.make_aware(value)
+            value = value.replace(tzinfo=tz_bsas)
         
         # Comparar solo hasta minutos para evitar problemas con segundos
         now = timezone.now().replace(second=0, microsecond=0)

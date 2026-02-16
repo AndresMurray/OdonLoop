@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.core.mail import send_mail
 from django.conf import settings
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from .models import Turno
 from .serializers import (
     TurnoSerializer, 
@@ -419,12 +420,14 @@ class TurnoViewSet(viewsets.ModelViewSet):
             # Verificar si el día de la semana está en la lista
             if fecha_actual.weekday() in data['dias_semana']:
                 # Generar turnos para ese día
-                # Hacer los datetimes aware desde el principio
+                # Crear datetimes con zona horaria de Buenos Aires explícita
+                tz_bsas = ZoneInfo('America/Argentina/Buenos_Aires')
                 hora_actual_naive = datetime.combine(fecha_actual, data['hora_inicio'])
                 hora_fin_naive = datetime.combine(fecha_actual, data['hora_fin'])
                 
-                hora_actual = timezone.make_aware(hora_actual_naive)
-                hora_fin = timezone.make_aware(hora_fin_naive)
+                # Asignar zona horaria explícitamente
+                hora_actual = hora_actual_naive.replace(tzinfo=tz_bsas)
+                hora_fin = hora_fin_naive.replace(tzinfo=tz_bsas)
                 
                 while hora_actual < hora_fin:
                     # Calcular turno_inicio y turno_fin (ya son aware)
