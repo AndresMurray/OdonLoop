@@ -53,10 +53,10 @@ class TurnoSerializer(serializers.ModelSerializer):
     def get_fecha_hora(self, obj):
         """Retornar fecha_hora en zona horaria local (Argentina) sin conversión"""
         from django.utils import timezone
-        import pytz
+        from zoneinfo import ZoneInfo
         
         # Convertir de UTC a zona horaria local
-        tz = pytz.timezone('America/Argentina/Buenos_Aires')
+        tz = ZoneInfo('America/Argentina/Buenos_Aires')
         fecha_local = obj.fecha_hora.astimezone(tz)
         
         # Retornar como string ISO pero sin el offset de timezone
