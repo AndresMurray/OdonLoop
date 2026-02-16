@@ -419,12 +419,16 @@ class TurnoViewSet(viewsets.ModelViewSet):
             # Verificar si el día de la semana está en la lista
             if fecha_actual.weekday() in data['dias_semana']:
                 # Generar turnos para ese día
-                hora_actual = datetime.combine(fecha_actual, data['hora_inicio'])
-                hora_fin = datetime.combine(fecha_actual, data['hora_fin'])
+                # Hacer los datetimes aware desde el principio
+                hora_actual_naive = datetime.combine(fecha_actual, data['hora_inicio'])
+                hora_fin_naive = datetime.combine(fecha_actual, data['hora_fin'])
+                
+                hora_actual = timezone.make_aware(hora_actual_naive)
+                hora_fin = timezone.make_aware(hora_fin_naive)
                 
                 while hora_actual < hora_fin:
-                    # Verificar si hay conflicto con turnos existentes
-                    turno_inicio = timezone.make_aware(hora_actual) if timezone.is_naive(hora_actual) else hora_actual
+                    # Calcular turno_inicio y turno_fin (ya son aware)
+                    turno_inicio = hora_actual
                     turno_fin = turno_inicio + timedelta(minutes=data['duracion_minutos'])
                     
                     # Buscar turnos que se superpongan
@@ -455,9 +459,9 @@ class TurnoViewSet(viewsets.ModelViewSet):
                         )
                         turnos_creados.append(turno)
                     else:
-                        errores.append(f"Conflicto en {hora_actual.strftime('%Y-%m-%d %H:%M')}")
+                        errores.append(f"Conflicto en {turno_inicio.strftime('%Y-%m-%d %H:%M')}")
                     
-                    # Avanzar al siguiente turno
+                    # Avanzar al siguiente turno (mantener como aware)
                     hora_actual += timedelta(minutes=data['duracion_minutos'])
             
             # Avanzar al siguiente día

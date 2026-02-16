@@ -76,6 +76,10 @@ class TurnoCreateSerializer(serializers.ModelSerializer):
         if timezone.is_naive(value):
             value = timezone.make_aware(value)
         
+        # Siempre asegurar que retornamos un datetime aware
+        if timezone.is_naive(value):
+            value = timezone.make_aware(value)
+        
         # Comparar solo hasta minutos para evitar problemas con segundos
         now = timezone.now().replace(second=0, microsecond=0)
         value_sin_segundos = value.replace(second=0, microsecond=0)
