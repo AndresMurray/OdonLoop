@@ -754,7 +754,7 @@ const SeguimientoPacientePage = () => {
                   <span>Atendido por: <span className="font-medium">{seguimientoSeleccionado.odontologo_nombre}</span></span>
                 </div>
                 <div className="text-sm text-gray-500">
-                  Registrado: {new Date(seguimientoSeleccionado.fecha_creacion).toLocaleString('es-AR')}
+                  Registrado: {new Date(seguimientoSeleccionado.fecha_creacion).toLocaleString('es-AR', { hour12: false })}
                 </div>
               </div>
 
