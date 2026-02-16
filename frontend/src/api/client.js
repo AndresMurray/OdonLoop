@@ -20,14 +20,9 @@ class ApiClient {
 
     try {
       const url = this.baseURL ? `${this.baseURL}${endpoint}` : endpoint;
-      console.log('🌐 Llamando a:', url, 'con método:', options.method || 'GET');
-      console.log('📦 Datos:', options.body);
       
       const response = await fetch(url, config);
       const data = await response.json();
-
-      console.log('📥 Respuesta status:', response.status);
-      console.log('📥 Respuesta data:', data);
 
       if (!response.ok) {
         throw {
@@ -40,7 +35,6 @@ class ApiClient {
 
       return data;
     } catch (error) {
-      console.error('❌ Error en request:', error);
       if (error.status) throw error;
       throw {
         status: 500,

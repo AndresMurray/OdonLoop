@@ -101,7 +101,6 @@ const GestionTurnosOdonto = () => {
       setPaginaReservados(1);
     } catch (err) {
       setError('Error al cargar los turnos');
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -115,7 +114,6 @@ const GestionTurnosOdonto = () => {
       const data = await getTurnosPorFecha(fecha);
       setTurnosDiaSeleccionado(data);
     } catch (err) {
-      console.error('Error al cargar turnos del día:', err);
       setTurnosDiaSeleccionado([]);
     }
   };
@@ -229,8 +227,6 @@ const GestionTurnosOdonto = () => {
         setError(response.message || 'No se pudo crear ningún turno debido a conflictos de horario');
       } else if (response.conflictos > 0) {
         setSuccess(`${response.message}`);
-        // Opcional: mostrar también una advertencia con detalles
-        console.log('Conflictos detectados:', response.errores);
       } else {
         setSuccess(response.message);
       }
@@ -428,7 +424,6 @@ const GestionTurnosOdonto = () => {
       cargarTurnos();
     } catch (err) {
       setError('Error al cancelar el turno');
-      console.error(err);
     } finally {
       setLoading(false);
     }

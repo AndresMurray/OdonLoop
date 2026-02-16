@@ -13,7 +13,6 @@ export const getTurnos = async () => {
     const response = await apiClient.get('/api/turnos/');
     return response;
   } catch (error) {
-    console.error('Error al obtener turnos:', error);
     throw error;
   }
 };
@@ -27,7 +26,6 @@ export const getTurnosDisponibles = async (odontologoId = null) => {
     const response = await apiClient.get(url);
     return response;
   } catch (error) {
-    console.error('Error al obtener turnos disponibles:', error);
     throw error;
   }
 };
@@ -38,7 +36,6 @@ export const getMisTurnos = async () => {
     const response = await apiClient.get('/api/turnos/mis_turnos/');
     return response;
   } catch (error) {
-    console.error('Error al obtener mis turnos:', error);
     throw error;
   }
 };
@@ -46,14 +43,9 @@ export const getMisTurnos = async () => {
 // Crear un turno disponible (solo odontólogos)
 export const crearTurno = async (turnoData) => {
   try {
-    console.log('Creando turno con datos:', turnoData);
-    console.log('URL completa:', '/api/turnos/');
     const response = await apiClient.post('/api/turnos/', turnoData);
-    console.log('Respuesta exitosa:', response);
     return response;
   } catch (error) {
-    console.error('Error al crear turno:', error);
-    console.error('Error response:', error.response);
     throw error;
   }
 };
@@ -66,7 +58,6 @@ export const reservarTurno = async (turnoId, motivo = '') => {
     });
     return response;
   } catch (error) {
-    console.error('Error al reservar turno:', error);
     throw error;
   }
 };
@@ -77,7 +68,6 @@ export const cancelarTurno = async (turnoId) => {
     const response = await apiClient.post(`/api/turnos/${turnoId}/cancelar/`);
     return response;
   } catch (error) {
-    console.error('Error al cancelar turno:', error);
     throw error;
   }
 };
@@ -88,7 +78,6 @@ export const confirmarTurno = async (turnoId) => {
     const response = await apiClient.post(`/api/turnos/${turnoId}/confirmar/`);
     return response;
   } catch (error) {
-    console.error('Error al confirmar turno:', error);
     throw error;
   }
 };
@@ -99,7 +88,6 @@ export const completarTurno = async (turnoId) => {
     const response = await apiClient.post(`/api/turnos/${turnoId}/completar/`);
     return response;
   } catch (error) {
-    console.error('Error al completar turno:', error);
     throw error;
   }
 };
@@ -110,7 +98,6 @@ export const getTurno = async (turnoId) => {
     const response = await apiClient.get(`/api/turnos/${turnoId}/`);
     return response;
   } catch (error) {
-    console.error('Error al obtener turno:', error);
     throw error;
   }
 };
@@ -121,7 +108,6 @@ export const crearTurnosLote = async (loteData) => {
     const response = await apiClient.post('/api/turnos/crear_lote/', loteData);
     return response;
   } catch (error) {
-    console.error('Error al crear turnos en lote:', error);
     throw error;
   }
 };
@@ -132,7 +118,6 @@ export const actualizarTurno = async (turnoId, turnoData) => {
     const response = await apiClient.patch(`/api/turnos/${turnoId}/`, turnoData);
     return response;
   } catch (error) {
-    console.error('Error al actualizar turno:', error);
     throw error;
   }
 };
@@ -143,7 +128,6 @@ export const getTurnosPorFecha = async (fecha) => {
     const response = await apiClient.get(`/api/turnos/?fecha_desde=${fecha}T00:00:00&fecha_hasta=${fecha}T23:59:59`);
     return response;
   } catch (error) {
-    console.error('Error al obtener turnos por fecha:', error);
     throw error;
   }
 };

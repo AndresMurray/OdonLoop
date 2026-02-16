@@ -22,7 +22,6 @@ export const authService = {
       
       return response;
     } catch (error) {
-      console.error('Error en login:', error);
       
       // Manejar diferentes formatos de error
       if (error.message) {

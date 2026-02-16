@@ -60,7 +60,6 @@ const SeguimientoPacientePage = () => {
       const data = await getPacienteById(pacienteId);
       setPaciente(data);
     } catch (err) {
-      console.error('Error al cargar paciente:', err);
       setAlert({
         type: 'error',
         message: 'Error al cargar información del paciente',
@@ -79,7 +78,6 @@ const SeguimientoPacientePage = () => {
       setTotalSeguimientos(data.count || 0);
       setTotalPages(Math.ceil((data.count || 0) / 5));
     } catch (err) {
-      console.error('Error al cargar seguimientos:', err);
       setAlert({
         type: 'error',
         message: 'Error al cargar seguimientos',
@@ -144,7 +142,6 @@ const SeguimientoPacientePage = () => {
         }
 
         const data = await response.json();
-        console.log('✅ Archivo subido:', { url: data.secure_url, resource_type: data.resource_type, format: data.format });
 
         const nuevoArchivo = {
           tipo: esImagen ? 'imagen' : 'documento',
@@ -156,7 +153,6 @@ const SeguimientoPacientePage = () => {
         setArchivosSeleccionados(prev => [...prev, nuevoArchivo]);
         setAlert({ type: 'success', message: `Archivo cargado: ${file.name}` });
       } catch (err) {
-        console.error('❌ Error subiendo archivo:', err);
         setAlert({ type: 'error', message: `Error al subir ${file.name}`, detail: err.message });
       }
     }
@@ -212,7 +208,6 @@ const SeguimientoPacientePage = () => {
       await cargarSeguimientos();
       
     } catch (err) {
-      console.error('Error al crear seguimiento:', err);
       setAlert({
         type: 'error',
         message: 'Error al crear seguimiento',
@@ -695,7 +690,6 @@ const SeguimientoPacientePage = () => {
                           document.body.removeChild(link);
                           window.URL.revokeObjectURL(blobUrl);
                         } catch (err) {
-                          console.error('Error descargando archivo:', err);
                           window.open(archivo.url, '_blank');
                         }
                       };

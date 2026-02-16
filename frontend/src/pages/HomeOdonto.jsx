@@ -45,7 +45,6 @@ const HomeOdonto = () => {
       const data = await getMisTurnos();
       setTurnos(data);
     } catch (err) {
-      console.error('Error al cargar turnos:', err);
     } finally {
       setLoading(false);
     }

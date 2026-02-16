@@ -13,7 +13,6 @@ export const getOdontologos = async () => {
     const response = await apiClient.get('/api/odontologos/');
     return response;
   } catch (error) {
-    console.error('Error al obtener odontólogos:', error);
     throw error;
   }
 };
@@ -24,7 +23,6 @@ export const getOdontologo = async (odontologoId) => {
     const response = await apiClient.get(`/api/odontologos/${odontologoId}/`);
     return response;
   } catch (error) {
-    console.error('Error al obtener odontólogo:', error);
     throw error;
   }
 };
@@ -35,7 +33,6 @@ export const getMiPerfil = async () => {
     const response = await apiClient.get('/api/odontologos/mi-perfil/');
     return response;
   } catch (error) {
-    console.error('Error al obtener perfil:', error);
     throw error;
   }
 };
@@ -46,7 +43,6 @@ export const actualizarMiPerfil = async (data) => {
     const response = await apiClient.patch('/api/odontologos/mi-perfil/', data);
     return response;
   } catch (error) {
-    console.error('Error al actualizar perfil:', error);
     throw error;
   }
 };

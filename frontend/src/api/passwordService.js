@@ -11,7 +11,6 @@ export const requestPasswordReset = async (email) => {
     const response = await apiClient.post('/api/usuarios/password-reset/request/', { email });
     return response;
   } catch (error) {
-    console.error('Error al solicitar recuperación de contraseña:', error);
     throw error;
   }
 };
@@ -27,7 +26,6 @@ export const verifyResetCode = async (email, code) => {
     });
     return response;
   } catch (error) {
-    console.error('Error al verificar código:', error);
     throw error;
   }
 };
@@ -44,7 +42,6 @@ export const resetPassword = async (email, code, newPassword) => {
     });
     return response;
   } catch (error) {
-    console.error('Error al cambiar contraseña:', error);
     throw error;
   }
 };
@@ -60,7 +57,6 @@ export const changePassword = async (data) => {
     });
     return response;
   } catch (error) {
-    console.error('Error al cambiar contraseña:', error);
     throw error;
   }
 };

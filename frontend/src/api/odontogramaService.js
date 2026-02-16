@@ -12,7 +12,6 @@ export const getOdontograma = async (pacienteId) => {
     const response = await apiClient.get(`/api/pacientes/odontograma/${pacienteId}/`);
     return response;
   } catch (error) {
-    console.error('Error al obtener odontograma:', error);
     throw error;
   }
 };
@@ -25,7 +24,6 @@ export const getHistorialPieza = async (pacienteId, pieza) => {
     const response = await apiClient.get(`/api/pacientes/odontograma/${pacienteId}/pieza/${pieza}/`);
     return response;
   } catch (error) {
-    console.error('Error al obtener historial de pieza:', error);
     throw error;
   }
 };
@@ -38,7 +36,6 @@ export const crearRegistroDental = async (data) => {
     const response = await apiClient.post('/api/pacientes/registros-dentales/', data);
     return response;
   } catch (error) {
-    console.error('Error al crear registro dental:', error);
     throw error;
   }
 };

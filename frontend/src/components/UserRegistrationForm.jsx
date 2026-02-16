@@ -41,11 +41,9 @@ const UserRegistrationForm = ({ onSuccess, onError }) => {
       : errors.password2;
 
   const onSubmit = async (formValues) => {
-    console.log('onSubmit llamado con:', formValues);
     try {
       await onSuccess(formValues);
     } catch (error) {
-      console.error('Error en onSubmit:', error);
       if (onError) {
         onError(error);
       }

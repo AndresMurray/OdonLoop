@@ -41,7 +41,6 @@ const HomePaciente = () => {
         setProximoTurno(turnosPendientes[0]);
       }
     } catch (error) {
-      console.error('Error al cargar próximo turno:', error);
     } finally {
       setLoading(false);
     }

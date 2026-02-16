@@ -16,7 +16,6 @@ export const getMisPacientes = async (search = '') => {
     const response = await apiClient.get(url);
     return response;
   } catch (error) {
-    console.error('Error al obtener mis pacientes:', error);
     throw error;
   }
 };
@@ -30,7 +29,6 @@ export const getTodosPacientes = async (search = '') => {
     const response = await apiClient.get(url);
     return response;
   } catch (error) {
-    console.error('Error al obtener todos los pacientes:', error);
     throw error;
   }
 };
@@ -44,7 +42,6 @@ export const getSeguimientosPorPaciente = async (pacienteId, page = 1, fechaDesd
     const response = await apiClient.get(url);
     return response;
   } catch (error) {
-    console.error('Error al obtener seguimientos del paciente:', error);
     throw error;
   }
 };
@@ -55,7 +52,6 @@ export const crearSeguimiento = async (seguimientoData) => {
     const response = await apiClient.post('/api/pacientes/seguimientos/', seguimientoData);
     return response;
   } catch (error) {
-    console.error('Error al crear seguimiento:', error);
     throw error;
   }
 };
@@ -66,7 +62,6 @@ export const getMisSeguimientos = async () => {
     const response = await apiClient.get('/api/pacientes/seguimientos/');
     return response;
   } catch (error) {
-    console.error('Error al obtener seguimientos:', error);
     throw error;
   }
 };
@@ -77,7 +72,6 @@ export const actualizarSeguimiento = async (id, seguimientoData) => {
     const response = await apiClient.put(`/api/pacientes/seguimientos/${id}/`, seguimientoData);
     return response;
   } catch (error) {
-    console.error('Error al actualizar seguimiento:', error);
     throw error;
   }
 };
@@ -88,7 +82,6 @@ export const eliminarSeguimiento = async (id) => {
     const response = await apiClient.delete(`/api/pacientes/seguimientos/${id}/`);
     return response;
   } catch (error) {
-    console.error('Error al eliminar seguimiento:', error);
     throw error;
   }
 };
@@ -99,7 +92,6 @@ export const crearPacienteRapido = async (pacienteData) => {
     const response = await apiClient.post('/api/odontologos/crear-paciente-rapido/', pacienteData);
     return response;
   } catch (error) {
-    console.error('Error al crear paciente rápido:', error);
     throw error;
   }
 };

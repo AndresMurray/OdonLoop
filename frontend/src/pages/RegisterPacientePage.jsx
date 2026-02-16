@@ -27,7 +27,6 @@ const RegisterPacientePage = () => {
         const data = await obraSocialService.getAll();
         setObrasSociales(data);
       } catch (error) {
-        console.error('Error al cargar obras sociales:', error);
         setAlert({
           type: 'error',
           message: 'No se pudieron cargar las obras sociales',
@@ -93,8 +92,6 @@ const RegisterPacientePage = () => {
       // Eliminar campos vacíos/null para evitar errores del backend
       if (!dataToSend.obra_social) delete dataToSend.obra_social;
       if (!dataToSend.obra_social_otra) delete dataToSend.obra_social_otra;
-      
-      console.log('📤 Datos a enviar:', dataToSend);
       
       await userService.register(dataToSend);
       setAlert({

@@ -13,7 +13,6 @@ export const getAllOdontologos = async () => {
     const response = await apiClient.get('/api/odontologos/admin/todos/');
     return response;
   } catch (error) {
-    console.error('Error al obtener todos los odontólogos:', error);
     throw error;
   }
 };
@@ -24,7 +23,6 @@ export const aprobarOdontologo = async (id) => {
     const response = await apiClient.post(`/api/odontologos/admin/${id}/aprobar/`);
     return response;
   } catch (error) {
-    console.error('Error al aprobar odontólogo:', error);
     throw error;
   }
 };
@@ -37,7 +35,6 @@ export const suspenderOdontologo = async (id, motivo = '') => {
     });
     return response;
   } catch (error) {
-    console.error('Error al suspender odontólogo:', error);
     throw error;
   }
 };
@@ -48,7 +45,6 @@ export const activarOdontologo = async (id) => {
     const response = await apiClient.post(`/api/odontologos/admin/${id}/activar/`);
     return response;
   } catch (error) {
-    console.error('Error al activar odontólogo:', error);
     throw error;
   }
 };

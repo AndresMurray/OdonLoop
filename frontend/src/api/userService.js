@@ -44,7 +44,6 @@ export const getPacienteById = async (pacienteId) => {
     const response = await apiClient.get(`/api/pacientes/${pacienteId}/`);
     return response;
   } catch (error) {
-    console.error('Error al obtener paciente:', error);
     throw error;
   }
 };

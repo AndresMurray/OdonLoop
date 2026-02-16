@@ -35,7 +35,6 @@ export const useForm = (initialValues = {}, validationRules = {}) => {
       const validationErrors = validateForm(values, validationRules);
       
       if (Object.keys(validationErrors).length > 0) {
-        console.log('Errores de validación:', validationErrors);
         setErrors(validationErrors);
         // Marcar todos los campos como touched para mostrar errores
         const allTouched = Object.keys(validationRules).reduce((acc, key) => {
@@ -47,11 +46,9 @@ export const useForm = (initialValues = {}, validationRules = {}) => {
         return;
       }
 
-      console.log('Enviando datos:', values);
       try {
         await onSubmit(values);
       } catch (error) {
-        console.error('Error en submit:', error);
         // Manejar errores del servidor
         if (error.errors) {
           setErrors(error.errors);

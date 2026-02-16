@@ -37,7 +37,6 @@ const PanelAdministracion = () => {
       setOdontologos(data);
     } catch (err) {
       setError('Error al cargar los odontólogos');
-      console.error(err);
     } finally {
       setLoading(false);
     }

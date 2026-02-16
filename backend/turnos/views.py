@@ -232,14 +232,6 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 fecha_formateada = turno.fecha_hora.strftime('%d/%m/%Y %H:%M')
                 nombre_odontologo = turno.odontologo.get_nombre_completo()
                 
-                print("\n" + "="*80)
-                print("📧 ENVIANDO EMAIL DE CANCELACIÓN")
-                print(f"Para: {paciente_email}")
-                print(f"Paciente: {nombre_completo}")
-                print(f"Turno: {fecha_formateada}")
-                print(f"Odontólogo: {nombre_odontologo}")
-                print("="*80 + "\n")
-                
                 send_mail(
                     subject=f'Cancelación de Turno - {fecha_formateada}',
                     message=f'Estimado/a {nombre_completo},\n\n'
@@ -254,15 +246,12 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 )
                 email_sent = True
                 
-                print("🚀 EMAIL ENVIADO EXITOSAMENTE (revisa la consola para ver el contenido)\n")
-                
             except Exception as e:
                 # Log del error pero no falla la cancelación
-                print(f"\n❌ ERROR al enviar email: {str(e)}\n")
+                pass
         elif turno.paciente and turno.paciente.user:
             # Es un paciente registrado pero sin email
             is_manual_booking = True
-            print(f"\n⚠️ PACIENTE SIN EMAIL: {turno.paciente.get_nombre_completo()} - No se envió email de cancelación\n")
         else:
             # Es una reserva manual (sin paciente registrado)
             is_manual_booking = True

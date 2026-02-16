@@ -41,7 +41,6 @@ const MisPacientesPage = () => {
       setPacientes(data);
       setPacientesFiltrados(data);
     } catch (err) {
-      console.error('Error al cargar pacientes:', err);
       setAlert({
         type: 'error',
         message: 'Error al cargar pacientes',

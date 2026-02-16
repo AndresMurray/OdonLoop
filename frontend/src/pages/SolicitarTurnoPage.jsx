@@ -55,7 +55,6 @@ const SolicitarTurnoPage = () => {
       const data = await getOdontologos();
       setOdontologos(data);
     } catch (err) {
-      console.error('Error al cargar odontólogos:', err);
     }
   };
 
@@ -65,7 +64,6 @@ const SolicitarTurnoPage = () => {
       setMisTurnos(data);
       setPaginaActual(1); // Resetear a la primera página cuando cargan los turnos
     } catch (err) {
-      console.error('Error al cargar mis turnos:', err);
     }
   };
 
@@ -85,7 +83,6 @@ const SolicitarTurnoPage = () => {
       }
     } catch (err) {
       setError('Error al buscar turnos disponibles');
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -123,7 +120,6 @@ const SolicitarTurnoPage = () => {
       cargarMisTurnos();
     } catch (err) {
       setError(err.response?.data?.detail || 'Error al cancelar el turno');
-      console.error('Error al cancelar turno:', err);
     } finally {
       setLoading(false);
     }

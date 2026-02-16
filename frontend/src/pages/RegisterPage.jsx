@@ -11,11 +11,8 @@ const RegisterPage = () => {
   const [alert, setAlert] = useState({ type: '', message: '' });
 
   const handleSuccess = async (formData) => {
-    console.log('handleSuccess llamado con:', formData);
     try {
-      console.log('Llamando a userService.register...');
       const response = await userService.register(formData);
-      console.log('Respuesta del servidor:', response);
       setAlert({
         type: 'success',
         message: '¡Registro exitoso! Redirigiendo...',
@@ -26,7 +23,6 @@ const RegisterPage = () => {
         navigate('/login', { replace: true });
       }, 2000);
     } catch (error) {
-      console.error('Error en handleSuccess:', error);
       setAlert({
         type: 'error',
         message: error.message || 'Error al registrar usuario',

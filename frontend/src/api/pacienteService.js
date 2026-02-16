@@ -13,7 +13,6 @@ export const crearPacienteRapido = async (pacienteData) => {
     const response = await apiClient.post('/api/odontologos/crear-paciente-rapido/', pacienteData);
     return response;
   } catch (error) {
-    console.error('Error al crear paciente rápido:', error);
     throw error;
   }
 };
@@ -28,7 +27,6 @@ export const getMiPerfil = async () => {
     const response = await apiClient.get('/api/pacientes/mi-perfil/');
     return response;
   } catch (error) {
-    console.error('Error al obtener perfil:', error);
     throw error;
   }
 };
@@ -39,7 +37,6 @@ export const actualizarMiPerfil = async (perfilData) => {
     const response = await apiClient.patch('/api/pacientes/mi-perfil/', perfilData);
     return response;
   } catch (error) {
-    console.error('Error al actualizar perfil:', error);
     throw error;
   }
 };
@@ -50,7 +47,6 @@ export const getObrasSociales = async () => {
     const response = await apiClient.get('/api/pacientes/obras-sociales/');
     return response;
   } catch (error) {
-    console.error('Error al obtener obras sociales:', error);
     throw error;
   }
 };
