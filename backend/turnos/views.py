@@ -265,9 +265,11 @@ class TurnoViewSet(viewsets.ModelViewSet):
         elif turno.paciente and turno.paciente.user:
             # Es un paciente registrado pero sin email
             is_manual_booking = True
-        else:
-            # Es una reserva manual (sin paciente registrado)
+        elif turno.nombre_paciente_manual or turno.apellido_paciente_manual:
+            # Es una reserva manual (tiene datos de paciente manual)
             is_manual_booking = True
+        # Si no tiene paciente ni datos manuales, es solo un turno disponible cancelado
+        # is_manual_booking queda en False
         
         serializer = TurnoSerializer(turno)
         response_data = {

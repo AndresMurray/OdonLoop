@@ -47,15 +47,11 @@ const HomePaciente = () => {
   };
 
   const formatearFecha = (fechaHora) => {
+    // El backend ya envía la fecha en hora local de Argentina
+    // Simplemente parseamos sin conversión de timezone
     const fecha = new Date(fechaHora);
-    const año = fecha.getUTCFullYear();
-    const mes = fecha.getUTCMonth();
-    const dia = fecha.getUTCDate();
-    const horas = fecha.getUTCHours();
-    const minutos = fecha.getUTCMinutes();
-    const fechaLocal = new Date(año, mes, dia, horas, minutos);
     
-    return fechaLocal.toLocaleDateString('es-AR', {
+    return fecha.toLocaleDateString('es-AR', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',

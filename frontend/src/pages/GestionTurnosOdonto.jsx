@@ -418,7 +418,8 @@ const GestionTurnosOdonto = () => {
       } else if (response.email_sent) {
         setSuccess('✓ Turno cancelado exitosamente. Se ha enviado un email al paciente notificando la cancelación.');
       } else {
-        setSuccess('Turno cancelado exitosamente');
+        // Turno disponible (sin paciente asignado) o sin necesidad de notificación
+        setSuccess('✓ Turno cancelado exitosamente.');
       }
       
       cargarTurnos();
