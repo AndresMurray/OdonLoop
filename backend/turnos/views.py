@@ -233,7 +233,9 @@ class TurnoViewSet(viewsets.ModelViewSet):
             try:
                 paciente_email = turno.paciente.user.email
                 nombre_completo = turno.paciente.get_nombre_completo()
-                fecha_formateada = turno.fecha_hora.strftime('%d/%m/%Y %H:%M')
+                # Convertir a zona horaria local antes de formatear
+                fecha_local = timezone.localtime(turno.fecha_hora)
+                fecha_formateada = fecha_local.strftime('%d/%m/%Y %H:%M')
                 nombre_odontologo = turno.odontologo.get_nombre_completo()
                 
                 logger.info(f'Intentando enviar email a {paciente_email} para cancelación de turno...')
