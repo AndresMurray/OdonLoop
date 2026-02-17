@@ -394,7 +394,7 @@ const SeguimientoPacientePage = () => {
                       </button>
                       
                       {archivosSeleccionados.length > 0 && (
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                           {archivosSeleccionados.map((archivo, index) => {
                             const esImg = archivo.tipo === 'imagen' && 
                               !archivo.nombre_original?.toLowerCase().endsWith('.pdf');
@@ -402,35 +402,38 @@ const SeguimientoPacientePage = () => {
                             return (
                               <div 
                                 key={index}
-                                className="relative border rounded-lg p-2 bg-gray-50 group"
+                                className="relative border-2 border-gray-200 rounded-xl p-3 bg-white hover:shadow-lg transition-all duration-200 group"
                               >
                                 {esImg ? (
-                                  <img 
-                                    src={archivo.url} 
-                                    alt={archivo.nombre_original} 
-                                    className="w-full h-16 object-cover rounded mb-1"
-                                  />
+                                  <div className="relative w-full h-32 mb-2 rounded-lg overflow-hidden bg-gray-100">
+                                    <img 
+                                      src={archivo.url} 
+                                      alt={archivo.nombre_original} 
+                                      className="w-full h-full object-contain hover:scale-110 transition-transform duration-200"
+                                    />
+                                  </div>
                                 ) : (
-                                  <div className="w-full h-16 bg-red-50 rounded mb-1 flex flex-col items-center justify-center">
-                                    <FileText className="w-6 h-6 text-red-500" />
-                                    <span className="text-xs text-red-600 font-semibold mt-1">
+                                  <div className="w-full h-32 bg-gradient-to-br from-red-50 to-red-100 rounded-lg mb-2 flex flex-col items-center justify-center border border-red-200">
+                                    <FileText className="w-10 h-10 text-red-500 mb-2" />
+                                    <span className="text-sm text-red-600 font-bold px-3 py-1 bg-white rounded-full shadow-sm">
                                       {(() => {
                                         const extension = archivo.nombre_original?.split('.').pop()?.toUpperCase();
                                         if (extension === 'PDF') return 'PDF';
                                         if (['DOC', 'DOCX'].includes(extension)) return 'DOC';
                                         if (['TXT'].includes(extension)) return 'TXT';
-                                        return 'ARCHIVO';
+                                        return 'FILE';
                                       })()}
                                     </span>
                                   </div>
                                 )}
-                                <p className="text-xs text-gray-600 truncate">
+                                <p className="text-xs font-medium text-gray-700 truncate px-1" title={archivo.nombre_original}>
                                   {archivo.nombre_original}
                                 </p>
                                 <button
                                   type="button"
                                   onClick={() => eliminarArchivo(index)}
-                                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 transform hover:scale-110"
+                                  title="Eliminar archivo"
                                 >
                                   <X className="w-4 h-4" />
                                 </button>
@@ -649,8 +652,9 @@ const SeguimientoPacientePage = () => {
               {/* Archivos e imágenes */}
               {seguimientoSeleccionado.archivos && seguimientoSeleccionado.archivos.length > 0 && (
                 <div className="mb-4">
-                  <h4 className="font-medium text-gray-700 mb-3">
-                    Archivos adjuntos ({seguimientoSeleccionado.archivos.length}):
+                  <h4 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-emerald-600" />
+                    Archivos adjuntos ({seguimientoSeleccionado.archivos.length})
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {seguimientoSeleccionado.archivos.map((archivo) => {
@@ -697,30 +701,39 @@ const SeguimientoPacientePage = () => {
                       return (
                         <div 
                           key={archivo.id}
-                          className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                          className="group border-2 border-gray-200 rounded-xl overflow-hidden hover:shadow-xl hover:border-emerald-400 transition-all duration-200 cursor-pointer"
                           onClick={handleOpenFile}
                         >
                           {esImagen ? (
-                            <img 
-                              src={archivo.url}
-                              alt={archivo.nombre_original || 'Imagen'}
-                              className="w-full h-48 object-cover"
-                            />
+                            <div className="relative w-full h-48 bg-gray-100">
+                              <img 
+                                src={archivo.url}
+                                alt={archivo.nombre_original || 'Imagen'}
+                                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center">
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white rounded-full p-2 shadow-lg">
+                                  <Download className="w-5 h-5 text-emerald-600" />
+                                </div>
+                              </div>
+                            </div>
                           ) : (
-                            <div className="w-full h-48 bg-red-50 flex flex-col items-center justify-center p-4">
-                              <FileText className="w-12 h-12 text-red-500 mb-2" />
-                              <span className="text-xs font-semibold text-red-600 uppercase mb-1">
+                            <div className="w-full h-48 bg-gradient-to-br from-red-50 to-red-100 flex flex-col items-center justify-center p-4 group-hover:from-red-100 group-hover:to-red-200 transition-all duration-200">
+                              <FileText className="w-14 h-14 text-red-500 mb-3 group-hover:scale-110 transition-transform duration-200" />
+                              <span className="text-sm font-bold text-red-600 uppercase mb-2 px-3 py-1 bg-white rounded-full shadow-sm">
                                 {esPDF ? 'PDF' : 'DOC'}
                               </span>
-                              <span className="text-xs text-gray-600 text-center break-words line-clamp-2">
-                                {archivo.nombre_original || 'Documento'}
-                              </span>
-                              <div className="flex items-center gap-1 mt-2 text-blue-600">
+                              <div className="flex items-center gap-2 mt-2 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 <Download className="w-4 h-4" />
-                                <span className="text-xs font-medium">Descargar</span>
+                                <span className="text-xs font-semibold">Abrir/Descargar</span>
                               </div>
                             </div>
                           )}
+                          <div className="p-2 bg-white border-t border-gray-200">
+                            <p className="text-xs font-medium text-gray-700 truncate" title={archivo.nombre_original}>
+                              {archivo.nombre_original || 'Documento'}
+                            </p>
+                          </div>
                         </div>
                       );
                     })}
