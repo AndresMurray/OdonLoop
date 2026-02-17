@@ -258,7 +258,6 @@ class RequestPasswordResetView(APIView):
                      f'Tu código de verificación es: {token.code}\n\n'
                      f'Este código es válido por 15 minutos.\n\n'
                      f'Si no solicitaste este cambio, puedes ignorar este mensaje.\n\n'
-                     f'Si tienes alguna duda, puedes responder a este email.\n\n'
                      f'Atentamente,\n'
                      f'Equipo OdonLoop',
                 from_email=settings.DEFAULT_FROM_EMAIL,
