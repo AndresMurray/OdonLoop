@@ -170,17 +170,17 @@ const HomeOdonto = () => {
           {/* Botón destacado de Gestión de Turnos */}
           <div className="mb-8">
             <Card className="bg-gradient-to-r from-blue-600 to-indigo-600 border-none">
-              <CardContent className="p-8">
-                <div className="flex flex-col md:flex-row items-center justify-between text-white">
-                  <div className="mb-4 md:mb-0">
-                    <h2 className="text-2xl font-bold mb-2">Gestión de Turnos</h2>
-                    <p className="text-blue-100">
+              <CardContent className="p-6 sm:p-8">
+                <div className="flex flex-col md:flex-row items-center justify-between text-white gap-4">
+                  <div className="text-center md:text-left">
+                    <h2 className="text-xl sm:text-2xl font-bold mb-2">Gestión de Turnos</h2>
+                    <p className="text-blue-100 text-sm sm:text-base">
                       Administra, crea y visualiza todos tus turnos de manera eficiente
                     </p>
                   </div>
                   <Button 
                     variant="secondary" 
-                    className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 text-lg"
+                    className="bg-white text-blue-600 hover:bg-gray-100 px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg whitespace-nowrap w-full md:w-auto"
                     onClick={() => navigate('/gestion-turnos')}
                   >
                     <CalendarIcon className="w-5 h-5 mr-2 inline" />
@@ -194,17 +194,17 @@ const HomeOdonto = () => {
           {/* Botón destacado de Mis Pacientes */}
           <div className="mb-8">
             <Card className="bg-gradient-to-r from-emerald-600 to-teal-600 border-none">
-              <CardContent className="p-8">
-                <div className="flex flex-col md:flex-row items-center justify-between text-white">
-                  <div className="mb-4 md:mb-0">
-                    <h2 className="text-2xl font-bold mb-2">Mis Pacientes</h2>
-                    <p className="text-emerald-100">
+              <CardContent className="p-6 sm:p-8">
+                <div className="flex flex-col md:flex-row items-center justify-between text-white gap-4">
+                  <div className="text-center md:text-left">
+                    <h2 className="text-xl sm:text-2xl font-bold mb-2">Mis Pacientes</h2>
+                    <p className="text-emerald-100 text-sm sm:text-base">
                       Accede al seguimiento de tus pacientes y su historial clínico
                     </p>
                   </div>
                   <Button 
                     variant="secondary" 
-                    className="bg-white text-emerald-600 hover:bg-gray-100 px-8 py-3 text-lg"
+                    className="bg-white text-emerald-600 hover:bg-gray-100 px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg whitespace-nowrap w-full md:w-auto"
                     onClick={() => navigate('/mis-pacientes')}
                   >
                     <Users className="w-5 h-5 mr-2 inline" />
@@ -218,8 +218,53 @@ const HomeOdonto = () => {
           {/* Selector de Fecha */}
           <div className="mb-6">
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+              <CardContent className="p-4 sm:p-6">
+                {/* Mobile: Layout vertical */}
+                <div className="md:hidden space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      value={fechaSeleccionada}
+                      onChange={(e) => {
+                        setFechaSeleccionada(e.target.value);
+                        setPaginaReservados(1);
+                        setPaginaDisponibles(1);
+                      }}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={irHoy}
+                      className="whitespace-nowrap"
+                    >
+                      Hoy
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={retrocederDia}
+                      className="flex-1 flex items-center justify-center"
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-1" />
+                      Anterior
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={avanzarDia}
+                      className="flex-1 flex items-center justify-center"
+                    >
+                      Siguiente
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Desktop: Layout horizontal */}
+                <div className="hidden md:flex items-center justify-between gap-4">
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -231,18 +276,16 @@ const HomeOdonto = () => {
                   </Button>
                   
                   <div className="flex items-center gap-4">
-                    <div className="text-center">
-                      <input
-                        type="date"
-                        value={fechaSeleccionada}
-                        onChange={(e) => {
-                          setFechaSeleccionada(e.target.value);
-                          setPaginaReservados(1);
-                          setPaginaDisponibles(1);
-                        }}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
+                    <input
+                      type="date"
+                      value={fechaSeleccionada}
+                      onChange={(e) => {
+                        setFechaSeleccionada(e.target.value);
+                        setPaginaReservados(1);
+                        setPaginaDisponibles(1);
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
                     <Button
                       variant="secondary"
                       size="sm"
@@ -262,6 +305,7 @@ const HomeOdonto = () => {
                     <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
+                
                 <p className="text-sm text-gray-600 mt-3 text-center">
                   Viendo turnos para el {formatearFechaLarga(fechaSeleccionada)}
                 </p>

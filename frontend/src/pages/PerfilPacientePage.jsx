@@ -236,35 +236,38 @@ const PerfilPacientePage = () => {
       <div className="flex-grow p-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="secondary"
-                onClick={() => navigate('/home-paciente')}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver
-              </Button>
-              <h1 className="text-3xl font-bold text-white">Mi Perfil</h1>
-            </div>
-            
-            {!editando ? (
-              <Button onClick={() => setEditando(true)}>
-                <Edit2 className="w-4 h-4 mr-2" />
-                Editar Perfil
-              </Button>
-            ) : (
-              <div className="flex gap-2">
-                <Button onClick={handleGuardar} disabled={saving}>
-                  <Save className="w-4 h-4 mr-2" />
-                  {saving ? 'Guardando...' : 'Guardar'}
+          <div className="mb-6 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate('/home-paciente')}
+                  className="flex-shrink-0"
+                >
+                  <ArrowLeft className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Volver</span>
                 </Button>
-                <Button variant="secondary" onClick={handleCancelar}>
-                  <X className="w-4 h-4 mr-2" />
-                  Cancelar
-                </Button>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">Mi Perfil</h1>
               </div>
-            )}
+              
+              {!editando ? (
+                <Button onClick={() => setEditando(true)} className="w-full sm:w-auto">
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  Editar Perfil
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button onClick={handleGuardar} disabled={saving} className="flex-1 sm:flex-initial">
+                    <Save className="w-4 h-4 mr-2" />
+                    {saving ? 'Guardando...' : 'Guardar'}
+                  </Button>
+                  <Button variant="secondary" onClick={handleCancelar} className="flex-1 sm:flex-initial">
+                    <X className="w-4 h-4 mr-2" />
+                    Cancelar
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Alertas */}

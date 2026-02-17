@@ -554,53 +554,53 @@ const GestionTurnosOdonto = () => {
       <div className="flex-grow bg-white/5 backdrop-blur-sm p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white">Gestión de Turnos</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Gestión de Turnos</h1>
             <p className="text-slate-200 mt-2">Dr. {userData.nombre} {userData.apellido}</p>
           </div>
-          <Button onClick={() => navigate('/home-odontologo')} variant="secondary">
+          <Button onClick={() => navigate('/home-odontologo')} variant="secondary" className="w-full sm:w-auto">
             Volver al Inicio
           </Button>
         </div>
         
         {/* Tabs de navegación */}
-        <div className="flex gap-2 mb-6 bg-white/10 p-2 rounded-lg">
+        <div className="flex flex-col sm:flex-row gap-2 mb-6 bg-white/10 p-2 rounded-lg">
           <button
             onClick={() => { setTabActiva('disponibles'); setShowForm(false); }}
-            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+            className={`flex-1 px-3 sm:px-4 py-3 rounded-lg font-medium transition-all text-sm sm:text-base ${
               tabActiva === 'disponibles'
                 ? 'bg-green-600 text-white shadow-lg'
                 : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
-            📅 Disponibles
-            <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-sm">
+            <span className="hidden sm:inline">📅 </span>Disponibles
+            <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs sm:text-sm">
               {contadores.disponibles}
             </span>
           </button>
           <button
             onClick={() => { setTabActiva('reservados'); setShowForm(false); }}
-            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+            className={`flex-1 px-3 sm:px-4 py-3 rounded-lg font-medium transition-all text-sm sm:text-base ${
               tabActiva === 'reservados'
                 ? 'bg-blue-600 text-white shadow-lg'
                 : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
-            👤 Reservados
-            <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-sm">
+            <span className="hidden sm:inline">👤 </span>Reservados
+            <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs sm:text-sm">
               {contadores.reservados}
             </span>
           </button>
           <button
             onClick={() => { setTabActiva('crear'); setShowForm(true); setModoCreacion('individual'); }}
-            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+            className={`flex-1 px-3 sm:px-4 py-3 rounded-lg font-medium transition-all text-sm sm:text-base ${
               tabActiva === 'crear'
                 ? 'bg-purple-600 text-white shadow-lg'
                 : 'bg-white/20 text-white hover:bg-white/30'
             }`}
           >
-            ➕ Crear Turno
+            <span className="hidden sm:inline">➕ </span>Crear Turno
           </button>
         </div>
 
@@ -623,11 +623,11 @@ const GestionTurnosOdonto = () => {
               <h2 className="text-2xl font-bold mb-4 text-gray-800">Crear Turno</h2>
               
               {/* Selector de Modo */}
-              <div className="flex gap-4 mb-6">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6">
                 <button
                   type="button"
                   onClick={() => setModoCreacion('individual')}
-                  className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${
                     modoCreacion === 'individual'
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -638,7 +638,7 @@ const GestionTurnosOdonto = () => {
                 <button
                   type="button"
                   onClick={() => setModoCreacion('lote')}
-                  className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${
                     modoCreacion === 'lote'
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'

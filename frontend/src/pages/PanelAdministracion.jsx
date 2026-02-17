@@ -132,14 +132,14 @@ const PanelAdministracion = () => {
       {/* Header */}
       <header className="bg-white/95 shadow-md backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 Panel de Administración
               </h1>
               <p className="text-gray-600 mt-1">Gestión de odontólogos</p>
             </div>
-            <Button variant="secondary" onClick={() => navigate('/home-admin')}>
+            <Button variant="secondary" onClick={() => navigate('/home-admin')} className="w-full sm:w-auto">
               Volver
             </Button>
           </div>

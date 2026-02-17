@@ -218,23 +218,21 @@ const SolicitarTurnoPage = () => {
       <div className="flex-grow bg-white/5 backdrop-blur-sm p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white">Solicitar Turno</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Solicitar Turno</h1>
             <p className="text-slate-200 mt-2">{userData.nombre} {userData.apellido}</p>
           </div>
-          <div className="flex gap-4">
-            <Button onClick={() => navigate('/home-paciente')} variant="secondary">
-              Volver al Inicio
-            </Button>
-          </div>
+          <Button onClick={() => navigate('/home-paciente')} variant="secondary" className="w-full sm:w-auto">
+            Volver al Inicio
+          </Button>
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 flex gap-4">
+        <div className="mb-6 flex flex-col sm:flex-row gap-2 sm:gap-4">
           <button
             onClick={() => setVistaActual('buscar')}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+            className={`px-4 sm:px-6 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${
               vistaActual === 'buscar'
                 ? 'bg-blue-700 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -244,7 +242,7 @@ const SolicitarTurnoPage = () => {
           </button>
           <button
             onClick={() => setVistaActual('misTurnos')}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+            className={`px-4 sm:px-6 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${
               vistaActual === 'misTurnos'
                 ? 'bg-blue-700 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -310,37 +308,77 @@ const SolicitarTurnoPage = () => {
                   </h2>
                   
                   {/* Navegación por día */}
-                  <div className="flex items-center justify-between bg-gray-100 p-4 rounded-lg">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={retrocederDia}
-                    >
-                      ← Día Anterior
-                    </Button>
-                    
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="date"
-                        value={fechaFiltro}
-                        onChange={(e) => setFechaFiltro(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-medium"
-                      />
+                  <div className="bg-gray-100 p-4 rounded-lg">
+                    {/* Mobile: Layout vertical */}
+                    <div className="md:hidden space-y-3">
+                      <div className="flex gap-2">
+                        <input
+                          type="date"
+                          value={fechaFiltro}
+                          onChange={(e) => setFechaFiltro(e.target.value)}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={irHoy}
+                          className="whitespace-nowrap"
+                        >
+                          Hoy
+                        </Button>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={retrocederDia}
+                          className="flex-1"
+                        >
+                          ← Anterior
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={avanzarDia}
+                          className="flex-1"
+                        >
+                          Siguiente →
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Desktop: Layout horizontal */}
+                    <div className="hidden md:flex items-center justify-between gap-4">
                       <Button
                         size="sm"
-                        onClick={irHoy}
+                        variant="secondary"
+                        onClick={retrocederDia}
                       >
-                        Hoy
+                        ← Día Anterior
+                      </Button>
+                      
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="date"
+                          value={fechaFiltro}
+                          onChange={(e) => setFechaFiltro(e.target.value)}
+                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-medium"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={irHoy}
+                        >
+                          Hoy
+                        </Button>
+                      </div>
+                      
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={avanzarDia}
+                      >
+                        Día Siguiente →
                       </Button>
                     </div>
-                    
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={avanzarDia}
-                    >
-                      Día Siguiente →
-                    </Button>
                   </div>
                   
                   <p className="text-sm text-gray-600 mt-3 text-center">
