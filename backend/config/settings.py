@@ -267,7 +267,11 @@ else:
     # Fallback a SMTP o consola
     EMAIL_BACKEND = env_config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 
-DEFAULT_FROM_EMAIL = env_config('DEFAULT_FROM_EMAIL', default='sistemagestionodontologico@gmail.com')
+# IMPORTANTE: Usa tu dominio propio para mejor deliverability y evitar spam
+# Antes de cambiar esto, asegúrate de autenticar el dominio en SendGrid
+# Ver: GUIA_CONFIGURACION_EMAIL_DOMINIO.md
+DEFAULT_FROM_EMAIL = env_config('DEFAULT_FROM_EMAIL', default='noreply@odonloop.com')
+DEFAULT_REPLY_TO_EMAIL = env_config('DEFAULT_REPLY_TO_EMAIL', default='info@odonloop.com')
 
 # ===== OPCIÓN 2: SMTP (Solo para desarrollo local) =====
 # Configuración SMTP para SendGrid (no funciona en Railway por bloqueo de puertos)

@@ -251,16 +251,18 @@ class RequestPasswordResetView(APIView):
         # Enviar email con el código
         try:
             send_mail(
-                subject='Recuperación de Contraseña - OdontoSystem',
+                subject='Recuperación de Contraseña - OdonLoop',
                 message=f'Hola {user.first_name},\n\n'
                         f'Recibimos una solicitud para recuperar tu contraseña.\n\n'
                         f'Tu código de verificación es: {token.code}\n\n'
                         f'Este código es válido por 15 minutos.\n\n'
                         f'Si no solicitaste este cambio, puedes ignorar este mensaje.\n\n'
+                        f'Si tienes alguna duda, puedes responder a este email.\n\n'
                         f'Atentamente,\n'
-                        f'OdontoSystem',
+                        f'Equipo OdonLoop',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
+                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
                 fail_silently=False,
             )
         except Exception as e:

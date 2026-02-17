@@ -22,6 +22,8 @@ local_settings.py
 db.sqlite3-journal
 media/
 
+test_sendgrid.py
+
 # Entornos
 .env
 .venv

@@ -246,12 +246,14 @@ class TurnoViewSet(viewsets.ModelViewSet):
                     subject=f'Cancelación de Turno - {fecha_formateada}',
                     message=f'Estimado/a {nombre_completo},\n\n'
                             f'Su turno con el Dr./Dra. {nombre_odontologo} ha sido cancelado.\n\n'
-                            f'Por favor, comuníquese con su secretaria para solucionarlo o saque un nuevo turno.\n\n'
+                        
+                            f'Por favor, comuníquese con su odontólogo/a o solicite un nuevo turno a través del sistema.\n\n'
+                            f'Si tiene alguna consulta, puede responder a este email.\n\n'
                             f'Atentamente,\n'
-                            f'Sistema Odontológico\n'
-                            f'Este es un mensaje automático, por favor no responder a este email.',
+                            f'Equipo OdonLoop',
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[paciente_email],
+                    reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
                     fail_silently=False,
                 )
                 email_sent = True
