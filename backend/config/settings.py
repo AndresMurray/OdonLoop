@@ -157,10 +157,12 @@ if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
 else:
     # Production: only allow specific origins
-    CORS_ALLOWED_ORIGINS = env_config(
-        'CORS_ALLOWED_ORIGINS',
-        default=''
-    ).split(',') if env_config('CORS_ALLOWED_ORIGINS', default='') else []
+    origins = env_config('CORS_ALLOWED_ORIGINS', default='')
+    if origins:
+        # Eliminar barras finales y espacios en blanco
+        CORS_ALLOWED_ORIGINS = [origin.strip().rstrip('/') for origin in origins.split(',') if origin.strip()]
+    else:
+        CORS_ALLOWED_ORIGINS = []
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     'accept',

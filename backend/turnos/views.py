@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
 from django.db.models import Q
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.conf import settings
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -242,20 +242,21 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 logger.info(f'EMAIL_BACKEND: {settings.EMAIL_BACKEND}')
                 logger.info(f'DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}')
                 
-                send_mail(
+                # Usar EmailMessage para soportar reply_to
+                email = EmailMessage(
                     subject=f'Cancelación de Turno - {fecha_formateada}',
-                    message=f'Estimado/a {nombre_completo},\n\n'
-                            f'Su turno con el Dr./Dra. {nombre_odontologo} ha sido cancelado.\n\n'
-                        
-                            f'Por favor, comuníquese con su odontólogo/a o solicite un nuevo turno a través del sistema.\n\n'
-                            f'Si tiene alguna consulta, puede responder a este email.\n\n'
-                            f'Atentamente,\n'
-                            f'Equipo OdonLoop',
+                    body=f'Estimado/a {nombre_completo},\n\n'
+                         f'Su turno con el Dr./Dra. {nombre_odontologo} ha sido cancelado.\n\n'
+                         f'Fecha y hora original: {fecha_formateada}\n\n'
+                         f'Por favor, comuníquese con su odontólogo/a o solicite un nuevo turno a través del sistema.\n\n'
+                         f'Si tiene alguna consulta, puede responder a este email.\n\n'
+                         f'Atentamente,\n'
+                         f'Equipo OdonLoop',
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[paciente_email],
+                    to=[paciente_email],
                     reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
-                    fail_silently=False,
                 )
+                email.send(fail_silently=False)
                 email_sent = True
                 logger.info(f'Email enviado exitosamente a {paciente_email}')
                 

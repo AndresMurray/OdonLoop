@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.db import transaction
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.conf import settings
 from django.utils import timezone
 from .models import CustomUser, PasswordResetToken
@@ -250,21 +250,22 @@ class RequestPasswordResetView(APIView):
         
         # Enviar email con el código
         try:
-            send_mail(
+            # Usar EmailMessage para soportar reply_to
+            email = EmailMessage(
                 subject='Recuperación de Contraseña - OdonLoop',
-                message=f'Hola {user.first_name},\n\n'
-                        f'Recibimos una solicitud para recuperar tu contraseña.\n\n'
-                        f'Tu código de verificación es: {token.code}\n\n'
-                        f'Este código es válido por 15 minutos.\n\n'
-                        f'Si no solicitaste este cambio, puedes ignorar este mensaje.\n\n'
-                        f'Si tienes alguna duda, puedes responder a este email.\n\n'
-                        f'Atentamente,\n'
-                        f'Equipo OdonLoop',
+                body=f'Hola {user.first_name},\n\n'
+                     f'Recibimos una solicitud para recuperar tu contraseña.\n\n'
+                     f'Tu código de verificación es: {token.code}\n\n'
+                     f'Este código es válido por 15 minutos.\n\n'
+                     f'Si no solicitaste este cambio, puedes ignorar este mensaje.\n\n'
+                     f'Si tienes alguna duda, puedes responder a este email.\n\n'
+                     f'Atentamente,\n'
+                     f'Equipo OdonLoop',
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
+                to=[user.email],
                 reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
-                fail_silently=False,
             )
+            email.send(fail_silently=False)
         except Exception as e:
             return Response(
                 {'error': 'Error al enviar el email'},
