@@ -7,6 +7,9 @@ from django.core.mail import send_mail
 from django.conf import settings
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+import logging
+
+logger = logging.getLogger(__name__)
 from .models import Turno
 from .serializers import (
     TurnoSerializer, 
@@ -222,6 +225,7 @@ class TurnoViewSet(viewsets.ModelViewSet):
         
         # Enviar email si el turno tiene un paciente registrado CON EMAIL
         email_sent = False
+        email_error = None
         is_manual_booking = False
         
         if turno.paciente and turno.paciente.user and turno.paciente.user.email:
@@ -231,6 +235,10 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 nombre_completo = turno.paciente.get_nombre_completo()
                 fecha_formateada = turno.fecha_hora.strftime('%d/%m/%Y %H:%M')
                 nombre_odontologo = turno.odontologo.get_nombre_completo()
+                
+                logger.info(f'Intentando enviar email a {paciente_email} para cancelación de turno...')
+                logger.info(f'EMAIL_BACKEND: {settings.EMAIL_BACKEND}')
+                logger.info(f'DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}')
                 
                 send_mail(
                     subject=f'Cancelación de Turno - {fecha_formateada}',
@@ -245,10 +253,15 @@ class TurnoViewSet(viewsets.ModelViewSet):
                     fail_silently=False,
                 )
                 email_sent = True
+                logger.info(f'Email enviado exitosamente a {paciente_email}')
                 
             except Exception as e:
                 # Log del error pero no falla la cancelación
-                pass
+                email_error = str(e)
+                logger.error(f'Error al enviar email de cancelación: {email_error}')
+                logger.error(f'Tipo de excepción: {type(e).__name__}')
+                if hasattr(e, 'smtp_error'):
+                    logger.error(f'SMTP Error: {e.smtp_error}')
         elif turno.paciente and turno.paciente.user:
             # Es un paciente registrado pero sin email
             is_manual_booking = True
@@ -260,7 +273,8 @@ class TurnoViewSet(viewsets.ModelViewSet):
         response_data = {
             **serializer.data,
             'email_sent': email_sent,
-            'is_manual_booking': is_manual_booking
+            'is_manual_booking': is_manual_booking,
+            'email_error': email_error if email_error else None
         }
         return Response(response_data, status=status.HTTP_200_OK)
     

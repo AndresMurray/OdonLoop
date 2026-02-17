@@ -254,10 +254,23 @@ cloudinary.config(
 
 # Email configuration
 # IMPORTANTE: Para producción, usar variables de entorno por seguridad
-EMAIL_BACKEND = env_config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+
+# ===== OPCIÓN 1: SendGrid API (RECOMENDADO PARA RAILWAY) =====
+# Usa la API HTTPS de SendGrid (puerto 443) en lugar de SMTP
+# Esto evita el bloqueo de puertos SMTP en Railway
+SENDGRID_API_KEY = env_config('SENDGRID_API_KEY', default='')
+
+# Si existe API Key, usar el backend personalizado
+if SENDGRID_API_KEY:
+    EMAIL_BACKEND = 'config.sendgrid_backend.SendGridAPIBackend'
+else:
+    # Fallback a SMTP o consola
+    EMAIL_BACKEND = env_config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+
 DEFAULT_FROM_EMAIL = env_config('DEFAULT_FROM_EMAIL', default='sistemagestionodontologico@gmail.com')
 
-# Configuración SMTP para SendGrid (cuando EMAIL_BACKEND sea smtp)
+# ===== OPCIÓN 2: SMTP (Solo para desarrollo local) =====
+# Configuración SMTP para SendGrid (no funciona en Railway por bloqueo de puertos)
 EMAIL_HOST = env_config('EMAIL_HOST', default='smtp.sendgrid.net')
 EMAIL_PORT = env_config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = env_config('EMAIL_USE_TLS', default=True, cast=bool)

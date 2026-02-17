@@ -3,6 +3,7 @@ from .views import (
     UserRegistrationView, UserProfileView, UserListView, UserLoginView,
     RequestPasswordResetView, VerifyResetCodeView, ResetPasswordView, ChangePasswordView
 )
+from .test_email_view import test_email
 from rest_framework_simplejwt.views import TokenRefreshView
 
 app_name = 'usuarios'
@@ -21,4 +22,7 @@ urlpatterns = [
     
     # Cambio de contraseña desde perfil
     path('password/change/', ChangePasswordView.as_view(), name='password-change'),
+    
+    # Test de email (solo admin)
+    path('test-email/', test_email, name='test-email'),
 ]
