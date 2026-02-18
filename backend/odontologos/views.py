@@ -201,7 +201,6 @@ def activar_odontologo(request, pk):
                      f'• Gestionar tu agenda de turnos\n'
                      f'• Administrar la información de tus pacientes\n'
                      f'• Acceder a todas las herramientas disponibles\n\n'
-                     f'Si tienes alguna pregunta o necesitas asistencia, estamos aquí para ayudarte.\n\n'
                      f'Saludos cordiales,\n'
                      f'El equipo de OdonLoop\n\n'
                      f'---\n'

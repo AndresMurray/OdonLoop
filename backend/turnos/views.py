@@ -289,7 +289,6 @@ class TurnoViewSet(viewsets.ModelViewSet):
                          f'Turno original: {fecha_formateada}\n\n'
                          f'Si necesitas agendar una nueva cita, puedes hacerlo a través de la plataforma cuando lo desees.\n\n'
                          f'También puedes contactar directamente al consultorio si tienes alguna pregunta sobre esta cancelación.\n\n'
-                         f'Quedamos a tu disposición.\n\n'
                          f'Saludos,\n'
                          f'El equipo de OdonLoop\n\n'
                          f'---\n'

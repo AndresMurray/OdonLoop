@@ -9,7 +9,9 @@ sqlparse==0.5.5
 tzdata==2025.3
 cloudinary==1.41.0
 requests==2.31.0
-sendgrid==6.11.0
+
+# Email providers
+sib-api-v3-sdk==7.6.0  # Brevo (Sendinblue)
 
 # Production dependencies
 gunicorn==21.2.0

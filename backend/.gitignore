@@ -4,6 +4,7 @@ venv/
 env/
 
 generar_hash.py
+railway_manage.ps1
 
 # Base de datos
 *.sqlite3
@@ -21,8 +22,6 @@ __pycache__/
 local_settings.py
 db.sqlite3-journal
 media/
-
-test_sendgrid.py
 
 # Entornos
 .env

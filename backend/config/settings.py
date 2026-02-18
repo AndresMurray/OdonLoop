@@ -257,36 +257,34 @@ cloudinary.config(
 # Email configuration
 # IMPORTANTE: Para producción, usar variables de entorno por seguridad
 
-# ===== OPCIÓN 1: SendGrid API (RECOMENDADO PARA RAILWAY) =====
-# Usa la API HTTPS de SendGrid (puerto 443) en lugar de SMTP
-# Esto evita el bloqueo de puertos SMTP en Railway
-SENDGRID_API_KEY = env_config('SENDGRID_API_KEY', default='')
+# ===== CONFIGURACIÓN DE EMAIL =====
 
-# Si existe API Key, usar el backend personalizado
-if SENDGRID_API_KEY:
-    EMAIL_BACKEND = 'config.sendgrid_backend.SendGridAPIBackend'
+# Brevo (Sendinblue) - Email transaccional
+# Usa la API de Brevo para enviar emails
+BREVO_API_KEY = env_config('BREVO_API_KEY', default='')
+
+# Si existe API Key de Brevo, usar el backend personalizado
+if BREVO_API_KEY:
+    EMAIL_BACKEND = 'config.brevo_backend.BrevoEmailBackend'
 else:
-    # Fallback a SMTP o consola
+    # Fallback a consola para desarrollo
     EMAIL_BACKEND = env_config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 
+# Configuración del remitente
 # IMPORTANTE: Usa tu dominio propio para mejor deliverability y evitar spam
-# Antes de cambiar esto, asegúrate de autenticar el dominio en SendGrid
-# Ver: GUIA_CONFIGURACION_EMAIL_DOMINIO.md
+# Antes de cambiar esto, asegúrate de autenticar el dominio en Brevo
+# Ver: GUIA_CONFIGURACION_BREVO.md
 DEFAULT_FROM_EMAIL = env_config('DEFAULT_FROM_EMAIL', default='noreply@odonloop.com')
+DEFAULT_FROM_NAME = env_config('DEFAULT_FROM_NAME', default='OdonLoop')
 DEFAULT_REPLY_TO_EMAIL = env_config('DEFAULT_REPLY_TO_EMAIL', default='info@odonloop.com')
 
 # URL del frontend para enlaces en emails (verificación, etc.)
 FRONTEND_URL = env_config('FRONTEND_URL', default='http://localhost:5173')
 
-# ===== OPCIÓN 2: SMTP (Solo para desarrollo local) =====
-# Configuración SMTP para SendGrid (no funciona en Railway por bloqueo de puertos)
-EMAIL_HOST = env_config('EMAIL_HOST', default='smtp.sendgrid.net')
+# ===== CONFIGURACIÓN SMTP (Solo para desarrollo local) =====
+# Configuración SMTP para Brevo (alternativa a la API)
+EMAIL_HOST = env_config('EMAIL_HOST', default='smtp-relay.brevo.com')
 EMAIL_PORT = env_config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = env_config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = env_config('EMAIL_HOST_USER', default='apikey')  # SendGrid siempre usa 'apikey'
-EMAIL_HOST_PASSWORD = env_config('EMAIL_HOST_PASSWORD', default='')  # Tu API Key de SendGrid
-
-# Configuración alternativa para Gmail (comentado - no recomendado para producción)
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_HOST_USER = 'tu-email@gmail.com'
-# EMAIL_HOST_PASSWORD = 'tu-password-de-16-caracteres'
+EMAIL_HOST_USER = env_config('EMAIL_HOST_USER', default='')  # Tu email de Brevo
+EMAIL_HOST_PASSWORD = env_config('EMAIL_HOST_PASSWORD', default='')  # Tu SMTP key de Brevo

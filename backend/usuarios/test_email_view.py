@@ -31,15 +31,15 @@ def test_email(request):
         }, status=400)
     
     # Información de configuración
-    sendgrid_api_key = getattr(settings, 'SENDGRID_API_KEY', '')
+    brevo_api_key = getattr(settings, 'BREVO_API_KEY', '')
     
     config_info = {
         'EMAIL_BACKEND': settings.EMAIL_BACKEND,
-        'SENDGRID_API_KEY': '***' + sendgrid_api_key[-4:] if sendgrid_api_key else '[VACÍO]',
+        'BREVO_API_KEY': '***' + brevo_api_key[-4:] if brevo_api_key else '[VACÍO]',
         'DEFAULT_FROM_EMAIL': settings.DEFAULT_FROM_EMAIL,
         'EMAIL_HOST': getattr(settings, 'EMAIL_HOST', 'N/A'),
         'EMAIL_PORT': getattr(settings, 'EMAIL_PORT', 'N/A'),
-        'METHOD': 'SendGrid API (HTTPS)' if sendgrid_api_key else 'SMTP o Console'
+        'METHOD': 'Brevo API (HTTPS)' if brevo_api_key else 'SMTP o Console'
     }
     
     try:
