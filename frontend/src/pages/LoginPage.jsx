@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { LogIn, ArrowLeft } from 'lucide-react';
 import { useForm } from '../hooks/useForm';
 import { validators } from '../utils/validators';
@@ -15,7 +15,22 @@ import Footer from '../components/Footer';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [alert, setAlert] = useState({ type: '', message: '', detail: '' });
+
+  // Mostrar mensaje si viene del registro o verificación
+  useEffect(() => {
+    if (location.state?.message) {
+      setAlert({
+        type: location.state.type || 'info',
+        message: location.state.message,
+        detail: location.state.detail || ''
+      });
+      
+      // Limpiar el state para que no se muestre al recargar
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const validationRules = {
     email: [validators.required, validators.email],
@@ -60,6 +75,16 @@ const LoginPage = () => {
         }
       }, 1000);
     } catch (error) {
+      // Manejar email no verificado
+      if (error.response?.status === 403 && error.response?.data?.requires_verification) {
+        setAlert({
+          type: 'warning',
+          message: 'Email no verificado',
+          detail: 'Debes verificar tu email antes de iniciar sesión. Revisa tu bandeja de entrada y haz clic en el enlace de verificación.',
+        });
+        return;
+      }
+      
       // Manejar errores específicos de estado del odontólogo
       if (error.response?.status === 403 && error.response?.data?.estado) {
         const estado = error.response.data.estado;

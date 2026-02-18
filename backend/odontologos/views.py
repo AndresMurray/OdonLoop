@@ -5,6 +5,12 @@ from rest_framework.views import APIView
 from django.utils import timezone
 from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.core.mail import EmailMessage
+from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
+
 from .models import Odontologo
 from .serializers import OdontologoSerializer, OdontologoPerfilSerializer
 
@@ -67,6 +73,39 @@ def aprobar_odontologo(request, pk):
     odontologo.fecha_aprobacion = timezone.now()
     odontologo.save()
     
+    # Activar el usuario para que pueda iniciar sesión
+    odontologo.user.is_active = True
+    odontologo.user.save()
+    
+    # Enviar email de aprobación al odontólogo
+    if odontologo.user and odontologo.user.email:
+        try:
+            nombre_completo = odontologo.get_nombre_completo()
+            logger.info(f'Enviando email de aprobación a {odontologo.user.email}...')
+            
+            email = EmailMessage(
+                subject='Tu cuenta OdonLoop ha sido aprobada',
+                body=f'Hola Dr./Dra. {nombre_completo},\n\n'
+                     f'Tenemos buenas noticias: tu cuenta profesional en OdonLoop ha sido aprobada y está lista para usar.\n\n'
+                     f'Ahora puedes acceder a todas las herramientas de la plataforma:\n\n'
+                     f'• Organizar y gestionar tu agenda de turnos\n'
+                     f'• Administrar la información de tus pacientes\n'
+                     f'• Aprovechar todas las funcionalidades disponibles\n\n'
+                     f'Para comenzar, simplemente inicia sesión con tus credenciales y explora las opciones disponibles.\n\n'
+                     f'Te damos la bienvenida a OdonLoop.\n\n'
+                     f'Saludos cordiales,\n'
+                     f'El equipo de OdonLoop\n\n'
+                     f'---\n'
+                     f'Este es un mensaje automático, por favor no respondas a este email.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[odontologo.user.email],
+                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+            )
+            email.send(fail_silently=True)
+            logger.info(f'Email de aprobación enviado exitosamente a {odontologo.user.email}')
+        except Exception as e:
+            logger.error(f'Error al enviar email de aprobación: {str(e)}')
+    
     serializer = OdontologoSerializer(odontologo)
     return Response({
         'message': f'Odontólogo {odontologo.get_nombre_completo()} aprobado exitosamente',
@@ -105,6 +144,10 @@ def suspender_odontologo(request, pk):
     odontologo.motivo_suspension = motivo
     odontologo.save()
     
+    # Desactivar el usuario para que no pueda iniciar sesión
+    odontologo.user.is_active = False
+    odontologo.user.save()
+    
     serializer = OdontologoSerializer(odontologo)
     return Response({
         'message': f'Odontólogo {odontologo.get_nombre_completo()} suspendido exitosamente',
@@ -139,6 +182,38 @@ def activar_odontologo(request, pk):
     odontologo.estado = 'activo'
     odontologo.motivo_suspension = None
     odontologo.save()
+    
+    # Activar el usuario para que pueda iniciar sesión
+    odontologo.user.is_active = True
+    odontologo.user.save()
+    
+    # Enviar email de reactivación al odontólogo
+    if odontologo.user and odontologo.user.email:
+        try:
+            nombre_completo = odontologo.get_nombre_completo()
+            logger.info(f'Enviando email de reactivación a {odontologo.user.email}...')
+            
+            email = EmailMessage(
+                subject='Tu cuenta OdonLoop ha sido reactivada',
+                body=f'Hola Dr./Dra. {nombre_completo},\n\n'
+                     f'Te informamos que tu cuenta profesional en OdonLoop ha sido reactivada.\n\n'
+                     f'Puedes volver a acceder a la plataforma y utilizar todas sus funcionalidades:\n\n'
+                     f'• Gestionar tu agenda de turnos\n'
+                     f'• Administrar la información de tus pacientes\n'
+                     f'• Acceder a todas las herramientas disponibles\n\n'
+                     f'Si tienes alguna pregunta o necesitas asistencia, estamos aquí para ayudarte.\n\n'
+                     f'Saludos cordiales,\n'
+                     f'El equipo de OdonLoop\n\n'
+                     f'---\n'
+                     f'Este es un mensaje automático, por favor no respondas a este email.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[odontologo.user.email],
+                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+            )
+            email.send(fail_silently=True)
+            logger.info(f'Email de reactivación enviado exitosamente a {odontologo.user.email}')
+        except Exception as e:
+            logger.error(f'Error al enviar email de reactivación: {str(e)}')
     
     serializer = OdontologoSerializer(odontologo)
     return Response({

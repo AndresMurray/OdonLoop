@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import CustomUser
+from django.utils import timezone
+from datetime import timedelta
 
 class UserSerializer(serializers.ModelSerializer):
     edad = serializers.ReadOnlyField(source='get_edad')
@@ -46,9 +48,32 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Debe ser un número válido")
 
     def validate_email(self, value):
-        """Validar que el email no exista"""
-        if CustomUser.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Este email ya está registrado")
+        """Validar que el email no exista o permitir re-registro si no está verificado después de 48 horas"""
+        try:
+            existing_user = CustomUser.objects.get(email=value)
+            
+            # Si el usuario ya está verificado, no permitir el registro
+            if existing_user.email_verified:
+                raise serializers.ValidationError("Este email ya está registrado y verificado")
+            
+            # Si el usuario no está verificado, verificar si han pasado 48 horas
+            time_since_registration = timezone.now() - existing_user.date_joined
+            hours_since_registration = time_since_registration.total_seconds() / 3600
+            
+            if hours_since_registration < 48:
+                hours_remaining = 48 - hours_since_registration
+                raise serializers.ValidationError(
+                    f"Este email está registrado pero no verificado. "
+                    f"Podrás registrarlo nuevamente en {hours_remaining:.1f} horas o solicita un nuevo enlace de verificación."
+                )
+            
+            # Han pasado 48 horas, eliminar el usuario antiguo para permitir re-registro
+            existing_user.delete()
+            
+        except CustomUser.DoesNotExist:
+            # El email no existe, permitir el registro
+            pass
+        
         return value
 
     def validate(self, attrs):

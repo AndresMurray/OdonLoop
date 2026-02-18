@@ -7,6 +7,8 @@ export const API_ENDPOINTS = {
     profile: `/api/usuarios/profile/`,
     list: `/api/usuarios/list/`,
     refreshToken: `/api/usuarios/token/refresh/`,
+    verifyEmail: `/api/usuarios/verify-email/`,
+    resendVerification: `/api/usuarios/resend-verification/`,
   },
 };
 

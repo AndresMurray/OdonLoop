@@ -275,6 +275,9 @@ else:
 DEFAULT_FROM_EMAIL = env_config('DEFAULT_FROM_EMAIL', default='noreply@odonloop.com')
 DEFAULT_REPLY_TO_EMAIL = env_config('DEFAULT_REPLY_TO_EMAIL', default='info@odonloop.com')
 
+# URL del frontend para enlaces en emails (verificación, etc.)
+FRONTEND_URL = env_config('FRONTEND_URL', default='http://localhost:5173')
+
 # ===== OPCIÓN 2: SMTP (Solo para desarrollo local) =====
 # Configuración SMTP para SendGrid (no funciona en Railway por bloqueo de puertos)
 EMAIL_HOST = env_config('EMAIL_HOST', default='smtp.sendgrid.net')

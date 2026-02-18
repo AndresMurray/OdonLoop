@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (
     UserRegistrationView, UserProfileView, UserListView, UserLoginView,
-    RequestPasswordResetView, VerifyResetCodeView, ResetPasswordView, ChangePasswordView
+    RequestPasswordResetView, VerifyResetCodeView, ResetPasswordView, ChangePasswordView,
+    VerifyEmailView, ResendVerificationEmailView
 )
 from .test_email_view import test_email
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -14,6 +15,10 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('profile/', UserProfileView.as_view(), name='profile'),
     path('list/', UserListView.as_view(), name='list'),
+    
+    # Verificación de email
+    path('verify-email/', VerifyEmailView.as_view(), name='verify-email'),
+    path('resend-verification/', ResendVerificationEmailView.as_view(), name='resend-verification'),
     
     # Recuperación de contraseña
     path('password-reset/request/', RequestPasswordResetView.as_view(), name='password-reset-request'),

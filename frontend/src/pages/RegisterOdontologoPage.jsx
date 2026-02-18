@@ -57,14 +57,16 @@ const RegisterOdontologoPage = () => {
   const onSubmit = async (formValues) => {
     try {
       await userService.register(formValues);
-      setAlert({
-        type: 'success',
-        message: '¡Registro exitoso! Redirigiendo...',
+      
+      // Redirigir a la página de pendiente aprobación con mensaje de verificación
+      navigate('/pendiente-aprobacion', { 
+        replace: true,
+        state: { 
+          message: '¡Registro exitoso! Te enviamos un email de verificación.',
+          type: 'success',
+          emailVerified: false
+        }
       });
-
-      setTimeout(() => {
-        navigate('/pendiente-aprobacion', { replace: true });
-      }, 2000);
     } catch (error) {
       setAlert({
         type: 'error',

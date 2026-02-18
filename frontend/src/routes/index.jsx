@@ -5,6 +5,8 @@ import RegisterOdontologoPage from '../pages/RegisterOdontologoPage';
 import PendienteAprobacionPage from '../pages/PendienteAprobacionPage';
 import LoginPage from '../pages/LoginPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
+import ActivarCuentaPage from '../pages/ActivarCuentaPage';
+import ReenviarVerificacionPage from '../pages/ReenviarVerificacionPage';
 import TurnosPage from '../pages/TurnosPage';
 import HomeOdonto from '../pages/HomeOdonto';
 import HomePaciente from '../pages/HomePaciente';
@@ -49,6 +51,22 @@ export const router = createBrowserRouter([
     element: (
       <GuestRoute>
         <ForgotPasswordPage />
+      </GuestRoute>
+    ),
+  },
+  {
+    path: '/activar-cuenta',
+    element: (
+      <GuestRoute>
+        <ActivarCuentaPage />
+      </GuestRoute>
+    ),
+  },
+  {
+    path: '/reenviar-verificacion',
+    element: (
+      <GuestRoute>
+        <ReenviarVerificacionPage />
       </GuestRoute>
     ),
   },

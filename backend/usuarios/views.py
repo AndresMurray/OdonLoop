@@ -1,4 +1,4 @@
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -7,7 +7,11 @@ from django.db import transaction
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.utils import timezone
-from .models import CustomUser, PasswordResetToken
+import logging
+
+logger = logging.getLogger(__name__)
+
+from .models import CustomUser, PasswordResetToken, EmailVerificationToken
 from .serializers import UserSerializer, UserRegistrationSerializer
 
 
@@ -25,13 +29,32 @@ class UserLoginView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Autenticar directamente con email (USERNAME_FIELD = 'email')
-        user = authenticate(request, username=email, password=password)
-        
-        if user is None:
+        # Buscar usuario por email (sin importar is_active)
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
             return Response(
                 {'error': 'Credenciales inválidas'},
                 status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Verificar la contraseña
+        if not user.check_password(password):
+            return Response(
+                {'error': 'Credenciales inválidas'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Verificar si el email está verificado
+        if not user.email_verified:
+            return Response(
+                {
+                    'error': 'Email no verificado',
+                    'detail': 'Por favor verifica tu email antes de iniciar sesión. Revisa tu bandeja de entrada.',
+                    'email': user.email,
+                    'requires_verification': True
+                },
+                status=status.HTTP_403_FORBIDDEN
             )
         
         # Verificar estado si es odontólogo
@@ -65,6 +88,13 @@ class UserLoginView(APIView):
                     {'error': 'Error al verificar el estado del odontólogo'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
+        
+        # Verificar que el usuario esté activo (solo después de todas las validaciones)
+        if not user.is_active:
+            return Response(
+                {'error': 'Tu cuenta está inactiva. Por favor contacta al administrador.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
         
         # Generar tokens JWT
         refresh = RefreshToken.for_user(user)
@@ -145,6 +175,31 @@ class UserRegistrationView(generics.CreateAPIView):
                             except ObraSocial.DoesNotExist:
                                 pass
                         
+                        # Enviar email de bienvenida al paciente que hace upgrade
+                        if user.email:
+                            try:
+                                email_msg = EmailMessage(
+                                    subject='Tu cuenta OdonLoop está lista',
+                                    body=f'Hola {user.first_name},\n\n'
+                                         f'Excelentes noticias: tu cuenta en OdonLoop ya está activa y lista para usar.\n\n'
+                                         f'Ahora puedes aprovechar todas las funcionalidades de la plataforma:\n\n'
+                                         f'• Buscar profesionales odontológicos cerca de ti\n'
+                                         f'• Agendar tus citas de forma rápida y conveniente\n'
+                                         f'• Gestionar y revisar todos tus turnos en un solo lugar\n\n'
+                                         f'Estamos aquí para hacer tu experiencia más simple. Si necesitas ayuda, no dudes en contactarnos.\n\n'
+                                         f'Saludos,\n'
+                                         f'El equipo de OdonLoop\n\n'
+                                         f'---\n'
+                                         f'Este es un mensaje automático, por favor no respondas a este email.',
+                                    from_email=settings.DEFAULT_FROM_EMAIL,
+                                    to=[user.email],
+                                    reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+                                )
+                                email_msg.send(fail_silently=True)
+                            except Exception:
+                                # No fallar el registro si falla el email
+                                pass
+                        
                         # Generar tokens JWT
                         from rest_framework_simplejwt.tokens import RefreshToken
                         refresh = RefreshToken.for_user(user)
@@ -172,8 +227,8 @@ class UserRegistrationView(generics.CreateAPIView):
     
     @transaction.atomic
     def perform_create(self, serializer):
-        # Crear el usuario
-        user = serializer.save()
+        # Crear el usuario como INACTIVO (requiere verificación de email)
+        user = serializer.save(is_active=False, email_verified=False)
         
         # Crear el perfil correspondiente según el tipo de usuario
         if user.tipo_usuario == 'paciente':
@@ -198,12 +253,238 @@ class UserRegistrationView(generics.CreateAPIView):
                 obra_social=obra_social,
                 obra_social_otra=obra_social_otra if not obra_social else None
             )
+            
+            # Enviar email de verificación
+            if user.email:
+                self._send_verification_email(user)
+                    
         elif user.tipo_usuario == 'odontologo':
             from odontologos.models import Odontologo
             Odontologo.objects.create(user=user)
+            
+            # Enviar email de verificación
+            if user.email:
+                self._send_verification_email(user, is_odontologo=True)
         
         return user
+    
+    def _send_verification_email(self, user, is_odontologo=False):
+        """Enviar email de verificación con token"""
+        try:
+            # Invalidar tokens anteriores no usados
+            EmailVerificationToken.objects.filter(user=user, used=False).update(used=True)
+            
+            # Crear nuevo token
+            token = EmailVerificationToken.objects.create(user=user)
+            
+            # URL de activación
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+            activation_link = f"{frontend_url}/activar-cuenta?token={token.token}"
+            
+            logger.info(f'Generando email de verificación para {user.email}...')
+            logger.info(f'Token generado: {token.token}')
+            
+            if is_odontologo:
+                subject = 'Confirma tu cuenta en OdonLoop'
+                body = (f'Hola Dr./Dra. {user.first_name} {user.last_name},\n\n'
+                       f'Gracias por registrarte en OdonLoop, la plataforma que facilita la gestión de turnos odontológicos.\n\n'
+                       f'Solo necesitamos confirmar tu dirección de email. Por favor, haz clic en el siguiente enlace:\n\n'
+                       f'{activation_link}\n\n'
+                       f'Este enlace estará disponible durante las próximas 48 horas.\n\n'
+                       f'Una vez que confirmes tu email, nuestro equipo revisará tu solicitud. Te enviaremos una notificación cuando tu cuenta esté lista para usar.\n\n'
+                       f'Si no realizaste este registro, simplemente ignora este mensaje. Tu dirección de email no será utilizada sin tu confirmación.\n\n'
+                       f'Saludos cordiales,\n'
+                       f'El equipo de OdonLoop\n\n'
+                       f'---\n'
+                       f'Este es un mensaje automático, por favor no respondas a este email.')
+            else:
+                subject = 'Confirma tu cuenta en OdonLoop'
+                body = (f'Hola {user.first_name},\n\n'
+                       f'Te damos la bienvenida a OdonLoop, tu herramienta para gestionar turnos odontológicos de forma simple.\n\n'
+                       f'Para activar tu cuenta, necesitamos que confirmes tu email haciendo clic aquí:\n\n'
+                       f'{activation_link}\n\n'
+                       f'Este enlace estará disponible durante las próximas 48 horas.\n\n'
+                       f'Con tu cuenta activa podrás:\n\n'
+                       f'• Consultar profesionales disponibles cerca de ti\n'
+                       f'• Agendar tus citas cuando te resulte conveniente\n'
+                       f'• Administrar todos tus turnos en un solo lugar\n\n'
+                       f'Si no creaste esta cuenta, no te preocupes. Simplemente ignora este mensaje.\n\n'
+                       f'Saludos,\n'
+                       f'El equipo de OdonLoop\n\n'
+                       f'---\n'
+                       f'Este es un mensaje automático, por favor no respondas a este email.')
+            
+            email = EmailMessage(
+                subject=subject,
+                body=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user.email],
+                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+            )
+            email.send(fail_silently=False)
+            logger.info(f'Email de verificación enviado exitosamente a {user.email}')
+            
+        except Exception as e:
+            logger.error(f'Error al enviar email de verificación: {str(e)}')
+            # Si falla el envío del email, eliminar el usuario creado
+            user.delete()
+            raise Exception('No se pudo enviar el email de verificación. Por favor, intenta nuevamente.')
 
+
+class VerifyEmailView(APIView):
+    """Vista para verificar el email y activar la cuenta"""
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        token_str = request.data.get('token')
+        
+        if not token_str:
+            return Response(
+                {'error': 'Token de verificación es requerido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Buscar el token
+            token = EmailVerificationToken.objects.select_related('user').get(token=token_str)
+            
+            # Verificar si el token es válido
+            if not token.is_valid():
+                if token.used:
+                    error_message = 'Este enlace de verificación ya ha sido usado'
+                else:
+                    error_message = 'Este enlace de verificación ha expirado. Por favor solicita uno nuevo.'
+                
+                return Response(
+                    {'error': error_message, 'expired': True},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Activar el usuario
+            user = token.user
+            user.email_verified = True
+            user.save()
+            
+            # Marcar token como usado
+            token.used = True
+            token.save()
+            
+            logger.info(f'Email verificado exitosamente para {user.email}')
+            
+            # Solo activar is_active y generar tokens para pacientes
+            # Los odontólogos deben esperar aprobación del admin
+            response_data = {
+                'message': '',
+                'verified': True,
+                'user': UserSerializer(user).data
+            }
+            
+            if user.tipo_usuario == 'odontologo':
+                # Odontólogos NO deben autenticarse hasta ser aprobados
+                response_data['message'] = 'Email verificado exitosamente. Tu cuenta está ahora en proceso de aprobación. Te notificaremos cuando sea aprobada.'
+            else:
+                # Pacientes y otros usuarios pueden iniciar sesión inmediatamente
+                user.is_active = True
+                user.save()
+                
+                # Generar tokens JWT para login automático
+                refresh = RefreshToken.for_user(user)
+                response_data['message'] = 'Email verificado exitosamente. Ya puedes iniciar sesión y usar la plataforma.'
+                response_data['refresh'] = str(refresh)
+                response_data['access'] = str(refresh.access_token)
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except EmailVerificationToken.DoesNotExist:
+            return Response(
+                {'error': 'Token de verificación inválido'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class ResendVerificationEmailView(APIView):
+    """Vista para reenviar el email de verificación"""
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        email = request.data.get('email')
+        
+        if not email:
+            return Response(
+                {'error': 'Email es requerido'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            user = CustomUser.objects.get(email=email)
+            
+            # Verificar si el usuario ya está verificado
+            if user.email_verified and user.is_active:
+                return Response(
+                    {'error': 'Esta cuenta ya está verificada'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Invalidar tokens anteriores
+            EmailVerificationToken.objects.filter(user=user, used=False).update(used=True)
+            
+            # Crear nuevo token
+            token = EmailVerificationToken.objects.create(user=user)
+            
+            # Enviar email
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+            activation_link = f"{frontend_url}/activar-cuenta?token={token.token}"
+            
+            is_odontologo = user.tipo_usuario == 'odontologo'
+            
+            if is_odontologo:
+                subject = 'Verifica tu email - OdonLoop'
+                body = (f'Estimado/a Dr./Dra. {user.first_name} {user.last_name},\n\n'
+                       f'Has solicitado un nuevo enlace de verificación.\n\n'
+                       f'Para completar tu registro, haz clic en el siguiente enlace:\n\n'
+                       f'{activation_link}\n\n'
+                       f'Este enlace es válido por 48 horas.\n\n'
+                       f'Después de verificar tu email, tu cuenta estará en proceso de aprobación por nuestro equipo.\n\n'
+                       f'Atentamente,\n'
+                       f'Equipo OdonLoop')
+            else:
+                subject = 'Verifica tu email - OdonLoop'
+                body = (f'Estimado/a {user.first_name} {user.last_name},\n\n'
+                       f'Has solicitado un nuevo enlace de verificación.\n\n'
+                       f'Para activar tu cuenta, haz clic en el siguiente enlace:\n\n'
+                       f'{activation_link}\n\n'
+                       f'Este enlace es válido por 48 horas.\n\n'
+                       f'Atentamente,\n'
+                       f'Equipo OdonLoop')
+            
+            email_msg = EmailMessage(
+                subject=subject,
+                body=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user.email],
+                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+            )
+            email_msg.send(fail_silently=False)
+            
+            logger.info(f'Email de verificación reenviado a {user.email}')
+            
+            return Response(
+                {'message': 'Email de verificación enviado'},
+                status=status.HTTP_200_OK
+            )
+            
+        except CustomUser.DoesNotExist:
+            # Por seguridad, no revelar si el email existe o no
+            return Response(
+                {'message': 'Si el email existe en nuestro sistema, recibirás un enlace de verificación'},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            logger.error(f'Error al reenviar email de verificación: {str(e)}')
+            return Response(
+                {'error': 'Error al enviar el email'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -252,14 +533,18 @@ class RequestPasswordResetView(APIView):
         try:
             # Usar EmailMessage para soportar reply_to
             email = EmailMessage(
-                subject='Recuperación de Contraseña - OdonLoop',
+                subject='Código de recuperación de contraseña',
                 body=f'Hola {user.first_name},\n\n'
-                     f'Recibimos una solicitud para recuperar tu contraseña.\n\n'
-                     f'Tu código de verificación es: {token.code}\n\n'
-                     f'Este código es válido por 15 minutos.\n\n'
-                     f'Si no solicitaste este cambio, puedes ignorar este mensaje.\n\n'
-                     f'Atentamente,\n'
-                     f'Equipo OdonLoop',
+                     f'Recibimos tu solicitud para restablecer la contraseña de tu cuenta OdonLoop.\n\n'
+                     f'Aquí está tu código de verificación:\n\n'
+                     f'{token.code}\n\n'
+                     f'Ingresa este código en la aplicación para crear tu nueva contraseña.\n\n'
+                     f'Por tu seguridad, este código solo es válido durante los próximos 15 minutos.\n\n'
+                     f'Si no solicitaste este cambio, no te preocupes. Tu cuenta está segura y puedes ignorar este mensaje.\n\n'
+                     f'Saludos,\n'
+                     f'El equipo de OdonLoop\n\n'
+                     f'---\n'
+                     f'Este es un mensaje automático, por favor no respondas a este email.',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[user.email],
                 reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],

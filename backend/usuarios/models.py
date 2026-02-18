@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 import random
 import string
+import secrets
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True, blank=True, null=True, verbose_name='Email')
@@ -35,6 +36,13 @@ class CustomUser(AbstractUser):
         default=True,
         verbose_name='Cuenta Completa',
         help_text='False si fue creado por odontólogo sin email'
+    )
+    
+    # Indica si el email ha sido verificado
+    email_verified = models.BooleanField(
+        default=False,
+        verbose_name='Email Verificado',
+        help_text='True si el usuario ha verificado su email'
     )
     
     # Usar username como campo de autenticación (email puede ser null)
@@ -89,4 +97,43 @@ class PasswordResetToken(models.Model):
                 self.code = self.generate_code()
             if not self.expires_at:
                 self.expires_at = timezone.now() + timezone.timedelta(minutes=15)
+        super().save(*args, **kwargs)
+
+
+class EmailVerificationToken(models.Model):
+    """Modelo para tokens de verificación de email"""
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='email_verification_tokens'
+    )
+    token = models.CharField(max_length=64, unique=True, verbose_name='Token de verificación')
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+    
+    class Meta:
+        verbose_name = 'Token de Verificación de Email'
+        verbose_name_plural = 'Tokens de Verificación de Email'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Token de verificación para {self.user.email}"
+    
+    @classmethod
+    def generate_token(cls):
+        """Genera un token seguro aleatorio"""
+        return secrets.token_urlsafe(32)
+    
+    def is_valid(self):
+        """Verifica si el token es válido (no usado y no expirado)"""
+        return not self.used and timezone.now() < self.expires_at
+    
+    def save(self, *args, **kwargs):
+        # Si es un nuevo token, establecer fecha de expiración (48 horas)
+        if not self.pk:
+            if not self.token:
+                self.token = self.generate_token()
+            if not self.expires_at:
+                self.expires_at = timezone.now() + timezone.timedelta(hours=48)
         super().save(*args, **kwargs)

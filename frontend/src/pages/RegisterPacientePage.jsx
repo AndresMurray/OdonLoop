@@ -94,14 +94,15 @@ const RegisterPacientePage = () => {
       if (!dataToSend.obra_social_otra) delete dataToSend.obra_social_otra;
       
       await userService.register(dataToSend);
-      setAlert({
-        type: 'success',
-        message: '¡Registro exitoso! Redirigiendo al login...',
+      
+      // Redirigir inmediatamente al login con mensaje
+      navigate('/login', { 
+        replace: true,
+        state: { 
+          message: '¡Registro exitoso! Revisa tu email para verificar tu cuenta antes de iniciar sesión.',
+          type: 'success'
+        }
       });
-
-      setTimeout(() => {
-        navigate('/login?tipo=paciente', { replace: true });
-      }, 2000);
     } catch (error) {
       setAlert({
         type: 'error',

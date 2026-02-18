@@ -100,4 +100,28 @@ export const authService = {
       throw error;
     }
   },
+
+  async verifyEmail(token) {
+    try {
+      const response = await apiClient.post(API_ENDPOINTS.users.verifyEmail, { token });
+      return response;
+    } catch (error) {
+      if (error.error) {
+        throw new Error(error.error);
+      }
+      throw new Error('Error al verificar el email');
+    }
+  },
+
+  async resendVerificationEmail(email) {
+    try {
+      const response = await apiClient.post(API_ENDPOINTS.users.resendVerification, { email });
+      return response;
+    } catch (error) {
+      if (error.error) {
+        throw new Error(error.error);
+      }
+      throw new Error('Error al reenviar el email de verificación');
+    }
+  },
 };
