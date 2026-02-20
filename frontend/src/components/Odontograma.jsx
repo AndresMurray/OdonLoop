@@ -7,7 +7,7 @@ import { Link2, Square, ClipboardPlus } from 'lucide-react';
  * Muestra 52 piezas dentales (32 permanentes + 20 temporales)
  * Organizadas según notación FDI
  */
-const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSeguimiento }, ref) => {
+const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSeguimiento, modoCaptura = false }, ref) => {
   const [hoveredPieza, setHoveredPieza] = useState(null);
   const [modoMarca, setModoMarca] = useState(null); // 'puente' o 'protesis'
   const [marcaEnProgreso, setMarcaEnProgreso] = useState({ inicio: null, fin: null });
@@ -46,10 +46,10 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
       // Segunda pieza seleccionada
       const inicio = marcaEnProgreso.inicio;
       const fin = numero;
-      
+
       // Guardar la marca en ambas piezas
       const marcaData = { inicio, fin, color: 'red', tipo: modoMarca };
-      
+
       // Actualizar pieza de inicio
       const itemInicio = odontogramaMap[inicio];
       const registroInicio = {
@@ -57,7 +57,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
         puente: marcaData
       };
       onChange(inicio, registroInicio);
-      
+
       // Actualizar pieza de fin
       const itemFin = odontogramaMap[fin];
       const registroFin = {
@@ -65,7 +65,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
         puente: marcaData
       };
       onChange(fin, registroFin);
-      
+
       // Resetear estado y salir del modo
       setMarcaEnProgreso({ inicio: null, fin: null });
       setModoMarca(null);
@@ -76,16 +76,16 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
   const obtenerPuentes = () => {
     const puentes = [];
     const puentesVistos = new Set();
-    
+
     odontograma.forEach(item => {
       if (item.registro?.puente) {
         const { inicio, fin, tipo } = item.registro.puente;
         const key = `${Math.min(inicio, fin)}-${Math.max(inicio, fin)}`;
-        
+
         if (!puentesVistos.has(key)) {
-          puentes.push({ 
-            inicio, 
-            fin, 
+          puentes.push({
+            inicio,
+            fin,
             color: item.registro.puente.color || 'red',
             tipo: tipo || 'puente'
           });
@@ -93,7 +93,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
         }
       }
     });
-    
+
     return puentes;
   };
 
@@ -141,7 +141,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
 
     // Calcular inmediatamente y después con delay
     recalcularConDelay();
-    
+
     // También recalcular después de un tiempo para asegurar
     const timeoutId = setTimeout(() => {
       calcularLineas();
@@ -152,7 +152,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
       recalcularConDelay();
     };
     window.addEventListener('resize', handleResize);
-    
+
     return () => {
       window.removeEventListener('resize', handleResize);
       clearTimeout(timeoutId);
@@ -165,7 +165,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
     const isSeleccionado = modoMarca && marcaEnProgreso.inicio === numero;
 
     return (
-      <div 
+      <div
         key={numero}
         data-numero={numero}
         onClick={() => handlePiezaClickMarca(numero)}
@@ -188,63 +188,63 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
 
   return (
     <div ref={containerRef} className="relative bg-white rounded-xl p-4 md:p-8 shadow-2xl" style={{ isolation: 'isolate' }}>
-      {/* Botones para activar modos */}
-      <div className="mb-4 flex justify-between items-center gap-3">
-        {/* Botón de Nuevo Seguimiento */}
-        <button
-          onClick={onNuevoSeguimiento}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all bg-blue-600 text-white hover:bg-blue-700 shadow-md"
-        >
-          <ClipboardPlus size={18} />
-          Agregar Nuevo Seguimiento
-        </button>
-        
-        {/* Botones de marcado */}
-        <div className="flex gap-3">
+      {/* Botones para activar modos — ocultos en modoCaptura */}
+      {!modoCaptura && (
+        <div className="mb-4 flex justify-between items-center gap-3">
+          {/* Botón de Nuevo Seguimiento */}
           <button
-            onClick={() => {
-              setModoMarca(modoMarca === 'puente' ? null : 'puente');
-              setMarcaEnProgreso({ inicio: null, fin: null });
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
-              modoMarca === 'puente'
-                ? 'bg-red-600 text-white hover:bg-red-700' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+            onClick={onNuevoSeguimiento}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all bg-blue-600 text-white hover:bg-blue-700 shadow-md"
           >
-            <Link2 size={18} />
-            {modoMarca === 'puente' ? 'Cancelar Puente' : 'Marcar Puente'}
+            <ClipboardPlus size={18} />
+            Agregar Nuevo Seguimiento
           </button>
-          
-          <button
-            onClick={() => {
-              setModoMarca(modoMarca === 'protesis' ? null : 'protesis');
-              setMarcaEnProgreso({ inicio: null, fin: null });
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
-              modoMarca === 'protesis'
-                ? 'bg-red-600 text-white hover:bg-red-700' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            <Square size={18} />
-            {modoMarca === 'protesis' ? 'Cancelar Prótesis' : 'Marcar Prótesis'}
-          </button>
-        </div>
-      </div>
 
-      {modoMarca && (
+          {/* Botones de marcado */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setModoMarca(modoMarca === 'puente' ? null : 'puente');
+                setMarcaEnProgreso({ inicio: null, fin: null });
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${modoMarca === 'puente'
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+            >
+              <Link2 size={18} />
+              {modoMarca === 'puente' ? 'Cancelar Puente' : 'Marcar Puente'}
+            </button>
+
+            <button
+              onClick={() => {
+                setModoMarca(modoMarca === 'protesis' ? null : 'protesis');
+                setMarcaEnProgreso({ inicio: null, fin: null });
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${modoMarca === 'protesis'
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+            >
+              <Square size={18} />
+              {modoMarca === 'protesis' ? 'Cancelar Prótesis' : 'Marcar Prótesis'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {modoMarca && !modoCaptura && (
         <div className="mb-4 p-3 bg-red-50 border-2 border-red-300 rounded-lg text-sm text-red-800">
-          <strong>{modoMarca === 'puente' ? 'Modo Puente Activo' : 'Modo Prótesis Removible Activo'}:</strong> 
+          <strong>{modoMarca === 'puente' ? 'Modo Puente Activo' : 'Modo Prótesis Removible Activo'}:</strong>
           {!marcaEnProgreso.inicio && ' Haz clic en la primera pieza'}
           {marcaEnProgreso.inicio && !marcaEnProgreso.fin && ` Pieza ${marcaEnProgreso.inicio} seleccionada. Haz clic en la segunda pieza`}
         </div>
       )}
-      
-      {/* Leyenda */}
-      <div className="mb-8 bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg">
+
+      {/* Leyenda — oculta en modoCaptura */}
+      {!modoCaptura && <div className="mb-8 bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg">
         <h3 className="text-lg font-bold text-gray-800 mb-3">Sistema de Marcado Profesional</h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
           <div>
             <h4 className="font-semibold text-gray-700 mb-2">Tratamientos por Cara:</h4>
@@ -263,7 +263,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
               </div>
             </div>
           </div>
-          
+
           <div>
             <h4 className="font-semibold text-gray-700 mb-2">Estados de Pieza (Clic derecho):</h4>
             <div className="grid grid-cols-2 gap-1 text-xs">
@@ -276,32 +276,32 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
               <div><span className="text-green-600 font-bold">I</span> Implante</div>
             </div>
           </div>
-          
+
           <div>
             <h4 className="font-semibold text-gray-700 mb-2">Prótesis:</h4>
             <div className="space-y-2 text-xs">
               <div className="flex items-center gap-2">
                 <svg width="40" height="12" className="border border-gray-300 rounded">
-                  <path d="M 5,6 Q 20,12 35,6" fill="none" stroke="#EF4444" strokeWidth="2"/>
-                  <circle cx="5" cy="6" r="2" fill="#EF4444"/>
-                  <circle cx="35" cy="6" r="2" fill="#EF4444"/>
+                  <path d="M 5,6 Q 20,12 35,6" fill="none" stroke="#EF4444" strokeWidth="2" />
+                  <circle cx="5" cy="6" r="2" fill="#EF4444" />
+                  <circle cx="35" cy="6" r="2" fill="#EF4444" />
                 </svg>
                 <span><strong className="text-red-600">Puente dental</strong></span>
               </div>
               <div className="flex items-center gap-2">
                 <svg width="40" height="12" className="border border-gray-300 rounded">
-                  <rect x="5" y="3" width="30" height="6" fill="none" stroke="#EF4444" strokeWidth="2" rx="1"/>
+                  <rect x="5" y="3" width="30" height="6" fill="none" stroke="#EF4444" strokeWidth="2" rx="1" />
                 </svg>
                 <span><strong className="text-red-600">Prótesis removible</strong></span>
               </div>
             </div>
           </div>
         </div>
-        
+
         <div className="mt-3 text-xs text-gray-600 bg-white p-2 rounded">
           <strong>Instrucciones:</strong> Click izquierdo en cara → Tratamiento | Clic derecho en centro → Estado | Botones superiores → Marcar puente/prótesis entre piezas
         </div>
-      </div>
+      </div>}
 
       {/* Indicador de orientación */}
       <div className="flex justify-between text-sm font-semibold text-gray-600 mb-4 px-4">
@@ -410,7 +410,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
 
       {/* SVG Overlay para líneas de puente y prótesis */}
       {lineasPuente.length > 0 && (
-        <svg 
+        <svg
           className="absolute top-0 left-0 w-full h-full pointer-events-none"
           style={{ zIndex: 1 }}
         >
@@ -421,7 +421,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
               const y = Math.min(linea.y1, linea.y2) - 6;
               const width = Math.abs(linea.x2 - linea.x1);
               const height = 12;
-              
+
               return (
                 <g key={`protesis-${linea.inicio}-${linea.fin}-${index}`}>
                   <rect
@@ -440,10 +440,10 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
               // Puente dental: Rectángulo sin cerrar (forma de U)
               const altura = 15;
               const yBase = Math.max(linea.y1, linea.y2) + altura;
-              
+
               // Path formando una U: baja, cruza horizontalmente, sube
               const path = `M ${linea.x1},${linea.y1} L ${linea.x1},${yBase} L ${linea.x2},${yBase} L ${linea.x2},${linea.y2}`;
-              
+
               return (
                 <g key={`puente-${linea.inicio}-${linea.fin}-${index}`}>
                   <path
@@ -474,12 +474,14 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
         </svg>
       )}
 
-      {/* Nota final */}
-      <div className="mt-8 text-center text-xs text-gray-500 bg-gray-50 p-3 rounded">
-        <p className="font-semibold">Odontograma profesional con notación FDI - Total: 52 piezas dentales</p>
-        <p className="mt-1">Sistema de 5 caras por pieza: Oclusal (centro), Vestibular (arriba), Lingual (abajo), Mesial (izq), Distal (der)</p>
-        <p className="mt-1 text-blue-600">Click en cara para tratamiento | Clic derecho en centro para estado de pieza</p>
-      </div>
+      {/* Nota final — oculta en modoCaptura */}
+      {!modoCaptura && (
+        <div className="mt-8 text-center text-xs text-gray-500 bg-gray-50 p-3 rounded">
+          <p className="font-semibold">Odontograma profesional con notación FDI - Total: 52 piezas dentales</p>
+          <p className="mt-1">Sistema de 5 caras por pieza: Oclusal (centro), Vestibular (arriba), Lingual (abajo), Mesial (izq), Distal (der)</p>
+          <p className="mt-1 text-blue-600">Click en cara para tratamiento | Clic derecho en centro para estado de pieza</p>
+        </div>
+      )}
     </div>
   );
 });

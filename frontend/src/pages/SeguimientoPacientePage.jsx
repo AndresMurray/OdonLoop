@@ -18,34 +18,35 @@ import { exportarHistorialPacientePDF } from '../utils/exportarPDF';
 const SeguimientoPacientePage = () => {
   const navigate = useNavigate();
   const { pacienteId } = useParams();
-  
+
   const [paciente, setPaciente] = useState(null);
   const [seguimientos, setSeguimientos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingPaciente, setLoadingPaciente] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [alert, setAlert] = useState({ type: '', message: '', detail: '' });
-  
+
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalSeguimientos, setTotalSeguimientos] = useState(0);
-  
+
   // Modal de detalles
   const [seguimientoSeleccionado, setSeguimientoSeleccionado] = useState(null);
   const [mostrarDetalles, setMostrarDetalles] = useState(false);
-  
+
   // Filtros de búsqueda
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
-  
+
   // PDF Export
   const [exportando, setExportando] = useState(false);
   const [odontogramaData, setOdontogramaData] = useState(null);
   const odontogramaRef = useRef(null);
   const [showOdontogramaModal, setShowOdontogramaModal] = useState(false);
-  const modalCaptureRef = useRef(null);
+  const [odontogramaParaCaptura, setOdontogramaParaCaptura] = useState(null);
+  const captureWrapperRef = useRef(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -135,7 +136,7 @@ const SeguimientoPacientePage = () => {
         const esImagen = file.type.startsWith('image/');
         // Usar 'image' para imágenes y 'raw' para documentos/PDFs
         const resourceType = esImagen ? 'image' : 'raw';
-        
+
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', uploadPreset);
@@ -179,7 +180,7 @@ const SeguimientoPacientePage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.descripcion.trim()) {
       setAlert({
         type: 'error',
@@ -199,12 +200,12 @@ const SeguimientoPacientePage = () => {
       };
 
       await crearSeguimiento(dataToSend);
-      
+
       setAlert({
         type: 'success',
         message: 'Seguimiento creado exitosamente'
       });
-      
+
       // Reset form
       setFormData({
         descripcion: '',
@@ -213,11 +214,11 @@ const SeguimientoPacientePage = () => {
       });
       setArchivosSeleccionados([]);
       setMostrarFormulario(false);
-      
+
       // Recargar seguimientos desde la primera página
       setCurrentPage(1);
       await cargarSeguimientos();
-      
+
     } catch (err) {
       setAlert({
         type: 'error',
@@ -260,27 +261,36 @@ const SeguimientoPacientePage = () => {
   const handleExportarPDF = async () => {
     setExportando(true);
     try {
-      // Cargar odontograma si no está cargado
-      if (!odontogramaData) {
+      // Cargar odontograma: usar variable local para no depender del estado React actualizado
+      let odontogramaLocal = odontogramaData;
+      if (!odontogramaLocal) {
         const data = await getOdontograma(pacienteId);
         setOdontogramaData(data);
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        odontogramaLocal = data; // ← variable local siempre tiene el dato fresco
       }
-      // Mostrar modal odontograma
+
+      // Guardar en el estado de captura (para el modal) y mostrar el modal
+      setOdontogramaParaCaptura(odontogramaLocal);
       setShowOdontogramaModal(true);
-      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Esperar que el modal y el odontograma se rendericen completamente
+      // (incluye requestAnimationFrame + setTimeout 100ms + setTimeout 500ms del componente)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       await exportarHistorialPacientePDF(
         pacienteId,
         paciente?.nombre_completo || 'Paciente',
-        modalCaptureRef
+        captureWrapperRef
       );
       setShowOdontogramaModal(false);
+      setOdontogramaParaCaptura(null);
       setAlert({
         type: 'success',
         message: 'PDF exportado exitosamente'
       });
     } catch (err) {
       setShowOdontogramaModal(false);
+      setOdontogramaParaCaptura(null);
       console.error('Error al exportar PDF:', err);
       setAlert({
         type: 'error',
@@ -295,14 +305,14 @@ const SeguimientoPacientePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
       <Navbar />
-      
+
       {/* Header */}
       <header className="bg-white/95 shadow-md backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => navigate('/mis-pacientes')}
               >
@@ -358,7 +368,7 @@ const SeguimientoPacientePage = () => {
       {/* Main Content */}
       <main className="flex-grow bg-white/5 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          
+
           <Alert
             type={alert.type}
             message={alert.message}
@@ -456,23 +466,23 @@ const SeguimientoPacientePage = () => {
                           </>
                         )}
                       </button>
-                      
+
                       {archivosSeleccionados.length > 0 && (
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                           {archivosSeleccionados.map((archivo, index) => {
-                            const esImg = archivo.tipo === 'imagen' && 
+                            const esImg = archivo.tipo === 'imagen' &&
                               !archivo.nombre_original?.toLowerCase().endsWith('.pdf');
-                            
+
                             return (
-                              <div 
+                              <div
                                 key={index}
                                 className="relative border-2 border-gray-200 rounded-xl p-3 bg-white hover:shadow-lg transition-all duration-200 group"
                               >
                                 {esImg ? (
                                   <div className="relative w-full h-32 mb-2 rounded-lg overflow-hidden bg-gray-100">
-                                    <img 
-                                      src={archivo.url} 
-                                      alt={archivo.nombre_original} 
+                                    <img
+                                      src={archivo.url}
+                                      alt={archivo.nombre_original}
                                       className="w-full h-full object-contain hover:scale-110 transition-transform duration-200"
                                     />
                                   </div>
@@ -539,142 +549,142 @@ const SeguimientoPacientePage = () => {
 
           {/* Lista de seguimientos - se oculta cuando se muestra el formulario */}
           {!mostrarFormulario && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-6 h-6 text-emerald-600" />
-                  Historial de Seguimientos
-                  {(fechaDesde || fechaHasta) && (
-                    <span className="text-sm font-normal text-gray-500">
-                      ({totalSeguimientos} resultados)
-                    </span>
-                  )}
-                </CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setMostrarFiltros(!mostrarFiltros)}
-                >
-                  <Filter className="w-4 h-4 mr-2" />
-                  {mostrarFiltros ? 'Ocultar Filtros' : 'Filtrar por Fecha'}
-                </Button>
-              </div>
-              
-              {/* Panel de filtros */}
-              {mostrarFiltros && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex flex-wrap items-end gap-4">
-                    <div className="flex-1 min-w-[200px]">
-                      <Input
-                        label="Fecha Desde"
-                        type="date"
-                        value={fechaDesde}
-                        onChange={(e) => {
-                          setFechaDesde(e.target.value);
-                          setCurrentPage(1);
-                        }}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-[200px]">
-                      <Input
-                        label="Fecha Hasta"
-                        type="date"
-                        value={fechaHasta}
-                        onChange={(e) => {
-                          setFechaHasta(e.target.value);
-                          setCurrentPage(1);
-                        }}
-                      />
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={limpiarFiltros}
-                      disabled={!fechaDesde && !fechaHasta}
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Limpiar
-                    </Button>
-                  </div>
-                  {(fechaDesde || fechaHasta) && (
-                    <div className="mt-3 text-sm text-gray-600">
-                      Mostrando seguimientos {fechaDesde && `desde el ${formatearFecha(fechaDesde)}`} {fechaHasta && `hasta el ${formatearFecha(fechaHasta)}`}
-                    </div>
-                  )}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-6 h-6 text-emerald-600" />
+                    Historial de Seguimientos
+                    {(fechaDesde || fechaHasta) && (
+                      <span className="text-sm font-normal text-gray-500">
+                        ({totalSeguimientos} resultados)
+                      </span>
+                    )}
+                  </CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMostrarFiltros(!mostrarFiltros)}
+                  >
+                    <Filter className="w-4 h-4 mr-2" />
+                    {mostrarFiltros ? 'Ocultar Filtros' : 'Filtrar por Fecha'}
+                  </Button>
                 </div>
-              )}
-            </CardHeader>
-            <CardContent className="p-6">
-              {loading && seguimientos.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Cargando seguimientos...</p>
-                </div>
-              ) : seguimientos.length === 0 ? (
-                <div className="text-center py-8">
-                  <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-xl text-gray-600">No hay seguimientos registrados</p>
-                  <p className="text-gray-500 mt-2">
-                    Comienza creando el primer seguimiento para este paciente
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {seguimientos.map((seguimiento) => (
-                    <div 
-                      key={seguimiento.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <Calendar className="w-5 h-5 text-emerald-600" />
-                            <span className="font-semibold text-lg text-gray-900">
-                              {formatearFecha(seguimiento.fecha_atencion)}
-                            </span>
-                            {(seguimiento.archivos?.length > 0 || seguimiento.imagen_url) && (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                                <ImageIcon className="w-3 h-3" />
-                                {seguimiento.archivos?.length || 1} archivo(s)
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-gray-600 text-sm line-clamp-2 mb-2">
-                            {seguimiento.descripcion}
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span>Registrado: {new Date(seguimiento.fecha_creacion).toLocaleDateString('es-AR')}</span>
-                            <span>Por: {seguimiento.odontologo_nombre}</span>
-                          </div>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => verDetalles(seguimiento)}
-                          className="ml-4"
-                        >
-                          Ver Detalles
-                        </Button>
+
+                {/* Panel de filtros */}
+                {mostrarFiltros && (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex flex-wrap items-end gap-4">
+                      <div className="flex-1 min-w-[200px]">
+                        <Input
+                          label="Fecha Desde"
+                          type="date"
+                          value={fechaDesde}
+                          onChange={(e) => {
+                            setFechaDesde(e.target.value);
+                            setCurrentPage(1);
+                          }}
+                        />
                       </div>
+                      <div className="flex-1 min-w-[200px]">
+                        <Input
+                          label="Fecha Hasta"
+                          type="date"
+                          value={fechaHasta}
+                          onChange={(e) => {
+                            setFechaHasta(e.target.value);
+                            setCurrentPage(1);
+                          }}
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={limpiarFiltros}
+                        disabled={!fechaDesde && !fechaHasta}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Limpiar
+                      </Button>
                     </div>
-                  ))}
-                </div>
-              )}
-              
-              {/* Paginación */}
-              {totalPages > 1 && (
-                <div className="mt-6">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                    itemsPerPage={5}
-                    totalItems={totalSeguimientos}
-                  />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    {(fechaDesde || fechaHasta) && (
+                      <div className="mt-3 text-sm text-gray-600">
+                        Mostrando seguimientos {fechaDesde && `desde el ${formatearFecha(fechaDesde)}`} {fechaHasta && `hasta el ${formatearFecha(fechaHasta)}`}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent className="p-6">
+                {loading && seguimientos.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Cargando seguimientos...</p>
+                  </div>
+                ) : seguimientos.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-xl text-gray-600">No hay seguimientos registrados</p>
+                    <p className="text-gray-500 mt-2">
+                      Comienza creando el primer seguimiento para este paciente
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {seguimientos.map((seguimiento) => (
+                      <div
+                        key={seguimiento.id}
+                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <Calendar className="w-5 h-5 text-emerald-600" />
+                              <span className="font-semibold text-lg text-gray-900">
+                                {formatearFecha(seguimiento.fecha_atencion)}
+                              </span>
+                              {(seguimiento.archivos?.length > 0 || seguimiento.imagen_url) && (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                  <ImageIcon className="w-3 h-3" />
+                                  {seguimiento.archivos?.length || 1} archivo(s)
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-gray-600 text-sm line-clamp-2 mb-2">
+                              {seguimiento.descripcion}
+                            </p>
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <span>Registrado: {new Date(seguimiento.fecha_creacion).toLocaleDateString('es-AR')}</span>
+                              <span>Por: {seguimiento.odontologo_nombre}</span>
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => verDetalles(seguimiento)}
+                            className="ml-4"
+                          >
+                            Ver Detalles
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Paginación */}
+                {totalPages > 1 && (
+                  <div className="mt-6">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                      itemsPerPage={5}
+                      totalItems={totalSeguimientos}
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
         </div>
@@ -695,7 +705,7 @@ const SeguimientoPacientePage = () => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            
+
             <div className="p-6">
               {/* Fecha */}
               <div className="flex items-center gap-2 mb-4">
@@ -723,8 +733,8 @@ const SeguimientoPacientePage = () => {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {seguimientoSeleccionado.archivos.map((archivo) => {
                       // Detectar si es PDF por extensión o URL
-                      const esPDF = archivo.nombre_original?.toLowerCase().endsWith('.pdf') || 
-                                   archivo.url.toLowerCase().includes('.pdf');
+                      const esPDF = archivo.nombre_original?.toLowerCase().endsWith('.pdf') ||
+                        archivo.url.toLowerCase().includes('.pdf');
                       const esDoc = archivo.tipo === 'documento' || esPDF;
                       const esImagen = archivo.tipo === 'imagen' && !esPDF;
 
@@ -733,21 +743,21 @@ const SeguimientoPacientePage = () => {
                           window.open(archivo.url, '_blank');
                           return;
                         }
-                        
+
                         // Para PDFs y documentos: descargar a través del backend (evita CORS)
                         try {
                           const token = localStorage.getItem('access_token');
                           const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
                           const proxyUrl = `${API_URL}/api/pacientes/descargar-archivo/?url=${encodeURIComponent(archivo.url)}`;
-                          
+
                           const response = await fetch(proxyUrl, {
                             headers: {
                               'Authorization': `Bearer ${token}`
                             }
                           });
-                          
+
                           if (!response.ok) throw new Error('Error en la descarga');
-                          
+
                           const blob = await response.blob();
                           const blobUrl = window.URL.createObjectURL(blob);
                           const link = document.createElement('a');
@@ -763,14 +773,14 @@ const SeguimientoPacientePage = () => {
                       };
 
                       return (
-                        <div 
+                        <div
                           key={archivo.id}
                           className="group border-2 border-gray-200 rounded-xl overflow-hidden hover:shadow-xl hover:border-emerald-400 transition-all duration-200 cursor-pointer"
                           onClick={handleOpenFile}
                         >
                           {esImagen ? (
                             <div className="relative w-full h-48 bg-gray-100">
-                              <img 
+                              <img
                                 src={archivo.url}
                                 alt={archivo.nombre_original || 'Imagen'}
                                 className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
@@ -809,7 +819,7 @@ const SeguimientoPacientePage = () => {
               {seguimientoSeleccionado.imagen_url && (!seguimientoSeleccionado.archivos || seguimientoSeleccionado.archivos.length === 0) && (
                 <div className="mb-4">
                   <h4 className="font-medium text-gray-700 mb-3">Imagen:</h4>
-                  <img 
+                  <img
                     src={seguimientoSeleccionado.imagen_url}
                     alt="Imagen del seguimiento"
                     className="max-w-full rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity"
@@ -844,7 +854,7 @@ const SeguimientoPacientePage = () => {
       )}
 
       {/* Modal odontograma para screenshot PDF */}
-      {showOdontogramaModal && odontogramaData && ReactDOM.createPortal(
+      {showOdontogramaModal && odontogramaParaCaptura && ReactDOM.createPortal(
         <div style={{
           position: 'fixed',
           left: 0,
@@ -854,22 +864,29 @@ const SeguimientoPacientePage = () => {
           background: 'rgba(255,255,255,0.97)',
           zIndex: 99999,
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'center',
+          overflowY: 'auto',
         }}>
-          {/* El ref debe apuntar al contenedor real del Odontograma */}
-          <div style={{ width: '1200px', background: 'white', padding: '16px', boxShadow: '0 0 24px #888' }}>
+          {/*
+            ref apunta al div wrapper exterior (no al componente Odontograma).
+            Así html2canvas captura todo el contenido sin problemas de isolation:isolate.
+          */}
+          <div
+            ref={captureWrapperRef}
+            style={{ width: '1200px', background: 'white', padding: '16px' }}
+          >
             <Odontograma
-              ref={modalCaptureRef}
-              odontograma={odontogramaData.odontograma}
-              onChange={() => {}}
-              onNuevoSeguimiento={() => {}}
+              odontograma={odontogramaParaCaptura.odontograma}
+              onChange={() => { }}
+              onNuevoSeguimiento={() => { }}
+              modoCaptura={true}
             />
           </div>
         </div>,
         document.body
       )}
-      
+
       <Footer />
     </div>
   );
