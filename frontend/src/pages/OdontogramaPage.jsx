@@ -6,7 +6,7 @@ import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Odontograma from '../components/Odontograma';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { 
   getOdontograma,
   guardarRegistroDental
@@ -20,7 +20,6 @@ const OdontogramaPage = () => {
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState({ type: '', message: '' });
   const [guardando, setGuardando] = useState(false);
-  const [cambiosPendientes, setCambiosPendientes] = useState({});
 
   useEffect(() => {
     cargarOdontograma();
@@ -31,7 +30,6 @@ const OdontogramaPage = () => {
     try {
       const data = await getOdontograma(pacienteId);
       setOdontogramaData(data);
-      setCambiosPendientes({});
     } catch (error) {
       setAlert({
         type: 'error',
@@ -42,15 +40,9 @@ const OdontogramaPage = () => {
     }
   };
 
-  // Manejar cambios en una pieza dental
-  const handlePiezaChange = (numeroPieza, nuevoRegistro) => {
-    // Marcar este cambio como pendiente de guardar
-    setCambiosPendientes(prev => ({
-      ...prev,
-      [numeroPieza]: nuevoRegistro
-    }));
-    
-    // Actualizar el estado local del odontograma
+  // Manejar cambios en una pieza dental con autoguardado
+  const handlePiezaChange = async (numeroPieza, nuevoRegistro) => {
+    // Actualizar el estado local del odontograma inmediatamente
     if (odontogramaData) {
       const nuevoOdontograma = odontogramaData.odontograma.map(item => {
         if (item.pieza_dental === numeroPieza) {
@@ -67,54 +59,33 @@ const OdontogramaPage = () => {
         odontograma: nuevoOdontograma
       });
     }
-  };
-
-  // Guardar todos los cambios pendientes
-  const handleGuardarCambios = async () => {
-    if (Object.keys(cambiosPendientes).length === 0) {
-      setAlert({
-        type: 'info',
-        message: 'No hay cambios para guardar'
-      });
-      return;
-    }
-
-    setGuardando(true);
-    let errores = 0;
-    let guardados = 0;
-
+    
+    // Guardar automáticamente en el backend
     try {
-      for (const [numeroPieza, registro] of Object.entries(cambiosPendientes)) {
-        try {
-          await guardarRegistroDental(parseInt(pacienteId), parseInt(numeroPieza), registro);
-          guardados++;
-        } catch (error) {
-          console.error(`Error al guardar pieza ${numeroPieza}:`, error);
-          errores++;
-        }
-      }
-
-      if (errores === 0) {
-        setAlert({
-          type: 'success',
-          message: `Se guardaron ${guardados} registro(s) correctamente`
-        });
-        // Recargar el odontograma
-        await cargarOdontograma();
-      } else {
-        setAlert({
-          type: 'warning',
-          message: `Se guardaron ${guardados} registro(s), pero ${errores} fallaron`
-        });
-      }
+      setGuardando(true);
+      await guardarRegistroDental(parseInt(pacienteId), parseInt(numeroPieza), nuevoRegistro);
+      // Mostrar notificación de éxito brevemente
+      setAlert({
+        type: 'success',
+        message: 'Cambio guardado automáticamente'
+      });
+      setTimeout(() => setAlert({ type: '', message: '' }), 2000);
     } catch (error) {
+      console.error(`Error al guardar pieza ${numeroPieza}:`, error);
       setAlert({
         type: 'error',
-        message: 'Error al guardar los cambios'
+        message: `Error al guardar los cambios en la pieza ${numeroPieza}`
       });
     } finally {
       setGuardando(false);
     }
+  };
+
+
+
+  // Navegar a la página de nuevo seguimiento
+  const handleNuevoSeguimiento = () => {
+    navigate(`/seguimiento-paciente/${pacienteId}`);
   };
 
   return (
@@ -147,17 +118,12 @@ const OdontogramaPage = () => {
               </div>
             </div>
             
-            {/* Botón de guardar */}
-            {Object.keys(cambiosPendientes).length > 0 && (
-              <Button
-                variant="primary"
-                onClick={handleGuardarCambios}
-                disabled={guardando}
-                className="animate-pulse"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {guardando ? 'Guardando...' : `Guardar ${Object.keys(cambiosPendientes).length} cambio(s)`}
-              </Button>
+            {/* Indicador de guardado */}
+            {guardando && (
+              <div className="flex items-center gap-2 text-blue-600">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span className="text-sm font-medium">Guardando...</span>
+              </div>
             )}
           </div>
         </div>
@@ -184,6 +150,7 @@ const OdontogramaPage = () => {
             <Odontograma 
               odontograma={odontogramaData.odontograma} 
               onChange={handlePiezaChange}
+              onNuevoSeguimiento={handleNuevoSeguimiento}
             />
           ) : (
             <Card>

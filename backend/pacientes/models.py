@@ -156,15 +156,12 @@ class SeguimientoArchivo(models.Model):
 
 
 class RegistroDental(models.Model):
-    """Modelo para el registro de cada pieza dental del paciente (Odontograma)"""
+    """Modelo para el registro de cada pieza dental del paciente (Odontograma Profesional)"""
     
-    # Numeración FDI (Federación Dental Internacional)
-    # Cuadrante 1 (superior derecho): 11-18
-    # Cuadrante 2 (superior izquierdo): 21-28
-    # Cuadrante 3 (inferior izquierdo): 31-38
-    # Cuadrante 4 (inferior derecho): 41-48
+    # Numeración FDI (Federación Dental Internacional) - 52 piezas totales
+    # 32 Permanentes + 20 Temporales
     PIEZAS_DENTALES = [
-        # Cuadrante 1 - Superior Derecho
+        # Cuadrante 1 - Superior Derecho Permanentes
         (11, '11 - Incisivo Central Superior Derecho'),
         (12, '12 - Incisivo Lateral Superior Derecho'),
         (13, '13 - Canino Superior Derecho'),
@@ -173,7 +170,7 @@ class RegistroDental(models.Model):
         (16, '16 - Primer Molar Superior Derecho'),
         (17, '17 - Segundo Molar Superior Derecho'),
         (18, '18 - Tercer Molar Superior Derecho'),
-        # Cuadrante 2 - Superior Izquierdo
+        # Cuadrante 2 - Superior Izquierdo Permanentes
         (21, '21 - Incisivo Central Superior Izquierdo'),
         (22, '22 - Incisivo Lateral Superior Izquierdo'),
         (23, '23 - Canino Superior Izquierdo'),
@@ -182,7 +179,7 @@ class RegistroDental(models.Model):
         (26, '26 - Primer Molar Superior Izquierdo'),
         (27, '27 - Segundo Molar Superior Izquierdo'),
         (28, '28 - Tercer Molar Superior Izquierdo'),
-        # Cuadrante 3 - Inferior Izquierdo
+        # Cuadrante 3 - Inferior Izquierdo Permanentes
         (31, '31 - Incisivo Central Inferior Izquierdo'),
         (32, '32 - Incisivo Lateral Inferior Izquierdo'),
         (33, '33 - Canino Inferior Izquierdo'),
@@ -191,7 +188,7 @@ class RegistroDental(models.Model):
         (36, '36 - Primer Molar Inferior Izquierdo'),
         (37, '37 - Segundo Molar Inferior Izquierdo'),
         (38, '38 - Tercer Molar Inferior Izquierdo'),
-        # Cuadrante 4 - Inferior Derecho
+        # Cuadrante 4 - Inferior Derecho Permanentes
         (41, '41 - Incisivo Central Inferior Derecho'),
         (42, '42 - Incisivo Lateral Inferior Derecho'),
         (43, '43 - Canino Inferior Derecho'),
@@ -200,19 +197,61 @@ class RegistroDental(models.Model):
         (46, '46 - Primer Molar Inferior Derecho'),
         (47, '47 - Segundo Molar Inferior Derecho'),
         (48, '48 - Tercer Molar Inferior Derecho'),
+        # Cuadrante 5 - Superior Derecho Temporales
+        (51, '51 - Incisivo Central Superior Derecho Temporal'),
+        (52, '52 - Incisivo Lateral Superior Derecho Temporal'),
+        (53, '53 - Canino Superior Derecho Temporal'),
+        (54, '54 - Primer Molar Superior Derecho Temporal'),
+        (55, '55 - Segundo Molar Superior Derecho Temporal'),
+        # Cuadrante 6 - Superior Izquierdo Temporales
+        (61, '61 - Incisivo Central Superior Izquierdo Temporal'),
+        (62, '62 - Incisivo Lateral Superior Izquierdo Temporal'),
+        (63, '63 - Canino Superior Izquierdo Temporal'),
+        (64, '64 - Primer Molar Superior Izquierdo Temporal'),
+        (65, '65 - Segundo Molar Superior Izquierdo Temporal'),
+        # Cuadrante 7 - Inferior Izquierdo Temporales
+        (71, '71 - Incisivo Central Inferior Izquierdo Temporal'),
+        (72, '72 - Incisivo Lateral Inferior Izquierdo Temporal'),
+        (73, '73 - Canino Inferior Izquierdo Temporal'),
+        (74, '74 - Primer Molar Inferior Izquierdo Temporal'),
+        (75, '75 - Segundo Molar Inferior Izquierdo Temporal'),
+        # Cuadrante 8 - Inferior Derecho Temporales
+        (81, '81 - Incisivo Central Inferior Derecho Temporal'),
+        (82, '82 - Incisivo Lateral Inferior Derecho Temporal'),
+        (83, '83 - Canino Inferior Derecho Temporal'),
+        (84, '84 - Primer Molar Inferior Derecho Temporal'),
+        (85, '85 - Segundo Molar Inferior Derecho Temporal'),
     ]
     
-    ESTADO_CHOICES = [
-        ('sano', 'Sano'),
+    # Tipos de tratamiento (para caras individuales)
+    TIPO_TRATAMIENTO_CHOICES = [
         ('caries', 'Caries'),
-        ('obturado', 'Obturado'),
-        ('extraccion', 'Extracción indicada'),
-        ('ausente', 'Ausente'),
-        ('corona', 'Corona'),
+        ('obturacion', 'Obturación'),
         ('endodoncia', 'Endodoncia'),
-        ('protesis', 'Prótesis'),
-        ('implante', 'Implante'),
-        ('otro', 'Otro'),
+        ('incrustacion', 'Incrustación'),
+        ('composite', 'Composite'),
+        ('amalgama', 'Amalgama'),
+    ]
+    
+    # Estado del tratamiento (para caras individuales)
+    ESTADO_TRATAMIENTO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('realizado', 'Realizado'),
+    ]
+    
+    # Estados especiales para la pieza completa
+    ESTADO_PIEZA_CHOICES = [
+        ('normal', 'Normal'),
+        ('ausente', 'Ausente (X Roja)'),
+        ('extraccion', 'Extracción Indicada (X Azul)'),
+        ('tc_realizado', 'Tratamiento de Conducto Realizado (TC Rojo)'),
+        ('tc_pendiente', 'Tratamiento de Conducto Pendiente (TC Azul)'),
+        ('corona_realizada', 'Corona Realizada (Círculo Rojo)'),
+        ('corona_pendiente', 'Corona Pendiente (Círculo Azul)'),
+        ('implante', 'Implante (I)'),
+        ('restauracion_total', 'Restauración Total'),
+        # NOTA: absceso ahora se marca en caras individuales, no en pieza completa
+        ('absceso', 'Absceso/Fístula - OBSOLETO (usar en caras)'),
     ]
     
     paciente = models.ForeignKey(
@@ -221,36 +260,91 @@ class RegistroDental(models.Model):
         related_name='registros_dentales',
         verbose_name='Paciente'
     )
-    odontologo = models.ForeignKey(
-        'odontologos.Odontologo',
-        on_delete=models.CASCADE,
-        related_name='registros_dentales_realizados',
-        verbose_name='Odontólogo'
-    )
     pieza_dental = models.IntegerField(
         choices=PIEZAS_DENTALES,
         verbose_name='Pieza Dental'
     )
-    estado = models.CharField(
-        max_length=20,
-        choices=ESTADO_CHOICES,
-        default='sano',
-        verbose_name='Estado'
+    
+    # Caras individuales - JSONField para almacenar {tipo: 'caries', estado: 'pendiente'}
+    cara_vestibular = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name='Cara Vestibular'
     )
-    descripcion = models.TextField(
-        verbose_name='Descripción/Observaciones'
+    cara_lingual = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name='Cara Lingual/Palatina'
     )
-    fecha_registro = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Fecha de registro'
+    cara_mesial = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name='Cara Mesial'
+    )
+    cara_distal = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name='Cara Distal'
+    )
+    cara_oclusal = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name='Cara Oclusal/Incisal'
+    )
+    
+    # Estados de la pieza completa (puede tener múltiples estados)
+    # Almacena un array de estados: ['tc_realizado', 'corona_pendiente']
+    estado_pieza = models.JSONField(
+        null=True,
+        blank=True,
+        default=list,
+        verbose_name='Estados de la Pieza'
+    )
+    
+    # Puentes dentales
+    # Almacena información sobre puentes: { inicio: 17, fin: 14, color: 'red' }
+    puente = models.JSONField(
+        null=True,
+        blank=True,
+        verbose_name='Puente Dental',
+        help_text='Información del puente si esta pieza es pilar'
+    )
+    
+    # Metadata
+    observaciones = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name='Observaciones'
+    )
+    actualizado_por = models.ForeignKey(
+        'odontologos.Odontologo',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='registros_dentales_actualizados',
+        verbose_name='Actualizado por'
+    )
+    fecha_actualizacion = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Última Actualización'
     )
     
     class Meta:
         verbose_name = 'Registro Dental'
         verbose_name_plural = 'Registros Dentales'
-        ordering = ['-fecha_registro']
+        ordering = ['pieza_dental']
+        unique_together = [['paciente', 'pieza_dental']]
     
     def __str__(self):
-        return f"Pieza {self.pieza_dental} - {self.paciente.get_nombre_completo()} - {self.fecha_registro.strftime('%d/%m/%Y')}"
+        return f"Pieza {self.pieza_dental} - {self.paciente.get_nombre_completo()}"
+    
+    def get_pieza_nombre(self):
+        """Retorna el nombre descriptivo de la pieza dental"""
+        return dict(self.PIEZAS_DENTALES).get(self.pieza_dental, f'Pieza {self.pieza_dental}')
+    
+    def get_tipo_denticion(self):
+        """Determina si es un diente permanente o temporal"""
+        if self.pieza_dental in [51, 52, 53, 54, 55, 61, 62, 63, 64, 65, 71, 72, 73, 74, 75, 81, 82, 83, 84, 85]:
+            return 'temporal'
+        return 'permanente'
 
 

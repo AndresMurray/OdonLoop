@@ -43,7 +43,8 @@ export const guardarRegistroDental = async (pacienteId, piezaDental, registro) =
       cara_mesial: registro.cara_mesial || null,
       cara_distal: registro.cara_distal || null,
       cara_oclusal: registro.cara_oclusal || null,
-      estado_pieza: registro.estado_pieza || null,
+      estado_pieza: registro.estado_pieza || [],  // Array de estados
+      puente: registro.puente || null,  // Info de puente
       observaciones: registro.observaciones || ''
     };
     

@@ -9,7 +9,7 @@ from .models import Paciente, ObraSocial, Seguimiento, RegistroDental
 from .serializers import (
     PacienteSerializer, PacienteCreateSerializer, ObraSocialSerializer,
     SeguimientoSerializer, SeguimientoCreateSerializer, MisPacientesSerializer,
-    PacientePerfilSerializer, RegistroDentalSerializer, RegistroDentalCreateSerializer
+    PacientePerfilSerializer, RegistroDentalSerializer, RegistroDentalCreateUpdateSerializer
 )
 from turnos.models import Turno
 
@@ -287,17 +287,21 @@ class OdontogramaView(APIView):
             piezas = [p[0] for p in RegistroDental.PIEZAS_DENTALES]
             
             # Construir el odontograma con el último registro de cada pieza
-            odontograma = {}
+            odontograma = []
             for pieza in piezas:
                 ultimo_registro = RegistroDental.objects.filter(
                     paciente=paciente,
                     pieza_dental=pieza
-                ).first()  # Ya ordenado por -fecha_registro
+                ).first()  # Ya ordenado por -fecha_actualizacion
                 
-                if ultimo_registro:
-                    odontograma[pieza] = RegistroDentalSerializer(ultimo_registro).data
-                else:
-                    odontograma[pieza] = None
+                # Crear objeto con estructura esperada por el frontend
+                pieza_data = {
+                    'pieza_dental': pieza,
+                    'pieza_nombre': dict(RegistroDental.PIEZAS_DENTALES).get(pieza, f'Pieza {pieza}'),
+                    'tipo_denticion': 'temporal' if pieza in [51, 52, 53, 54, 55, 61, 62, 63, 64, 65, 71, 72, 73, 74, 75, 81, 82, 83, 84, 85] else 'permanente',
+                    'registro': RegistroDentalSerializer(ultimo_registro).data if ultimo_registro else None
+                }
+                odontograma.append(pieza_data)
             
             # Obtener datos del paciente
             paciente_data = {
@@ -376,12 +380,32 @@ class RegistroDentalViewSet(viewsets.ModelViewSet):
         
         if hasattr(user, 'perfil_odontologo'):
             return RegistroDental.objects.filter(
-                odontologo=user.perfil_odontologo
-            ).select_related('paciente__user', 'odontologo__user')
+                actualizado_por=user.perfil_odontologo
+            ).select_related('paciente__user', 'actualizado_por__user')
         
         return RegistroDental.objects.none()
     
     def get_serializer_class(self):
-        if self.action == 'create':
-            return RegistroDentalCreateSerializer
+        if self.action in ['create', 'update', 'partial_update']:
+            return RegistroDentalCreateUpdateSerializer
         return RegistroDentalSerializer
+    
+    def create(self, request, *args, **kwargs):
+        """Crear o actualizar registro dental (upsert behavior)"""
+        paciente_id = request.data.get('paciente')
+        pieza_dental = request.data.get('pieza_dental')
+        
+        # Verificar si ya existe un registro para esta pieza
+        try:
+            registro = RegistroDental.objects.get(
+                paciente_id=paciente_id,
+                pieza_dental=pieza_dental
+            )
+            # Si existe, hacer update
+            serializer = self.get_serializer(registro, data=request.data, partial=False)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except RegistroDental.DoesNotExist:
+            # Si no existe, crear nuevo
+            return super().create(request, *args, **kwargs)

@@ -148,32 +148,58 @@ class MisPacientesSerializer(serializers.ModelSerializer):
 
 
 class RegistroDentalSerializer(serializers.ModelSerializer):
-    """Serializer para registros dentales individuales"""
-    odontologo_nombre = serializers.CharField(source='odontologo.user.get_full_name', read_only=True)
-    estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+    """Serializer para leer registros dentales completos"""
+    odontologo_nombre = serializers.CharField(source='actualizado_por.user.get_full_name', read_only=True)
     pieza_nombre = serializers.CharField(source='get_pieza_dental_display', read_only=True)
     
     class Meta:
         model = RegistroDental
         fields = [
-            'id', 'paciente', 'odontologo', 'odontologo_nombre',
-            'pieza_dental', 'pieza_nombre', 'estado', 'estado_display',
-            'descripcion', 'fecha_registro'
+            'id', 'paciente', 'actualizado_por', 'odontologo_nombre',
+            'pieza_dental', 'pieza_nombre',
+            'cara_vestibular', 'cara_lingual', 'cara_mesial', 'cara_distal', 'cara_oclusal',
+            'estado_pieza', 'puente',
+            'observaciones', 'fecha_actualizacion'
         ]
-        read_only_fields = ['id', 'odontologo', 'fecha_registro']
+        read_only_fields = ['id', 'actualizado_por', 'fecha_actualizacion']
 
 
-class RegistroDentalCreateSerializer(serializers.ModelSerializer):
-    """Serializer para crear registros dentales"""
+class RegistroDentalCreateUpdateSerializer(serializers.ModelSerializer):
+    """Serializer para crear y actualizar registros dentales"""
+    
+    # Hacer los campos de cara opcionales y permitir null
+    cara_vestibular = serializers.JSONField(required=False, allow_null=True)
+    cara_lingual = serializers.JSONField(required=False, allow_null=True)
+    cara_mesial = serializers.JSONField(required=False, allow_null=True)
+    cara_distal = serializers.JSONField(required=False, allow_null=True)
+    cara_oclusal = serializers.JSONField(required=False, allow_null=True)
+    estado_pieza = serializers.JSONField(required=False, allow_null=True)  # Ahora es array
+    puente = serializers.JSONField(required=False, allow_null=True)  # Info de puente
+    observaciones = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     
     class Meta:
         model = RegistroDental
-        fields = ['paciente', 'pieza_dental', 'estado', 'descripcion']
+        fields = [
+            'paciente', 'pieza_dental',
+            'cara_vestibular', 'cara_lingual', 'cara_mesial', 'cara_distal', 'cara_oclusal',
+            'estado_pieza', 'puente', 'observaciones'
+        ]
     
     def create(self, validated_data):
         odontologo = self.context['request'].user.perfil_odontologo
-        validated_data['odontologo'] = odontologo
+        validated_data['actualizado_por'] = odontologo
+        # Establecer default para estado_pieza si no se proporciona
+        if 'estado_pieza' not in validated_data or not validated_data['estado_pieza']:
+            validated_data['estado_pieza'] = []
         return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        odontologo = self.context['request'].user.perfil_odontologo
+        validated_data['actualizado_por'] = odontologo
+        # Establecer default para estado_pieza si no se proporciona
+        if 'estado_pieza' not in validated_data:
+            validated_data['estado_pieza'] = []
+        return super().update(instance, validated_data)
 
 
 class OdontogramaResumenSerializer(serializers.Serializer):
