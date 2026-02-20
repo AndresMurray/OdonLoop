@@ -187,6 +187,32 @@ class SeguimientoViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=False, methods=['get'], url_path='exportar-paciente/(?P<paciente_id>[^/.]+)')
+    def exportar_paciente(self, request, paciente_id=None):
+        """Obtener TODOS los seguimientos de un paciente sin paginación (para exportar PDF)"""
+        try:
+            if not hasattr(request.user, 'perfil_odontologo'):
+                return Response(
+                    {'error': 'Solo odontólogos pueden acceder'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            odontologo = request.user.perfil_odontologo
+
+            seguimientos = Seguimiento.objects.filter(
+                paciente_id=paciente_id,
+                odontologo=odontologo
+            ).select_related('paciente__user', 'odontologo__user').prefetch_related('archivos').order_by('-fecha_atencion')
+
+            serializer = SeguimientoSerializer(seguimientos, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class MiPerfilPacienteView(APIView):
     """Vista para que el paciente vea y actualice su propio perfil"""
@@ -413,3 +439,24 @@ class RegistroDentalViewSet(viewsets.ModelViewSet):
         except RegistroDental.DoesNotExist:
             # Si no existe, crear nuevo
             return super().create(request, *args, **kwargs)
+
+
+class DescargarArchivoView(APIView):
+    """Vista proxy para descargar archivos de Cloudinary evitando CORS"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        url = request.query_params.get('url')
+        if not url:
+            return Response({'error': 'URL requerida'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            response = requests.get(url, timeout=30)
+            content_type = response.headers.get('Content-Type', 'application/octet-stream')
+            filename = url.split('/')[-1].split('?')[0]
+
+            django_response = HttpResponse(response.content, content_type=content_type)
+            django_response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return django_response
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

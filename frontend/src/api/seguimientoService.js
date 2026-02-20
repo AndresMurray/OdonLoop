@@ -86,6 +86,16 @@ export const eliminarSeguimiento = async (id) => {
   }
 };
 
+// Obtener TODOS los seguimientos de un paciente (sin paginación, para exportar PDF)
+export const getTodosSeguimientosPaciente = async (pacienteId) => {
+  try {
+    const response = await apiClient.get(`/api/pacientes/seguimientos/exportar-paciente/${pacienteId}/`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Crear paciente rápido (por odontólogo)
 export const crearPacienteRapido = async (pacienteData) => {
   try {
@@ -104,5 +114,6 @@ export default {
   getMisSeguimientos,
   actualizarSeguimiento,
   eliminarSeguimiento,
+  getTodosSeguimientosPaciente,
   crearPacienteRapido
 };

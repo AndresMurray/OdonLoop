@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
 import Button from '../components/Button';
@@ -7,9 +8,12 @@ import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
-import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter, Smile, Download } from 'lucide-react';
+import Odontograma from '../components/Odontograma';
+import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter, Smile, Download, FileDown } from 'lucide-react';
 import { getSeguimientosPorPaciente, crearSeguimiento } from '../api/seguimientoService';
 import { getPacienteById } from '../api/userService';
+import { getOdontograma } from '../api/odontogramaService';
+import { exportarHistorialPacientePDF } from '../utils/exportarPDF';
 
 const SeguimientoPacientePage = () => {
   const navigate = useNavigate();
@@ -36,6 +40,13 @@ const SeguimientoPacientePage = () => {
   const [fechaHasta, setFechaHasta] = useState('');
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   
+  // PDF Export
+  const [exportando, setExportando] = useState(false);
+  const [odontogramaData, setOdontogramaData] = useState(null);
+  const odontogramaRef = useRef(null);
+  const [showOdontogramaModal, setShowOdontogramaModal] = useState(false);
+  const modalCaptureRef = useRef(null);
+
   // Form state
   const [formData, setFormData] = useState({
     descripcion: '',
@@ -245,6 +256,42 @@ const SeguimientoPacientePage = () => {
     setMostrarDetalles(false);
   };
 
+  // Exportar PDF
+  const handleExportarPDF = async () => {
+    setExportando(true);
+    try {
+      // Cargar odontograma si no está cargado
+      if (!odontogramaData) {
+        const data = await getOdontograma(pacienteId);
+        setOdontogramaData(data);
+        await new Promise(resolve => setTimeout(resolve, 2500));
+      }
+      // Mostrar modal odontograma
+      setShowOdontogramaModal(true);
+      await new Promise(resolve => setTimeout(resolve, 800));
+      await exportarHistorialPacientePDF(
+        pacienteId,
+        paciente?.nombre_completo || 'Paciente',
+        modalCaptureRef
+      );
+      setShowOdontogramaModal(false);
+      setAlert({
+        type: 'success',
+        message: 'PDF exportado exitosamente'
+      });
+    } catch (err) {
+      setShowOdontogramaModal(false);
+      console.error('Error al exportar PDF:', err);
+      setAlert({
+        type: 'error',
+        message: 'Error al exportar PDF',
+        detail: err.message
+      });
+    } finally {
+      setExportando(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
       <Navbar />
@@ -272,6 +319,23 @@ const SeguimientoPacientePage = () => {
               </div>
             </div>
             <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleExportarPDF}
+                disabled={exportando}
+              >
+                {exportando ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600 mr-2"></div>
+                    Exportando...
+                  </>
+                ) : (
+                  <>
+                    <FileDown className="w-5 h-5 mr-2" />
+                    Exportar PDF
+                  </>
+                )}
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => navigate(`/odontograma/${pacienteId}`)}
@@ -777,6 +841,33 @@ const SeguimientoPacientePage = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal odontograma para screenshot PDF */}
+      {showOdontogramaModal && odontogramaData && ReactDOM.createPortal(
+        <div style={{
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(255,255,255,0.97)',
+          zIndex: 99999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          {/* El ref debe apuntar al contenedor real del Odontograma */}
+          <div style={{ width: '1200px', background: 'white', padding: '16px', boxShadow: '0 0 24px #888' }}>
+            <Odontograma
+              ref={modalCaptureRef}
+              odontograma={odontogramaData.odontograma}
+              onChange={() => {}}
+              onNuevoSeguimiento={() => {}}
+            />
+          </div>
+        </div>,
+        document.body
       )}
       
       <Footer />

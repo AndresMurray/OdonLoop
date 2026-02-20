@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../components/Card';
 import Button from '../components/Button';
@@ -6,11 +6,12 @@ import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Odontograma from '../components/Odontograma';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileDown } from 'lucide-react';
 import { 
   getOdontograma,
   guardarRegistroDental
 } from '../api/odontogramaService';
+import { exportarHistorialPacientePDF } from '../utils/exportarPDF';
 
 const OdontogramaPage = () => {
   const { pacienteId } = useParams();
@@ -20,6 +21,8 @@ const OdontogramaPage = () => {
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState({ type: '', message: '' });
   const [guardando, setGuardando] = useState(false);
+  const [exportando, setExportando] = useState(false);
+  const odontogramaRef = useRef(null);
 
   useEffect(() => {
     cargarOdontograma();
@@ -88,6 +91,25 @@ const OdontogramaPage = () => {
     navigate(`/seguimiento-paciente/${pacienteId}`);
   };
 
+  // Exportar PDF
+  const handleExportarPDF = async () => {
+    setExportando(true);
+    try {
+      await exportarHistorialPacientePDF(
+        pacienteId,
+        odontogramaData?.paciente?.nombre_completo || 'Paciente',
+        odontogramaRef
+      );
+      setAlert({ type: 'success', message: 'PDF exportado exitosamente' });
+      setTimeout(() => setAlert({ type: '', message: '' }), 3000);
+    } catch (err) {
+      console.error('Error al exportar PDF:', err);
+      setAlert({ type: 'error', message: 'Error al exportar el PDF' });
+    } finally {
+      setExportando(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
       <Navbar />
@@ -118,13 +140,33 @@ const OdontogramaPage = () => {
               </div>
             </div>
             
-            {/* Indicador de guardado */}
-            {guardando && (
-              <div className="flex items-center gap-2 text-blue-600">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span className="text-sm font-medium">Guardando...</span>
-              </div>
-            )}
+            {/* Indicador de guardado y botón exportar */}
+            <div className="flex items-center gap-3">
+              {guardando && (
+                <div className="flex items-center gap-2 text-blue-600">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="text-sm font-medium">Guardando...</span>
+                </div>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportarPDF}
+                disabled={exportando || !odontogramaData}
+              >
+                {exportando ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                    Exportando...
+                  </>
+                ) : (
+                  <>
+                    <FileDown className="w-4 h-4 mr-2" />
+                    Exportar PDF
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -147,11 +189,13 @@ const OdontogramaPage = () => {
               </CardContent>
             </Card>
           ) : odontogramaData ? (
-            <Odontograma 
-              odontograma={odontogramaData.odontograma} 
-              onChange={handlePiezaChange}
-              onNuevoSeguimiento={handleNuevoSeguimiento}
-            />
+            <div ref={odontogramaRef}>
+              <Odontograma 
+                odontograma={odontogramaData.odontograma} 
+                onChange={handlePiezaChange}
+                onNuevoSeguimiento={handleNuevoSeguimiento}
+              />
+            </div>
           ) : (
             <Card>
               <CardContent className="p-8 text-center">

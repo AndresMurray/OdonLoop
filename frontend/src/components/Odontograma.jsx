@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PiezaDental from './PiezaDental';
 import { Link2, Square, ClipboardPlus } from 'lucide-react';
 
@@ -7,11 +7,11 @@ import { Link2, Square, ClipboardPlus } from 'lucide-react';
  * Muestra 52 piezas dentales (32 permanentes + 20 temporales)
  * Organizadas según notación FDI
  */
-const Odontograma = ({ odontograma = [], onChange, onNuevoSeguimiento }) => {
+const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSeguimiento }, ref) => {
   const [hoveredPieza, setHoveredPieza] = useState(null);
   const [modoMarca, setModoMarca] = useState(null); // 'puente' o 'protesis'
   const [marcaEnProgreso, setMarcaEnProgreso] = useState({ inicio: null, fin: null });
-  const containerRef = useRef(null);
+  const containerRef = ref || useRef(null);
 
   // Convertir array a objeto para acceso rápido
   const odontogramaMap = {};
@@ -482,6 +482,6 @@ const Odontograma = ({ odontograma = [], onChange, onNuevoSeguimiento }) => {
       </div>
     </div>
   );
-};
+});
 
 export default Odontograma;
