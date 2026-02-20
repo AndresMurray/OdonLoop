@@ -7,3 +7,5 @@ export { default as Navbar } from './Navbar';
 export { default as Footer } from './Footer';
 export { Card, CardHeader, CardTitle, CardDescription, CardContent } from './Card';
 export { Calendar } from './Calendar';
+export { default as PiezaDental } from './PiezaDental';
+export { default as Odontograma } from './Odontograma';
