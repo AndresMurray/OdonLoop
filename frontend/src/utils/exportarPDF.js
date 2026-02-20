@@ -410,7 +410,7 @@ export const exportarHistorialPacientePDF = async (pacienteId, pacienteNombre, o
   }
 
   // Guardar
-  const nombreArchivo = `historia_clinica_${pacienteNombre.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.pdf`;
+  const nombreArchivo = `seguimiento_paciente_${pacienteNombre.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.pdf`;
   pdf.save(nombreArchivo);
 };
 
