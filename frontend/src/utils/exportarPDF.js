@@ -3,23 +3,20 @@ import html2canvas from 'html2canvas';
 import { getTodosSeguimientosPaciente } from '../api/seguimientoService';
 
 // ============================================
-// PARCHE PARA oklch() — Tailwind CSS v4 usa oklch por defecto
-// pero html2canvas v1 no lo soporta. Esta función reemplaza
-// oklch() en todos los stylesheets y estilos inline del
+// PARCHE PARA oklch() y lab() — Tailwind CSS v4 usa oklch/lab por defecto
+// pero html2canvas v1 no los soporta. Esta función reemplaza
+// esos colores en todos los stylesheets y estilos inline del
 // documento clonado antes de que html2canvas lo renderice.
 // ============================================
 
 /**
- * Convierte oklch(L C H) a un color rgb lo más fiel posible.
- * Usa una aproximación lineal estándar del espacio de color OKLab.
+ * Convierte oklch(L C H) a rgb().
  */
 function oklchToRgb(l, c, h) {
-  // Convertir oklch → oklab
   const hRad = (h * Math.PI) / 180;
   const a = c * Math.cos(hRad);
   const b = c * Math.sin(hRad);
 
-  // oklab → lms (cubed)
   const l_ = l + 0.3963377774 * a + 0.2158037573 * b;
   const m_ = l - 0.1055613458 * a - 0.0638541728 * b;
   const s_ = l - 0.0894841775 * a - 1.2914855480 * b;
@@ -28,12 +25,10 @@ function oklchToRgb(l, c, h) {
   const mv = m_ * m_ * m_;
   const sv = s_ * s_ * s_;
 
-  // lms → linear sRGB
   let r = 4.0767416621 * lv - 3.3077115913 * mv + 0.2309699292 * sv;
   let g = -1.2684380046 * lv + 2.6097574011 * mv - 0.3413193965 * sv;
   let bv = -0.0041960863 * lv - 0.7034186147 * mv + 1.7076147010 * sv;
 
-  // Gamma correction (linear → sRGB)
   const toSrgb = (x) => {
     if (x <= 0) return 0;
     if (x >= 1) return 255;
@@ -44,13 +39,41 @@ function oklchToRgb(l, c, h) {
 }
 
 /**
- * Reemplaza una cadena oklch(...) por su equivalente rgb().
+ * Convierte lab(L a b) a rgb().
+ * CIE Lab → XYZ D65 → sRGB
  */
+function labToRgb(L, a, b) {
+  // Lab → XYZ
+  const fy = (L + 16) / 116;
+  const fx = a / 500 + fy;
+  const fz = fy - b / 200;
+
+  const delta = 6 / 29;
+  const toXyz = (t) => (t > delta ? t * t * t : 3 * delta * delta * (t - 4 / 29));
+
+  // D65 white point
+  const X = toXyz(fx) * 0.95047;
+  const Y = toXyz(fy) * 1.00000;
+  const Z = toXyz(fz) * 1.08883;
+
+  // XYZ → linear sRGB
+  let r = 3.2406 * X - 1.5372 * Y - 0.4986 * Z;
+  let g = -0.9689 * X + 1.8758 * Y + 0.0415 * Z;
+  let bv = 0.0557 * X - 0.2040 * Y + 1.0570 * Z;
+
+  // Gamma correction
+  const toSrgb = (x) => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 255;
+    return Math.round((x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055) * 255);
+  };
+
+  return `rgb(${toSrgb(r)}, ${toSrgb(g)}, ${toSrgb(bv)})`;
+}
+
 function convertirOklch(match) {
   try {
-    // Extraer los valores: oklch(L C H) o oklch(L C H / A)
     const inner = match.replace(/^oklch\(/, '').replace(/\)$/, '');
-    // Quitar la parte de alpha si existe
     const sinAlpha = inner.split('/')[0].trim();
     const partes = sinAlpha.trim().split(/\s+/);
 
@@ -58,11 +81,9 @@ function convertirOklch(match) {
 
     let l = parseFloat(partes[0]);
     const c = parseFloat(partes[1]);
-    let h = parseFloat(partes[2]) || 0;
+    const h = parseFloat(partes[2]) || 0;
 
-    // Tailwind suele dar L como porcentaje (0-100%) o decimal (0-1)
     if (partes[0].endsWith('%')) l = l / 100;
-    // C puede ser porcentaje también
     const cVal = partes[1].endsWith('%') ? parseFloat(partes[1]) / 100 * 0.4 : c;
 
     return oklchToRgb(l, cVal, h);
@@ -71,23 +92,41 @@ function convertirOklch(match) {
   }
 }
 
+function convertirLab(match) {
+  try {
+    const inner = match.replace(/^lab\(/, '').replace(/\)$/, '');
+    const sinAlpha = inner.split('/')[0].trim();
+    const partes = sinAlpha.trim().split(/[\s,]+/);
+
+    if (partes.length < 3) return '#888888';
+
+    const L = parseFloat(partes[0]);
+    const a = parseFloat(partes[1]);
+    const b = parseFloat(partes[2]);
+
+    return labToRgb(L, a, b);
+  } catch {
+    return '#888888';
+  }
+}
+
 /**
- * Parchea un texto CSS reemplazando todas las ocurrencias de oklch()
+ * Parchea un texto CSS reemplazando oklch() y lab() por rgb()
  */
 function parchearCssText(css) {
-  // Regex que captura oklch( ... ) incluyendo posibles anidamientos básicos
-  return css.replace(/oklch\([^)]+\)/g, convertirOklch);
+  return css
+    .replace(/oklch\([^)]+\)/g, convertirOklch)
+    .replace(/\blab\([^)]+\)/g, convertirLab);
 }
 
 /**
  * Parchea todos los <style> y atributos style en el documento clonado
- * para que html2canvas pueda parsear los colores sin errores.
  */
 function parchearOklchEnDocumento(doc) {
   // 1. Parchear etiquetas <style>
   const styleTags = doc.querySelectorAll('style');
   styleTags.forEach((tag) => {
-    if (tag.textContent.includes('oklch')) {
+    if (tag.textContent.includes('oklch') || tag.textContent.includes('lab(')) {
       tag.textContent = parchearCssText(tag.textContent);
     }
   });
@@ -96,7 +135,7 @@ function parchearOklchEnDocumento(doc) {
   const todosLosEls = doc.querySelectorAll('[style]');
   todosLosEls.forEach((el) => {
     const s = el.getAttribute('style');
-    if (s && s.includes('oklch')) {
+    if (s && (s.includes('oklch') || s.includes('lab('))) {
       el.setAttribute('style', parchearCssText(s));
     }
   });
@@ -342,31 +381,56 @@ export const exportarHistorialPacientePDF = async (pacienteId, pacienteNombre, o
                 pdf.setTextColor(120, 120, 120);
                 pdf.setFontSize(8);
                 pdf.setFont('helvetica', 'italic');
-                pdf.text(img.nombre, margin + 3, yPos);
+                pdf.text(sanitizarTexto(img.nombre), margin + 3, yPos);
                 yPos += 6;
               } else {
                 // No se pudo cargar, solo texto
                 pdf.setTextColor(100, 100, 100);
                 pdf.setFontSize(9);
                 pdf.setFont('helvetica', 'normal');
-                pdf.text(`📎 ${img.nombre} (imagen)`, margin + 6, yPos);
+                pdf.text(`* ${sanitizarTexto(img.nombre)} (imagen)`, margin + 6, yPos);
                 yPos += 5;
               }
             } catch {
               pdf.setTextColor(100, 100, 100);
               pdf.setFontSize(9);
               pdf.setFont('helvetica', 'normal');
-              pdf.text(`📎 ${img.nombre} (imagen)`, margin + 6, yPos);
+              pdf.text(`* ${sanitizarTexto(img.nombre)} (imagen)`, margin + 6, yPos);
               yPos += 5;
             }
           } else {
-            // Documento (PDF, DOC, etc.)
-            pdf.setTextColor(100, 100, 100);
-            pdf.setFontSize(9);
-            pdf.setFont('helvetica', 'normal');
+            // Documento (PDF, DOC, etc.) — descargar automáticamente
+            await descargarArchivo(img.url, img.nombre);
+
+            // Recuadro visual en el PDF indicando la descarga
+            if (yPos > pageHeight - 30) {
+              pdf.addPage();
+              yPos = margin;
+            }
+
             const ext = img.nombre?.split('.').pop()?.toUpperCase() || 'FILE';
-            pdf.text(`📄 ${img.nombre} [${ext}]`, margin + 6, yPos);
-            yPos += 5;
+            const iconos = { PDF: '[PDF]', DOC: '[DOC]', DOCX: '[DOC]', XLS: '[XLS]', XLSX: '[XLS]' };
+            const icono = iconos[ext] || `[${ext}]`;
+
+            // Fondo gris claro para el recuadro
+            pdf.setFillColor(245, 245, 245);
+            pdf.setDrawColor(180, 180, 180);
+            pdf.setLineWidth(0.3);
+            pdf.roundedRect(margin + 3, yPos - 1, contentWidth - 6, 14, 2, 2, 'FD');
+
+            // Icono + nombre del archivo
+            pdf.setTextColor(60, 60, 60);
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(`${icono} ${sanitizarTexto(img.nombre)}`, margin + 6, yPos + 5);
+
+            // Texto de descarga automática
+            pdf.setTextColor(80, 120, 80);
+            pdf.setFontSize(7.5);
+            pdf.setFont('helvetica', 'italic');
+            pdf.text('Descargado automáticamente junto con este PDF', margin + 6, yPos + 10);
+
+            yPos += 18;
           }
         }
       }
@@ -418,6 +482,22 @@ export const exportarHistorialPacientePDF = async (pacienteId, pacienteNombre, o
 // FUNCIONES AUXILIARES
 // ============================================
 
+/**
+ * Reemplaza caracteres acentuados/especiales por ASCII para jsPDF.
+ */
+function sanitizarTexto(texto) {
+  if (!texto) return '';
+  return texto
+    .replace(/[àáâãäå]/g, 'a').replace(/[ÀÁÂÃÄÅ]/g, 'A')
+    .replace(/[èéêë]/g, 'e').replace(/[ÈÉÊË]/g, 'E')
+    .replace(/[ìíîï]/g, 'i').replace(/[ÌÍÎÏ]/g, 'I')
+    .replace(/[òóôõöø]/g, 'o').replace(/[ÒÓÔÕÖØ]/g, 'O')
+    .replace(/[ùúûü]/g, 'u').replace(/[ÙÚÛÜ]/g, 'U')
+    .replace(/ñ/g, 'n').replace(/Ñ/g, 'N')
+    .replace(/ç/g, 'c').replace(/Ç/g, 'C')
+    .replace(/[^ -~]/g, '?');
+}
+
 function formatearFecha(fecha) {
   if (!fecha) return 'Sin fecha';
   const [year, month, day] = fecha.split('-');
@@ -427,6 +507,31 @@ function formatearFecha(fecha) {
     month: 'long',
     year: 'numeric'
   });
+}
+
+/**
+ * Descarga un archivo no-imagen (PDF, DOC, etc.) automáticamente.
+ * Usa fetch + blob para evitar problemas de CORS en algunos navegadores.
+ */
+async function descargarArchivo(url, nombre) {
+  try {
+    const response = await fetch(url, { mode: 'cors' });
+    if (!response.ok) throw new Error('No se pudo obtener el archivo');
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = nombre || 'archivo';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    // Pequeña pausa entre descargas para no saturar al browser
+    await new Promise((r) => setTimeout(r, 400));
+    URL.revokeObjectURL(blobUrl);
+  } catch {
+    // Si falla la descarga automática, no interrumpir la exportación del PDF
+    console.warn(`No se pudo descargar automáticamente: ${nombre}`);
+  }
 }
 
 /**
