@@ -281,7 +281,7 @@ class TurnoViewSet(viewsets.ModelViewSet):
                         f'Paciente: {nombre_paciente}\n'
                         f'Fecha: {fecha_formateada}\n'
                         f'Hora: {hora_formateada}\n\n'
-                        f'El horario quedó nuevamente disponible en la plataforma.\n\n'
+                        f'Nota: el horario NO queda disponible automáticamente. Si desea que otro paciente pueda reservarlo, deberá generar un nuevo turno desde la plataforma para ese horario.\n\n'
                         f'Saludos,\n'
                         f'El equipo de OdonLoop\n\n'
                         f'---\n'

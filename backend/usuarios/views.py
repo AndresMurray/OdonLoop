@@ -279,19 +279,19 @@ class UserRegistrationView(generics.CreateAPIView):
             logger.info(f'Notificando al admin sobre nuevo odontólogo: {user.email}')
             email = DjangoEmailMessage(
                 subject=f'Nuevo odontólogo registrado: {nombre_completo}',
-                body=(
-                    f'Hola Andrés,\n\n'
-                    f'Se ha registrado un nuevo odontólogo en OdonLoop y está pendiente de verificación:\n\n'
-                    f'Nombre: {nombre_completo}\n'
-                    f'Email: {user.email}\n'
-                    f'Fecha de registro: {fecha_registro}\n\n'
-                    f'Ingresá al Panel de Administración para revisar y aprobar su cuenta:\n'
-                    f'{getattr(settings, "FRONTEND_URL", "http://localhost:5173")}/admin-panel\n\n'
-                    f'Saludos,\n'
-                    f'OdonLoop\n\n'
-                    f'---\n'
-                    f'Este es un mensaje automático.'
-                ),
+                    body=(
+                        f'Hola Andrés,\n\n'
+                        f'Se ha registrado un nuevo odontólogo en OdonLoop y está pendiente de verificación:\n\n'
+                        f'Nombre: {nombre_completo}\n'
+                        f'Email: {user.email}\n'
+                        f'Fecha de registro: {fecha_registro}\n\n'
+                        f'Ingresá a OdonLoop para revisarlo y aprobarlo:\n'
+                        f'{getattr(settings, "FRONTEND_URL", "https://odonloop.com")}\n\n'
+                        f'Saludos,\n'
+                        f'OdonLoop\n\n'
+                        f'---\n'
+                        f'Este es un mensaje automático.'
+                    ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[admin_email],
             )
