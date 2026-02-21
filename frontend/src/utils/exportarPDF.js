@@ -120,10 +120,12 @@ function parchearCssText(css) {
 }
 
 /**
- * Parchea todos los <style> y atributos style en el documento clonado
+ * Parchea todos los <style> y atributos style en el documento clonado.
+ * También lee las reglas CSS de los stylesheets externos del documento original
+ * (necesario en producción donde los estilos están en archivos .css compilados).
  */
 function parchearOklchEnDocumento(doc) {
-  // 1. Parchear etiquetas <style>
+  // 1. Parchear etiquetas <style> del clon (dev mode)
   const styleTags = doc.querySelectorAll('style');
   styleTags.forEach((tag) => {
     if (tag.textContent.includes('oklch') || tag.textContent.includes('lab(')) {
@@ -139,6 +141,37 @@ function parchearOklchEnDocumento(doc) {
       el.setAttribute('style', parchearCssText(s));
     }
   });
+
+  // 3. Leer stylesheets del documento ORIGINAL y parchear (producción)
+  // En el build compilado, los estilos están como <link> externos, no como <style>.
+  // Los leemos desde document.styleSheets (ya parseados por el browser) y
+  // los inyectamos corregidos en el clon.
+  try {
+    let cssAcumulado = '';
+    const sheets = document.styleSheets; // documento original (ya cargado)
+    for (let i = 0; i < sheets.length; i++) {
+      try {
+        const rules = sheets[i].cssRules || sheets[i].rules;
+        if (!rules) continue;
+        for (let j = 0; j < rules.length; j++) {
+          const ruleText = rules[j].cssText || '';
+          if (ruleText.includes('oklch') || ruleText.includes('lab(')) {
+            cssAcumulado += parchearCssText(ruleText) + '\n';
+          }
+        }
+      } catch {
+        // Stylesheet cross-origin, no se puede leer — ignorar
+        continue;
+      }
+    }
+    if (cssAcumulado) {
+      const styleTag = doc.createElement('style');
+      styleTag.textContent = cssAcumulado;
+      doc.head.appendChild(styleTag);
+    }
+  } catch (e) {
+    console.warn('No se pudieron parchear stylesheets externas:', e);
+  }
 }
 
 /**
