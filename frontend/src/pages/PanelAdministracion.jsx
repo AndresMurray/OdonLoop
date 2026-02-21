@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { UserCheck, UserX, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 
 const PanelAdministracion = () => {
   const navigate = useNavigate();
   const userData = authService.getUserData();
-  
+
   const [odontologos, setOdontologos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(false);
@@ -20,6 +21,7 @@ const PanelAdministracion = () => {
   const [filtro, setFiltro] = useState('todos'); // 'todos', 'pendiente', 'activo', 'suspendido'
   const [motivoSuspension, setMotivoSuspension] = useState('');
   const [odontologoParaSuspender, setOdontologoParaSuspender] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ open: false, tipo: null, id: null });
 
   useEffect(() => {
     if (!userData || userData.tipo_usuario !== 'admin') {
@@ -43,15 +45,28 @@ const PanelAdministracion = () => {
   };
 
   const handleAprobar = async (id) => {
-    if (!window.confirm('¿Está seguro de aprobar este odontólogo?')) return;
+    setConfirmModal({ open: true, tipo: 'aprobar', id });
+  };
 
+  const handleActivar = async (id) => {
+    setConfirmModal({ open: true, tipo: 'reactivar', id });
+  };
+
+  const confirmarAccion = async () => {
+    const { tipo, id } = confirmModal;
+    setConfirmModal({ open: false, tipo: null, id: null });
     try {
       setProcesando(true);
-      const response = await aprobarOdontologo(id);
-      setSuccess(response.message || 'Odontólogo aprobado exitosamente');
+      if (tipo === 'aprobar') {
+        const response = await aprobarOdontologo(id);
+        setSuccess(response.message || 'Odontólogo aprobado exitosamente');
+      } else if (tipo === 'reactivar') {
+        const response = await activarOdontologo(id);
+        setSuccess(response.message || 'Odontólogo reactivado exitosamente');
+      }
       await cargarOdontologos();
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al aprobar odontólogo');
+      setError(err.response?.data?.error || 'Error al procesar la acción');
     } finally {
       setProcesando(false);
     }
@@ -74,20 +89,6 @@ const PanelAdministracion = () => {
     }
   };
 
-  const handleActivar = async (id) => {
-    if (!window.confirm('¿Está seguro de reactivar este odontólogo?')) return;
-
-    try {
-      setProcesando(true);
-      const response = await activarOdontologo(id);
-      setSuccess(response.message || 'Odontólogo reactivado exitosamente');
-      await cargarOdontologos();
-    } catch (err) {
-      setError(err.response?.data?.error || 'Error al reactivar odontólogo');
-    } finally {
-      setProcesando(false);
-    }
-  };
 
   const odontologosFiltrados = odontologos.filter(odontologo => {
     if (filtro === 'todos') return true;
@@ -102,7 +103,7 @@ const PanelAdministracion = () => {
     };
     const badge = badges[estado] || badges.activo;
     const Icon = badge.icon;
-    
+
     return (
       <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${badge.color}`}>
         <Icon className="w-3 h-3" />
@@ -128,7 +129,7 @@ const PanelAdministracion = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
       <Navbar />
-      
+
       {/* Header */}
       <header className="bg-white/95 shadow-md backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -149,7 +150,7 @@ const PanelAdministracion = () => {
       {/* Main Content */}
       <main className="flex-grow bg-white/5 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          
+
           {/* Mensajes */}
           {error && (
             <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center gap-2">
@@ -205,28 +206,28 @@ const PanelAdministracion = () => {
           <Card className="mb-6">
             <CardContent className="p-4">
               <div className="flex gap-3">
-                <Button 
+                <Button
                   variant={filtro === 'todos' ? 'primary' : 'secondary'}
                   onClick={() => setFiltro('todos')}
                   size="sm"
                 >
                   Todos ({odontologos.length})
                 </Button>
-                <Button 
+                <Button
                   variant={filtro === 'pendiente' ? 'primary' : 'secondary'}
                   onClick={() => setFiltro('pendiente')}
                   size="sm"
                 >
                   Pendientes ({contadores.pendiente})
                 </Button>
-                <Button 
+                <Button
                   variant={filtro === 'activo' ? 'primary' : 'secondary'}
                   onClick={() => setFiltro('activo')}
                   size="sm"
                 >
                   Activos ({contadores.activo})
                 </Button>
-                <Button 
+                <Button
                   variant={filtro === 'suspendido' ? 'primary' : 'secondary'}
                   onClick={() => setFiltro('suspendido')}
                   size="sm"
@@ -277,7 +278,7 @@ const PanelAdministracion = () => {
                             )}
                           </div>
                         </div>
-                        
+
                         <div className="flex flex-col gap-2 min-w-[180px]">
                           {odontologo.estado === 'pendiente' && (
                             <Button
@@ -372,6 +373,21 @@ const PanelAdministracion = () => {
       )}
 
       <Footer />
+
+      <ConfirmModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, tipo: null, id: null })}
+        onConfirm={confirmarAccion}
+        title={confirmModal.tipo === 'aprobar' ? 'Aprobar Odontólogo' : 'Reactivar Odontólogo'}
+        message={
+          confirmModal.tipo === 'aprobar'
+            ? '¿Estás seguro de que querés aprobar este odontólogo? Se le enviará una notificación por email.'
+            : '¿Estás seguro de que querés reactivar este odontólogo?'
+        }
+        confirmText={confirmModal.tipo === 'aprobar' ? 'Sí, aprobar' : 'Sí, reactivar'}
+        cancelText="Cancelar"
+        variant={confirmModal.tipo === 'aprobar' ? 'info' : 'warning'}
+      />
     </div>
   );
 };
