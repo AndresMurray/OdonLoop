@@ -262,6 +262,40 @@ class TurnoViewSet(viewsets.ModelViewSet):
         
         turno.cancelar()
         
+        # Notificar al odontólogo si quien cancela es un paciente
+        if user.tipo_usuario == 'paciente' and turno.odontologo and turno.odontologo.user and turno.odontologo.user.email:
+            try:
+                fecha_local = timezone.localtime(turno.fecha_hora)
+                fecha_formateada = fecha_local.strftime('%d/%m/%Y')
+                hora_formateada = fecha_local.strftime('%H:%M')
+                nombre_paciente = turno.paciente.get_nombre_completo() if turno.paciente else 'Paciente desconocido'
+                odontologo_email = turno.odontologo.user.email
+                nombre_odontologo = turno.odontologo.get_nombre_completo()
+
+                logger.info(f'Enviando email de cancelación al odontólogo {odontologo_email}...')
+                email_odontologo = EmailMessage(
+                    subject=f'Turno cancelado — {nombre_paciente} — {fecha_formateada} {hora_formateada}',
+                    body=(
+                        f'Estimado/a Dr./Dra. {nombre_odontologo},\n\n'
+                        f'Le informamos que el siguiente turno ha sido cancelado por el paciente:\n\n'
+                        f'Paciente: {nombre_paciente}\n'
+                        f'Fecha: {fecha_formateada}\n'
+                        f'Hora: {hora_formateada}\n\n'
+                        f'El horario quedó nuevamente disponible en la plataforma.\n\n'
+                        f'Saludos,\n'
+                        f'El equipo de OdonLoop\n\n'
+                        f'---\n'
+                        f'Este es un mensaje automático, por favor no respondas a este email.'
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[odontologo_email],
+                    reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+                )
+                email_odontologo.send(fail_silently=True)
+                logger.info(f'Email de cancelación enviado al odontólogo {odontologo_email}')
+            except Exception as e:
+                logger.error(f'Error al enviar email de cancelación al odontólogo: {str(e)}')
+
         # Enviar email si el turno tiene un paciente registrado CON EMAIL
         email_sent = False
         email_error = None
