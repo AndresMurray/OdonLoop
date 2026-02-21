@@ -6,7 +6,7 @@ import Input from '../components/Input';
 import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { ArrowLeft, Mail, Key, Lock } from 'lucide-react';
+import { ArrowLeft, Mail, Key } from 'lucide-react';
 import { requestPasswordReset, verifyResetCode, resetPassword } from '../api/passwordService';
 
 const ForgotPasswordPage = () => {
@@ -21,7 +21,7 @@ const ForgotPasswordPage = () => {
 
   const handleRequestCode = async (e) => {
     e.preventDefault();
-    
+
     if (!email) {
       setAlert({ type: 'error', message: 'El email es requerido' });
       return;
@@ -227,34 +227,26 @@ const ForgotPasswordPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Nueva Contraseña
                     </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <Input
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Mínimo 8 caracteres"
-                        className="pl-10"
-                        required
-                      />
-                    </div>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Mínimo 8 caracteres"
+                      required
+                    />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Confirmar Contraseña
                     </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <Input
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Repite la contraseña"
-                        className="pl-10"
-                        required
-                      />
-                    </div>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repite la contraseña"
+                      required
+                    />
                   </div>
 
                   <Button
