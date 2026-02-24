@@ -6,8 +6,9 @@ import Input from '../components/Input';
 import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { ArrowLeft, Search, User, FileText, Smile } from 'lucide-react';
+import { ArrowLeft, Search, User, FileText, Smile, UserPlus } from 'lucide-react';
 import { getMisPacientes } from '../api/seguimientoService';
+import ModalAsignarPaciente from '../components/ModalAsignarPaciente';
 
 const MisPacientesPage = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const MisPacientesPage = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [alert, setAlert] = useState({ type: '', message: '', detail: '' });
+  const [modalNuevoPaciente, setModalNuevoPaciente] = useState(false);
 
   useEffect(() => {
     cargarPacientes();
@@ -26,7 +28,7 @@ const MisPacientesPage = () => {
     if (searchTerm.trim() === '') {
       setPacientesFiltrados(pacientes);
     } else {
-      const filtered = pacientes.filter(p => 
+      const filtered = pacientes.filter(p =>
         p.nombre_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.dni && p.dni.includes(searchTerm))
       );
@@ -61,7 +63,7 @@ const MisPacientesPage = () => {
 
   const formatearFecha = (fecha) => {
     if (!fecha) return 'Sin seguimientos';
-    
+
     const date = new Date(fecha);
     return date.toLocaleDateString('es-AR', {
       day: '2-digit',
@@ -73,14 +75,14 @@ const MisPacientesPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
       <Navbar />
-      
+
       {/* Header */}
       <header className="bg-white/95 shadow-md backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => navigate('/home-odontologo')}
               >
@@ -96,6 +98,15 @@ const MisPacientesPage = () => {
                 </p>
               </div>
             </div>
+            {/* Botón Nuevo Paciente */}
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setModalNuevoPaciente(true)}
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Nuevo Paciente
+            </Button>
           </div>
         </div>
       </header>
@@ -103,7 +114,7 @@ const MisPacientesPage = () => {
       {/* Main Content */}
       <main className="flex-grow bg-white/5 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          
+
           <Alert
             type={alert.type}
             message={alert.message}
@@ -128,7 +139,7 @@ const MisPacientesPage = () => {
                   </div>
                 </div>
               </div>
-              
+
               {searchTerm && (
                 <p className="text-sm text-gray-600 mt-2">
                   {pacientesFiltrados.length} resultado(s) encontrado(s)
@@ -153,9 +164,9 @@ const MisPacientesPage = () => {
                   {searchTerm ? 'No se encontraron pacientes' : 'No tienes pacientes registrados'}
                 </p>
                 <p className="text-gray-500 mt-2">
-                  {searchTerm 
+                  {searchTerm
                     ? 'Intenta con otros términos de búsqueda'
-                    : 'Los pacientes aparecerán aquí cuando soliciten turnos contigo'
+                    : 'Creá tu primer paciente con el botón "Nuevo Paciente" o los pacientes aparecerán aquí cuando soliciten turnos contigo'
                   }
                 </p>
               </CardContent>
@@ -163,13 +174,13 @@ const MisPacientesPage = () => {
           ) : (
             <div className="grid gap-4">
               {pacientesFiltrados.map((paciente) => (
-                <Card 
+                <Card
                   key={paciente.id}
                   className="hover:shadow-lg transition-shadow cursor-pointer"
                   onClick={() => handleVerSeguimiento(paciente.id)}
                 >
                   <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                       <div className="flex items-start gap-4 flex-grow">
                         <div className="bg-emerald-100 p-3 rounded-full">
                           <User className="w-8 h-8 text-emerald-600" />
@@ -178,7 +189,7 @@ const MisPacientesPage = () => {
                           <h3 className="text-xl font-semibold text-gray-900">
                             {paciente.nombre_completo}
                           </h3>
-                          
+
                           {/* Datos de contacto */}
                           <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
                             {paciente.dni && (
@@ -194,27 +205,27 @@ const MisPacientesPage = () => {
                               <span>Nac: {formatearFecha(paciente.fecha_nacimiento)}</span>
                             )}
                           </div>
-                          
+
                           {/* Dirección */}
                           {paciente.direccion && (
                             <div className="mt-2 text-sm text-gray-600">
                               <span className="font-medium">Dirección:</span> {paciente.direccion}
                             </div>
                           )}
-                          
+
                           {/* Obra Social */}
                           {(paciente.obra_social_detalle || paciente.obra_social_otra) && (
                             <div className="mt-2 text-sm text-gray-600">
                               <span className="font-medium">Obra Social:</span>{' '}
-                              {paciente.obra_social_otra 
+                              {paciente.obra_social_otra
                                 ? paciente.obra_social_otra
-                                : paciente.obra_social_detalle?.sigla 
+                                : paciente.obra_social_detalle?.sigla
                                   ? `${paciente.obra_social_detalle.sigla} - ${paciente.obra_social_detalle.nombre}`
                                   : paciente.obra_social_detalle?.nombre
                               }
                             </div>
                           )}
-                          
+
                           {/* Información médica */}
                           {(paciente.antecedentes_medicos || paciente.alergias) && (
                             <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm">
@@ -232,7 +243,7 @@ const MisPacientesPage = () => {
                               )}
                             </div>
                           )}
-                          
+
                           <div className="mt-2 text-sm">
                             <span className="text-gray-500">Último seguimiento: </span>
                             <span className="font-medium text-gray-700">
@@ -241,25 +252,28 @@ const MisPacientesPage = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <Button 
+                      {/* Botones de acción */}
+                      <div className="flex flex-row sm:flex-col gap-2 sm:ml-2">
+                        <Button
                           variant="primary"
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleVerSeguimiento(paciente.id);
                           }}
+                          className="flex-1 sm:flex-none"
                         >
                           <FileText className="w-4 h-4 mr-2" />
                           Seguimiento
                         </Button>
-                        <Button 
+                        <Button
                           variant="outline"
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleVerOdontograma(paciente.id);
                           }}
+                          className="flex-1 sm:flex-none"
                         >
                           <Smile className="w-4 h-4 mr-2" />
                           Odontograma
@@ -274,8 +288,21 @@ const MisPacientesPage = () => {
 
         </div>
       </main>
-      
+
       <Footer />
+
+      {/* Modal Nuevo Paciente */}
+      <ModalAsignarPaciente
+        isOpen={modalNuevoPaciente}
+        onClose={() => setModalNuevoPaciente(false)}
+        soloCrear={true}
+        onSeleccionar={() => {
+          // Al crear un paciente, refrescar la lista y cerrar el modal
+          cargarPacientes();
+          setModalNuevoPaciente(false);
+          setAlert({ type: 'success', message: 'Paciente creado y agregado a tu lista exitosamente' });
+        }}
+      />
     </div>
   );
 };

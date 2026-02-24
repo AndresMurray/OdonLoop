@@ -190,29 +190,29 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
     <div ref={containerRef} className="relative bg-white rounded-xl p-4 md:p-8 shadow-2xl" style={{ isolation: 'isolate' }}>
       {/* Botones para activar modos — ocultos en modoCaptura */}
       {!modoCaptura && (
-        <div className="mb-4 flex justify-between items-center gap-3">
+        <div className="mb-4 flex flex-wrap justify-between items-center gap-2">
           {/* Botón de Nuevo Seguimiento */}
           <button
             onClick={onNuevoSeguimiento}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all bg-blue-600 text-white hover:bg-blue-700 shadow-md"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold transition-all bg-blue-600 text-white hover:bg-blue-700 shadow-md text-sm"
           >
-            <ClipboardPlus size={18} />
+            <ClipboardPlus size={16} />
             Agregar Nuevo Seguimiento
           </button>
 
           {/* Botones de marcado */}
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => {
                 setModoMarca(modoMarca === 'puente' ? null : 'puente');
                 setMarcaEnProgreso({ inicio: null, fin: null });
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${modoMarca === 'puente'
-                  ? 'bg-red-600 text-white hover:bg-red-700'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold transition-all text-sm ${modoMarca === 'puente'
+                ? 'bg-red-600 text-white hover:bg-red-700'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
             >
-              <Link2 size={18} />
+              <Link2 size={16} />
               {modoMarca === 'puente' ? 'Cancelar Puente' : 'Marcar Puente'}
             </button>
 
@@ -221,12 +221,12 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
                 setModoMarca(modoMarca === 'protesis' ? null : 'protesis');
                 setMarcaEnProgreso({ inicio: null, fin: null });
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${modoMarca === 'protesis'
-                  ? 'bg-red-600 text-white hover:bg-red-700'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold transition-all text-sm ${modoMarca === 'protesis'
+                ? 'bg-red-600 text-white hover:bg-red-700'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
             >
-              <Square size={18} />
+              <Square size={16} />
               {modoMarca === 'protesis' ? 'Cancelar Prótesis' : 'Marcar Prótesis'}
             </button>
           </div>
@@ -265,7 +265,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
           </div>
 
           <div>
-            <h4 className="font-semibold text-gray-700 mb-2">Estados de Pieza (Clic derecho):</h4>
+            <h4 className="font-semibold text-gray-700 mb-2">Estados de Pieza (Clic derecho / Mantener presionado en mobile):</h4>
             <div className="grid grid-cols-2 gap-1 text-xs">
               <div><span className="text-red-600 font-bold">✕</span> Ausente</div>
               <div><span className="text-blue-600 font-bold">✕</span> Extracción</div>
@@ -299,7 +299,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
         </div>
 
         <div className="mt-3 text-xs text-gray-600 bg-white p-2 rounded">
-          <strong>Instrucciones:</strong> Click izquierdo en cara → Tratamiento | Clic derecho en centro → Estado | Botones superiores → Marcar puente/prótesis entre piezas
+          <strong>Instrucciones:</strong> Click izquierdo en cara → Tratamiento | Clic derecho (o mantener presionado en mobile) en centro → Estado | Botones superiores → Marcar puente/prótesis entre piezas
         </div>
       </div>}
 
@@ -479,7 +479,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
         <div className="mt-8 text-center text-xs text-gray-500 bg-gray-50 p-3 rounded">
           <p className="font-semibold">Odontograma profesional con notación FDI - Total: 52 piezas dentales</p>
           <p className="mt-1">Sistema de 5 caras por pieza: Oclusal (centro), Vestibular (arriba), Lingual (abajo), Mesial (izq), Distal (der)</p>
-          <p className="mt-1 text-blue-600">Click en cara para tratamiento | Clic derecho en centro para estado de pieza</p>
+          <p className="mt-1 text-blue-600">Click en cara para tratamiento | Clic derecho / mantener presionado en centro para estado de pieza</p>
         </div>
       )}
     </div>

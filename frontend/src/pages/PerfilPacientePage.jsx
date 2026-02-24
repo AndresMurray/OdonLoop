@@ -19,7 +19,7 @@ const PerfilPacientePage = () => {
   const [editando, setEditando] = useState(false);
   const [alert, setAlert] = useState({ type: '', message: '' });
   const [mostrarOtraOS, setMostrarOtraOS] = useState(false);
-  
+
   // Estados para cambiar contraseña
   const [mostrarCambioPassword, setMostrarCambioPassword] = useState(false);
   const [cambiandoPassword, setCambiandoPassword] = useState(false);
@@ -29,7 +29,7 @@ const PerfilPacientePage = () => {
     confirm_password: ''
   });
   const [passwordAlert, setPasswordAlert] = useState({ type: '', message: '' });
-  
+
   // Estado del formulario de edición
   const [formData, setFormData] = useState({
     first_name: '',
@@ -53,10 +53,10 @@ const PerfilPacientePage = () => {
         getMiPerfil(),
         getObrasSociales()
       ]);
-      
+
       setPerfil(perfilData);
       setObrasSociales(obrasData);
-      
+
       // Inicializar formulario con datos actuales
       setFormData({
         first_name: perfilData.first_name || '',
@@ -68,12 +68,12 @@ const PerfilPacientePage = () => {
         obra_social: perfilData.obra_social || '',
         obra_social_otra: perfilData.obra_social_otra || ''
       });
-      
+
       // Si tiene obra_social_otra, mostrar el input manual
       if (perfilData.obra_social_otra) {
         setMostrarOtraOS(true);
       }
-      
+
     } catch (error) {
       setAlert({
         type: 'error',
@@ -95,7 +95,7 @@ const PerfilPacientePage = () => {
   const handleGuardar = async () => {
     setSaving(true);
     setAlert({ type: '', message: '' });
-    
+
     try {
       // Preparar datos según si usa obra social de lista o manual
       const datosAEnviar = {
@@ -103,7 +103,7 @@ const PerfilPacientePage = () => {
         obra_social: mostrarOtraOS ? null : formData.obra_social,
         obra_social_otra: mostrarOtraOS ? formData.obra_social_otra : null
       };
-      
+
       const datosActualizados = await actualizarMiPerfil(datosAEnviar);
       setPerfil(datosActualizados);
       setEditando(false);
@@ -141,7 +141,7 @@ const PerfilPacientePage = () => {
 
   const handlePasswordChange = async () => {
     setPasswordAlert({ type: '', message: '' });
-    
+
     // Validaciones
     if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) {
       setPasswordAlert({
@@ -173,19 +173,19 @@ const PerfilPacientePage = () => {
         current_password: passwordData.current_password,
         new_password: passwordData.new_password
       });
-      
+
       setPasswordAlert({
         type: 'success',
         message: 'Contraseña actualizada correctamente'
       });
-      
+
       // Limpiar formulario y ocultar después de 2 segundos
       setPasswordData({
         current_password: '',
         new_password: '',
         confirm_password: ''
       });
-      
+
       setTimeout(() => {
         setMostrarCambioPassword(false);
         setPasswordAlert({ type: '', message: '' });
@@ -232,7 +232,7 @@ const PerfilPacientePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
       <Navbar />
-      
+
       <div className="flex-grow p-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -249,7 +249,7 @@ const PerfilPacientePage = () => {
                 </Button>
                 <h1 className="text-2xl sm:text-3xl font-bold text-white">Mi Perfil</h1>
               </div>
-              
+
               {!editando ? (
                 <Button onClick={() => setEditando(true)} className="w-full sm:w-auto">
                   <Edit2 className="w-4 h-4 mr-2" />
@@ -346,15 +346,7 @@ const PerfilPacientePage = () => {
                         placeholder="DNI"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-                      <Input
-                        name="direccion"
-                        value={formData.direccion}
-                        onChange={handleInputChange}
-                        placeholder="Dirección"
-                      />
-                    </div>
+
                   </>
                 ) : (
                   <>
@@ -374,13 +366,9 @@ const PerfilPacientePage = () => {
                       <span className="text-gray-600">Fecha de Nacimiento</span>
                       <span className="font-medium">{formatearFecha(perfil?.fecha_nacimiento)}</span>
                     </div>
-                    <div className="flex justify-between py-2 border-b">
+                    <div className="flex justify-between py-2">
                       <span className="text-gray-600">DNI</span>
                       <span className="font-medium">{perfil?.dni || '-'}</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="text-gray-600">Dirección</span>
-                      <span className="font-medium">{perfil?.direccion || '-'}</span>
                     </div>
                   </>
                 )}
@@ -448,10 +436,10 @@ const PerfilPacientePage = () => {
                   <div className="flex justify-between py-2">
                     <span className="text-gray-600">Obra Social</span>
                     <span className="font-medium">
-                      {perfil?.obra_social_otra 
+                      {perfil?.obra_social_otra
                         ? perfil.obra_social_otra
-                        : perfil?.obra_social_detalle 
-                          ? (perfil.obra_social_detalle.sigla 
+                        : perfil?.obra_social_detalle
+                          ? (perfil.obra_social_detalle.sigla
                             ? `${perfil.obra_social_detalle.sigla} - ${perfil.obra_social_detalle.nombre}`
                             : perfil.obra_social_detalle.nombre)
                           : 'Sin obra social'}
@@ -485,7 +473,7 @@ const PerfilPacientePage = () => {
                         <Alert type={passwordAlert.type} message={passwordAlert.message} />
                       </div>
                     )}
-                    
+
                     <div className="max-w-md space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -500,7 +488,7 @@ const PerfilPacientePage = () => {
                           disabled={cambiandoPassword}
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Nueva Contraseña
@@ -515,7 +503,7 @@ const PerfilPacientePage = () => {
                         />
                         <p className="text-xs text-gray-500 mt-1">Mínimo 8 caracteres</p>
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Confirmar Nueva Contraseña
@@ -529,16 +517,16 @@ const PerfilPacientePage = () => {
                           disabled={cambiandoPassword}
                         />
                       </div>
-                      
+
                       <div className="flex gap-2">
-                        <Button 
+                        <Button
                           onClick={handlePasswordChange}
                           disabled={cambiandoPassword}
                         >
                           <Save className="w-4 h-4 mr-2" />
                           {cambiandoPassword ? 'Cambiando...' : 'Guardar Nueva Contraseña'}
                         </Button>
-                        <Button 
+                        <Button
                           variant="secondary"
                           onClick={() => {
                             setMostrarCambioPassword(false);
@@ -576,7 +564,7 @@ const PerfilPacientePage = () => {
           </div>
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );

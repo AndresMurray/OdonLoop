@@ -58,6 +58,14 @@ class Paciente(models.Model):
     # Metadata
     fecha_alta = models.DateTimeField(default=timezone.now, verbose_name='Fecha de alta')
     activo = models.BooleanField(default=True, verbose_name='Activo')
+    creado_por_odontologo = models.ForeignKey(
+        'odontologos.Odontologo',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='pacientes_creados',
+        verbose_name='Creado por odontólogo'
+    )
     
     class Meta:
         verbose_name = 'Paciente'

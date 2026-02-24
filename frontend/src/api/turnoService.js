@@ -20,7 +20,7 @@ export const getTurnos = async () => {
 // Obtener turnos disponibles (opcionalmente filtrados por odontólogo)
 export const getTurnosDisponibles = async (odontologoId = null) => {
   try {
-    const url = odontologoId 
+    const url = odontologoId
       ? `/api/turnos/disponibles/?odontologo=${odontologoId}`
       : '/api/turnos/disponibles/';
     const response = await apiClient.get(url);
@@ -126,6 +126,16 @@ export const actualizarTurno = async (turnoId, turnoData) => {
 export const getTurnosPorFecha = async (fecha) => {
   try {
     const response = await apiClient.get(`/api/turnos/?fecha_desde=${fecha}T00:00:00&fecha_hasta=${fecha}T23:59:59`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Alternar visibilidad de un turno (oculto/visible para pacientes)
+export const toggleVisibilidadTurno = async (turnoId) => {
+  try {
+    const response = await apiClient.post(`/api/turnos/${turnoId}/toggle_visible/`);
     return response;
   } catch (error) {
     throw error;

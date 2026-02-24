@@ -6,13 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from './Card';
 import Alert from './Alert';
 import { getMisPacientes, getTodosPacientes, crearPacienteRapido } from '../api/seguimientoService';
 
-const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar }) => {
-  const [modo, setModo] = useState('buscar'); // 'buscar' o 'crear'
+const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = false }) => {
+  const [modo, setModo] = useState(soloCrear ? 'crear' : 'buscar'); // 'buscar' o 'crear'
   const [pacientes, setPacientes] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({ type: '', message: '', detail: '' });
-  
+
   // Form para crear paciente
   const [nuevoPaciente, setNuevoPaciente] = useState({
     first_name: '',
@@ -23,10 +23,12 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar }) => {
   });
 
   useEffect(() => {
-    if (isOpen && modo === 'buscar') {
-      cargarPacientes();
+    if (isOpen) {
+      // Si soloCrear, siempre abrir en modo crear
+      setModo(soloCrear ? 'crear' : 'buscar');
+      if (!soloCrear) cargarPacientes();
     }
-  }, [isOpen, modo]);
+  }, [isOpen]);
 
   const cargarPacientes = async () => {
     setLoading(true);
@@ -59,7 +61,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar }) => {
 
   const handleCrearPaciente = async (e) => {
     e.preventDefault();
-    
+
     if (!nuevoPaciente.first_name || !nuevoPaciente.last_name || !nuevoPaciente.dni) {
       setAlert({
         type: 'error',
@@ -73,15 +75,16 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar }) => {
       const response = await crearPacienteRapido(nuevoPaciente);
       setAlert({
         type: 'success',
-        message: 'Paciente creado exitosamente'
+        message: soloCrear ? 'Paciente creado exitosamente' : 'Paciente creado exitosamente'
       });
-      
-      // Seleccionar automáticamente el paciente recién creado
+
+      // Seleccionar automáticamente el paciente recién creado (o solo notificar en soloCrear)
       setTimeout(() => {
         onSeleccionar(response.paciente);
-        handleClose();
-      }, 1000);
-      
+        if (!soloCrear) handleClose();
+        else handleClose();
+      }, 800);
+
     } catch (err) {
       setAlert({
         type: 'error',
@@ -107,6 +110,13 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar }) => {
     onClose();
   };
 
+  // Reset modo cuando se cierra el modal
+  useEffect(() => {
+    if (!isOpen) {
+      setModo(soloCrear ? 'crear' : 'buscar');
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -115,7 +125,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
           <h2 className="text-2xl font-bold text-gray-900">
-            Asignar Paciente al Turno
+            {soloCrear ? 'Crear Nuevo Paciente' : 'Asignar Paciente al Turno'}
           </h2>
           <button
             onClick={handleClose}
@@ -125,31 +135,31 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar }) => {
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b bg-gray-50">
-          <button
-            onClick={() => setModo('buscar')}
-            className={`flex-1 py-3 px-6 font-medium transition-colors ${
-              modo === 'buscar'
+        {/* Tabs — solo mostrar si no es soloCrear */}
+        {!soloCrear && (
+          <div className="flex border-b bg-gray-50">
+            <button
+              onClick={() => setModo('buscar')}
+              className={`flex-1 py-3 px-6 font-medium transition-colors ${modo === 'buscar'
                 ? 'border-b-2 border-emerald-600 text-emerald-600 bg-white'
                 : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Search className="w-5 h-5 inline mr-2" />
-            Buscar Paciente
-          </button>
-          <button
-            onClick={() => setModo('crear')}
-            className={`flex-1 py-3 px-6 font-medium transition-colors ${
-              modo === 'crear'
+                }`}
+            >
+              <Search className="w-5 h-5 inline mr-2" />
+              Buscar Paciente
+            </button>
+            <button
+              onClick={() => setModo('crear')}
+              className={`flex-1 py-3 px-6 font-medium transition-colors ${modo === 'crear'
                 ? 'border-b-2 border-emerald-600 text-emerald-600 bg-white'
                 : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <UserPlus className="w-5 h-5 inline mr-2" />
-            Crear Nuevo Paciente
-          </button>
-        </div>
+                }`}
+            >
+              <UserPlus className="w-5 h-5 inline mr-2" />
+              Crear Nuevo Paciente
+            </button>
+          </div>
+        )}
 
         {/* Content */}
         <div className="p-6">
@@ -234,7 +244,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar }) => {
                 <p className="text-sm text-gray-600 mb-4">
                   Este paciente podrá activar su cuenta después ingresando su DNI y email en el registro.
                 </p>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     label="Nombre *"

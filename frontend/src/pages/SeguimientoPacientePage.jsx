@@ -309,39 +309,41 @@ const SeguimientoPacientePage = () => {
       {/* Header */}
       <header className="bg-white/95 shadow-md backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => navigate('/mis-pacientes')}
+                className="shrink-0"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-4 h-4 mr-1" />
                 Volver
               </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-3xl font-bold text-gray-900 leading-tight">
                   {loadingPaciente ? 'Cargando...' : `Seguimiento de ${paciente?.nombre_completo}`}
                 </h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-gray-600 mt-0.5 text-sm sm:text-base">
                   Historial y nuevo registro de seguimiento
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 onClick={handleExportarPDF}
                 disabled={exportando}
+                className="text-sm"
               >
                 {exportando ? (
                   <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600 mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
                     Exportando...
                   </>
                 ) : (
                   <>
-                    <FileDown className="w-5 h-5 mr-2" />
+                    <FileDown className="w-4 h-4 mr-1" />
                     Exportar PDF
                   </>
                 )}
@@ -349,15 +351,17 @@ const SeguimientoPacientePage = () => {
               <Button
                 variant="outline"
                 onClick={() => navigate(`/odontograma/${pacienteId}`)}
+                className="text-sm"
               >
-                <Smile className="w-5 h-5 mr-2" />
+                <Smile className="w-4 h-4 mr-1" />
                 Odontograma
               </Button>
               <Button
                 variant="primary"
                 onClick={() => setMostrarFormulario(!mostrarFormulario)}
+                className="text-sm"
               >
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus className="w-4 h-4 mr-1" />
                 {mostrarFormulario ? 'Cancelar' : 'Nuevo Seguimiento'}
               </Button>
             </div>

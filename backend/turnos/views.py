@@ -30,15 +30,15 @@ class TurnoViewSet(viewsets.ModelViewSet):
         queryset = Turno.objects.select_related('paciente__user', 'odontologo__user').all()
         user = self.request.user
         
-        # Si es paciente, mostrar solo sus turnos y los disponibles
+        # Si es paciente, mostrar solo sus turnos y los disponibles VISIBLES
         if user.tipo_usuario == 'paciente':
             try:
                 paciente = Paciente.objects.get(user=user)
                 queryset = queryset.filter(
-                    Q(paciente=paciente) | Q(estado='disponible', paciente__isnull=True)
+                    Q(paciente=paciente) | Q(estado='disponible', paciente__isnull=True, visible=True)
                 )
             except Paciente.DoesNotExist:
-                queryset = queryset.filter(estado='disponible', paciente__isnull=True)
+                queryset = queryset.filter(estado='disponible', paciente__isnull=True, visible=True)
         
         # Si es odontólogo, mostrar solo sus turnos
         elif user.tipo_usuario == 'odontologo':
@@ -458,13 +458,14 @@ class TurnoViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def disponibles(self, request):
-        """Obtener turnos disponibles"""
+        """Obtener turnos disponibles (solo visibles para pacientes)"""
         odontologo_id = request.query_params.get('odontologo', None)
         
         turnos = Turno.objects.filter(
             estado='disponible',
             paciente__isnull=True,
-            fecha_hora__gt=timezone.now()
+            fecha_hora__gt=timezone.now(),
+            visible=True  # Solo mostrar turnos visibles a pacientes
         )
         
         if odontologo_id:
@@ -472,6 +473,35 @@ class TurnoViewSet(viewsets.ModelViewSet):
         
         turnos = turnos.order_by('fecha_hora')
         serializer = TurnoSerializer(turnos, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'])
+    def toggle_visible(self, request, pk=None):
+        """Ocultar/mostrar un turno (solo el odontólogo dueño del turno)"""
+        if request.user.tipo_usuario != 'odontologo':
+            return Response(
+                {'error': 'Solo los odontólogos pueden cambiar la visibilidad de turnos'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            odontologo = Odontologo.objects.get(user=request.user)
+        except Odontologo.DoesNotExist:
+            return Response(
+                {'error': 'No se encontró el perfil de odontólogo'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        turno = self.get_object()
+        if turno.odontologo != odontologo:
+            return Response(
+                {'error': 'No tenés permiso para editar este turno'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        turno.visible = not turno.visible
+        turno.save()
+        serializer = TurnoSerializer(turno)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     @action(detail=False, methods=['post'])
@@ -537,13 +567,14 @@ class TurnoViewSet(viewsets.ModelViewSet):
                             break
                     
                     if not conflicto:
-                        # Crear el turno
+                        # Crear el turno (visible por defecto según parámetro del lote)
                         turno = Turno.objects.create(
                             odontologo=odontologo,
                             fecha_hora=turno_inicio,
                             duracion_minutos=data['duracion_minutos'],
                             motivo=data.get('motivo', ''),
-                            estado='disponible'
+                            estado='disponible',
+                            visible=data.get('visible', True)
                         )
                         turnos_creados.append(turno)
                     else:

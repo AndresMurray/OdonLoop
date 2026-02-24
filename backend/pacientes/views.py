@@ -78,22 +78,23 @@ class MisPacientesView(APIView):
             search = request.query_params.get('search', '')
             
             # Obtener pacientes únicos que tienen turnos con este odontólogo
-            pacientes_ids = Turno.objects.filter(
+            pacientes_con_turno_ids = Turno.objects.filter(
                 odontologo=odontologo
-            ).values_list('paciente_id', flat=True).distinct()
+            ).exclude(paciente__isnull=True).values_list('paciente_id', flat=True).distinct()
             
-            # Filtrar pacientes
+            # Filtrar pacientes: los que tienen turnos O los creados manualmente por este odontólogo
+            from django.db.models import Q as DQ
             pacientes = Paciente.objects.filter(
-                id__in=pacientes_ids,
+                DQ(id__in=pacientes_con_turno_ids) | DQ(creado_por_odontologo=odontologo),
                 activo=True
             ).select_related('user', 'obra_social')
             
             # Aplicar búsqueda por nombre si existe
             if search:
                 pacientes = pacientes.filter(
-                    Q(user__first_name__icontains=search) |
-                    Q(user__last_name__icontains=search) |
-                    Q(dni__icontains=search)
+                    DQ(user__first_name__icontains=search) |
+                    DQ(user__last_name__icontains=search) |
+                    DQ(dni__icontains=search)
                 )
             
             # Ordenar por apellido y nombre

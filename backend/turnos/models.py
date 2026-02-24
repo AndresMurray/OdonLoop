@@ -40,6 +40,11 @@ class Turno(models.Model):
         verbose_name='Estado'
     )
     
+    visible = models.BooleanField(
+        default=True,
+        verbose_name='Visible para pacientes',
+        help_text='Si está desactivado, el turno solo es visible para el odontólogo (modo agenda privado)'
+    )
     fecha_creacion = models.DateTimeField(default=timezone.now, verbose_name='Fecha de creación')
     fecha_actualizacion = models.DateTimeField(auto_now=True, verbose_name='Fecha de actualización')
 

@@ -18,7 +18,7 @@ const HomeOdonto = () => {
     const hoy = new Date();
     return hoy.toISOString().split('T')[0];
   });
-  
+
   // Estados de paginación
   const [paginaReservados, setPaginaReservados] = useState(1);
   const [paginaDisponibles, setPaginaDisponibles] = useState(1);
@@ -54,22 +54,22 @@ const HomeOdonto = () => {
     // El backend ya envía la fecha en hora local de Argentina (sin timezone)
     // Solo necesitamos parsearla y formatearla directamente
     const fecha = new Date(fechaHora);
-    
+
     const horaStr = String(fecha.getHours()).padStart(2, '0');
     const minStr = String(fecha.getMinutes()).padStart(2, '0');
     const diaStr = String(fecha.getDate()).padStart(2, '0');
     const mesStr = String(fecha.getMonth() + 1).padStart(2, '0');
     const año = fecha.getFullYear();
-    
+
     return `${horaStr}:${minStr} - ${diaStr}/${mesStr}/${año}`;
   };
 
   const formatearFechaLarga = (fechaISO) => {
     const fecha = new Date(fechaISO + 'T00:00:00');
-    const opciones = { 
-      weekday: 'long', 
-      day: 'numeric', 
-      month: 'long', 
+    const opciones = {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
       year: 'numeric',
       timeZone: 'UTC'
     };
@@ -101,19 +101,19 @@ const HomeOdonto = () => {
 
   const getTurnosPorFechaYEstado = (estado) => {
     return turnos.filter(t => {
-      const cumpleEstado = estado === 'reservados' 
+      const cumpleEstado = estado === 'reservados'
         ? (t.estado === 'reservado' || t.estado === 'confirmado')
         : t.estado === 'disponible';
-      
+
       if (!cumpleEstado) return false;
 
       const fechaTurno = new Date(t.fecha_hora);
       const fechaFiltro = new Date(fechaSeleccionada + 'T00:00:00');
-      
+
       // Comparar solo la fecha (día/mes/año) en UTC
       return fechaTurno.getUTCFullYear() === fechaFiltro.getUTCFullYear() &&
-             fechaTurno.getUTCMonth() === fechaFiltro.getUTCMonth() &&
-             fechaTurno.getUTCDate() === fechaFiltro.getUTCDate();
+        fechaTurno.getUTCMonth() === fechaFiltro.getUTCMonth() &&
+        fechaTurno.getUTCDate() === fechaFiltro.getUTCDate();
     });
   };
 
@@ -147,7 +147,7 @@ const HomeOdonto = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
       <Navbar />
-      
+
       {/* Header with User Info */}
       <header className="bg-white/95 shadow-md backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -178,8 +178,8 @@ const HomeOdonto = () => {
                       Administra, crea y visualiza todos tus turnos de manera eficiente
                     </p>
                   </div>
-                  <Button 
-                    variant="secondary" 
+                  <Button
+                    variant="secondary"
                     className="bg-white text-blue-600 hover:bg-gray-100 px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg whitespace-nowrap w-full md:w-auto"
                     onClick={() => navigate('/gestion-turnos')}
                   >
@@ -202,8 +202,8 @@ const HomeOdonto = () => {
                       Accede al seguimiento de tus pacientes y su historial clínico
                     </p>
                   </div>
-                  <Button 
-                    variant="secondary" 
+                  <Button
+                    variant="secondary"
                     className="bg-white text-emerald-600 hover:bg-gray-100 px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg whitespace-nowrap w-full md:w-auto"
                     onClick={() => navigate('/mis-pacientes')}
                   >
@@ -242,8 +242,8 @@ const HomeOdonto = () => {
                     </Button>
                   </div>
                   <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={retrocederDia}
                       className="flex-1 flex items-center justify-center"
@@ -251,7 +251,7 @@ const HomeOdonto = () => {
                       <ChevronLeft className="w-4 h-4 mr-1" />
                       Anterior
                     </Button>
-                    <Button 
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={avanzarDia}
@@ -265,8 +265,8 @@ const HomeOdonto = () => {
 
                 {/* Desktop: Layout horizontal */}
                 <div className="hidden md:flex items-center justify-between gap-4">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={retrocederDia}
                     className="flex items-center"
@@ -274,7 +274,7 @@ const HomeOdonto = () => {
                     <ChevronLeft className="w-4 h-4" />
                     Anterior
                   </Button>
-                  
+
                   <div className="flex items-center gap-4">
                     <input
                       type="date"
@@ -294,8 +294,8 @@ const HomeOdonto = () => {
                       Hoy
                     </Button>
                   </div>
-                  
-                  <Button 
+
+                  <Button
                     variant="outline"
                     size="sm"
                     onClick={avanzarDia}
@@ -305,7 +305,7 @@ const HomeOdonto = () => {
                     <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
-                
+
                 <p className="text-sm text-gray-600 mt-3 text-center">
                   Viendo turnos para el {formatearFechaLarga(fechaSeleccionada)}
                 </p>
@@ -367,7 +367,7 @@ const HomeOdonto = () => {
                         </div>
                       ))}
                     </div>
-                    
+
                     {getTotalPaginas('reservados') > 1 && (
                       <Pagination
                         currentPage={paginaReservados}
@@ -404,13 +404,20 @@ const HomeOdonto = () => {
                       {getTurnosPaginados('disponibles', paginaDisponibles).map((turno) => (
                         <div
                           key={turno.id}
-                          className="p-4 bg-green-50 rounded-lg border border-green-100"
+                          className={`p-4 rounded-lg border ${turno.visible ? 'bg-green-50 border-green-100' : 'bg-yellow-50 border-yellow-200'}`}
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <p className="font-semibold text-gray-900">
-                                {formatearFecha(turno.fecha_hora)}
-                              </p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold text-gray-900">
+                                  {formatearFecha(turno.fecha_hora)}
+                                </p>
+                                {!turno.visible && (
+                                  <span className="text-xs bg-yellow-100 text-yellow-800 border border-yellow-300 px-2 py-0.5 rounded-full font-medium">
+                                    🚫 Oculto
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-sm text-gray-500">
                                 Duración: {turno.duracion_minutos} min
                               </p>
@@ -422,7 +429,7 @@ const HomeOdonto = () => {
                         </div>
                       ))}
                     </div>
-                    
+
                     {getTotalPaginas('disponibles') > 1 && (
                       <Pagination
                         currentPage={paginaDisponibles}

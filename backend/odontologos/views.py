@@ -277,10 +277,12 @@ def crear_paciente_rapido(request):
         )
         
         # Crear perfil de paciente
+        odontologo = request.user.perfil_odontologo
         paciente = Paciente.objects.create(
             user=user,
             dni=dni,
-            obra_social_id=obra_social_id if obra_social_id else None
+            obra_social_id=obra_social_id if obra_social_id else None,
+            creado_por_odontologo=odontologo
         )
         
         from pacientes.serializers import PacienteSerializer
