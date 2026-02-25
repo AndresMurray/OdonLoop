@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
 import Button from '../components/Button';
@@ -8,6 +8,7 @@ import { getMisTurnos } from '../api/turnoService';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
+import TurnoCalendar from '../components/TurnoCalendar';
 
 const HomeOdonto = () => {
   const navigate = useNavigate();
@@ -23,6 +24,21 @@ const HomeOdonto = () => {
   const [paginaReservados, setPaginaReservados] = useState(1);
   const [paginaDisponibles, setPaginaDisponibles] = useState(1);
   const ITEMS_POR_PAGINA = 3;
+
+  // Calcular turnos activos (disponibles, reservados, confirmados) de hoy en adelante
+  const turnosActivosPorDia = useMemo(() => {
+    const mapa = {};
+    const hoy = new Date().toISOString().split('T')[0];
+    turnos.forEach(t => {
+      if (['disponible', 'reservado', 'confirmado'].includes(t.estado)) {
+        const [fechaStr] = t.fecha_hora.split('T');
+        if (fechaStr >= hoy) {
+          mapa[fechaStr] = (mapa[fechaStr] || 0) + 1;
+        }
+      }
+    });
+    return mapa;
+  }, [turnos]);
 
   useEffect(() => {
     if (!userData) {
@@ -217,99 +233,105 @@ const HomeOdonto = () => {
 
           {/* Selector de Fecha */}
           <div className="mb-6">
-            <Card>
-              <CardContent className="p-4 sm:p-6">
+            <Card className="p-6 sm:p-8">
+              <div className="mb-4">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">
+                  Seleccionar Fecha
+                </h3>
+
+                {/* Calendario */}
+                <TurnoCalendar
+                  turnosPorDia={turnosActivosPorDia}
+                  fechaSeleccionada={fechaSeleccionada}
+                  onSelectFecha={(fecha) => {
+                    setFechaSeleccionada(fecha);
+                    setPaginaReservados(1);
+                    setPaginaDisponibles(1);
+                  }}
+                  highlightColor="blue"
+                  label="turnos activos"
+                  showTotal={false}
+                />
+              </div>
+
+              {/* Separador */}
+              <div className="h-px bg-gray-200 mt-2 mb-4"></div>
+
+              {/* Navegación por día */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-2">
                 {/* Mobile: Layout vertical */}
-                <div className="md:hidden space-y-3">
+                <div className="md:hidden w-full space-y-3">
                   <div className="flex gap-2">
-                    <input
-                      type="date"
-                      value={fechaSeleccionada}
-                      onChange={(e) => {
-                        setFechaSeleccionada(e.target.value);
-                        setPaginaReservados(1);
-                        setPaginaDisponibles(1);
-                      }}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
+                    <div className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-center font-medium text-gray-700 shadow-sm flex items-center justify-center">
+                      {new Date(fechaSeleccionada + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    </div>
                     <Button
-                      variant="secondary"
                       size="sm"
                       onClick={irHoy}
-                      className="whitespace-nowrap"
+                      className="whitespace-nowrap shadow-sm"
                     >
                       Hoy
                     </Button>
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={retrocederDia}
-                      className="flex-1 flex items-center justify-center"
+                      className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
                     >
-                      <ChevronLeft className="w-4 h-4 mr-1" />
-                      Anterior
+                      ← Anterior
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={avanzarDia}
-                      className="flex-1 flex items-center justify-center"
+                      className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
                     >
-                      Siguiente
-                      <ChevronRight className="w-4 h-4 ml-1" />
+                      Siguiente →
                     </Button>
                   </div>
                 </div>
 
                 {/* Desktop: Layout horizontal */}
-                <div className="hidden md:flex items-center justify-between gap-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={retrocederDia}
-                    className="flex items-center"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    Anterior
-                  </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={retrocederDia}
+                  className="hidden md:block shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
+                >
+                  ← Día Anterior
+                </Button>
 
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="date"
-                      value={fechaSeleccionada}
-                      onChange={(e) => {
-                        setFechaSeleccionada(e.target.value);
-                        setPaginaReservados(1);
-                        setPaginaDisponibles(1);
-                      }}
-                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={irHoy}
-                    >
-                      Hoy
-                    </Button>
+                <div className="hidden md:flex items-center gap-3">
+                  <div className="relative">
+                    <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-center font-medium text-gray-700 shadow-sm flex items-center justify-center min-w-[120px]">
+                      {new Date(fechaSeleccionada + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    </div>
                   </div>
-
                   <Button
-                    variant="outline"
+                    variant="primary"
                     size="sm"
-                    onClick={avanzarDia}
-                    className="flex items-center"
+                    onClick={irHoy}
+                    className="px-4 shadow-sm"
                   >
-                    Siguiente
-                    <ChevronRight className="w-4 h-4" />
+                    Hoy
                   </Button>
                 </div>
 
-                <p className="text-sm text-gray-600 mt-3 text-center">
-                  Viendo turnos para el {formatearFechaLarga(fechaSeleccionada)}
-                </p>
-              </CardContent>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={avanzarDia}
+                  className="hidden md:block shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
+                >
+                  Día Siguiente →
+                </Button>
+              </div>
+
+              <p className="text-sm text-gray-600 mt-4 text-center">
+                Viendo turnos para el {formatearFechaLarga(fechaSeleccionada)}
+              </p>
             </Card>
           </div>
 

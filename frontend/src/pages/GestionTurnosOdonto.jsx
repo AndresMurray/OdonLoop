@@ -655,7 +655,7 @@ const GestionTurnosOdonto = () => {
 
           {/* Formulario Crear Turnos */}
           {tabActiva === 'crear' && showForm && (
-            <Card className="mb-8">
+            <Card className="mb-8 p-6 sm:p-8">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold mb-4 text-gray-800">Crear Turno</h2>
 
@@ -936,7 +936,7 @@ const GestionTurnosOdonto = () => {
             <div className="space-y-6">
               {/* Turnos Disponibles */}
               {tabActiva === 'disponibles' && (
-                <Card>
+                <Card className="p-6 sm:p-8">
                   <div className="mb-4">
                     <h3 className="text-xl font-bold text-gray-800 mb-4">
                       Turnos Disponibles
@@ -949,30 +949,32 @@ const GestionTurnosOdonto = () => {
                       onSelectFecha={cambiarFecha}
                       highlightColor="green"
                       label="disponibles"
-                      totalLabel="Total disponibles"
+                      showTotal={false}
                     />
 
+                    {/* Separador */}
+                    <div className="h-px bg-gray-200 my-4"></div>
+
                     {/* Navegación por día */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 bg-gray-100 p-3 rounded-lg">
+                    <div className="flex flex-wrap items-center justify-between gap-3 py-2">
                       <Button
                         size="sm"
                         variant="secondary"
                         onClick={retrocederDia}
-                        className="shrink-0"
+                        className="shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
                       >
-                        ← Día Anterior
+                        ← Anterior
                       </Button>
 
-                      <div className="flex items-center gap-2 flex-wrap justify-center">
-                        <input
-                          type="date"
-                          value={fechaFiltro}
-                          onChange={(e) => cambiarFecha(e.target.value)}
-                          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-medium text-sm"
-                        />
+                      <div className="flex items-center gap-3 flex-wrap justify-center flex-1">
+                        <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-center font-medium text-gray-700 shadow-sm flex items-center justify-center min-w-[120px]">
+                          {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        </div>
                         <Button
                           size="sm"
                           onClick={irHoy}
+                          variant="primary"
+                          className="px-4 shadow-sm"
                         >
                           Hoy
                         </Button>
@@ -982,9 +984,9 @@ const GestionTurnosOdonto = () => {
                         size="sm"
                         variant="secondary"
                         onClick={avanzarDia}
-                        className="shrink-0"
+                        className="shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
                       >
-                        Día Siguiente →
+                        Siguiente →
                       </Button>
                     </div>
 
@@ -1155,7 +1157,7 @@ const GestionTurnosOdonto = () => {
 
               {/* Turnos Reservados */}
               {tabActiva === 'reservados' && (
-                <Card>
+                <Card className="p-6 sm:p-8">
                   <div className="mb-4">
                     <h3 className="text-xl font-bold text-gray-800 mb-4">
                       Turnos Reservados
@@ -1168,29 +1170,32 @@ const GestionTurnosOdonto = () => {
                       onSelectFecha={cambiarFecha}
                       highlightColor="blue"
                       label="reservados"
-                      totalLabel="Total reservados"
+                      showTotal={false}
                     />
 
+                    {/* Separador */}
+                    <div className="h-px bg-gray-200 my-4"></div>
+
                     {/* Navegación por día */}
-                    <div className="flex items-center justify-between bg-gray-100 p-4 rounded-lg">
+                    <div className="flex flex-wrap items-center justify-between gap-3 py-2">
                       <Button
                         size="sm"
                         variant="secondary"
                         onClick={retrocederDia}
+                        className="shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
                       >
-                        ← Día Anterior
+                        ← Anterior
                       </Button>
 
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="date"
-                          value={fechaFiltro}
-                          onChange={(e) => cambiarFecha(e.target.value)}
-                          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-medium"
-                        />
+                      <div className="flex items-center gap-3 flex-wrap justify-center flex-1">
+                        <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-center font-medium text-gray-700 shadow-sm flex items-center justify-center min-w-[120px]">
+                          {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        </div>
                         <Button
                           size="sm"
                           onClick={irHoy}
+                          variant="primary"
+                          className="px-4 shadow-sm"
                         >
                           Hoy
                         </Button>
@@ -1200,8 +1205,9 @@ const GestionTurnosOdonto = () => {
                         size="sm"
                         variant="secondary"
                         onClick={avanzarDia}
+                        className="shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
                       >
-                        Día Siguiente →
+                        Siguiente →
                       </Button>
                     </div>
 

@@ -6,7 +6,8 @@ const TurnoCalendar = ({
     onSelectFecha,
     highlightColor = 'blue',
     label = 'turnos',
-    totalLabel = 'Total de turnos'
+    totalLabel = 'Total de turnos',
+    showTotal = true
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [mesActual, setMesActual] = useState(() => {
@@ -138,7 +139,7 @@ const TurnoCalendar = ({
                     </svg>
                 </button>
 
-                {totalTurnos > 0 && (
+                {showTotal && totalTurnos > 0 && totalLabel && (
                     <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-sm font-medium ${colors.totalBg}`}>
                         <span>{totalLabel}:</span>
                         <span className="bg-white/20 px-2 py-0.5 rounded-full font-bold">{totalTurnos}</span>

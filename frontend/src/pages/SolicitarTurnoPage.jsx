@@ -316,7 +316,7 @@ const SolicitarTurnoPage = () => {
           {vistaActual === 'buscar' && (
             <div className="space-y-6">
               {/* Seleccionar Odontólogo */}
-              <Card>
+              <Card className="p-6 sm:p-8">
                 <h2 className="text-2xl font-bold mb-4 text-gray-800">Seleccionar Odontólogo</h2>
                 <div className="space-y-4">
                   <div>
@@ -349,7 +349,7 @@ const SolicitarTurnoPage = () => {
 
               {/* Turnos Disponibles */}
               {turnosDisponibles.length > 0 && (
-                <Card>
+                <Card className="p-6 sm:p-8">
                   <div className="mb-4">
                     <h2 className="text-2xl font-bold mb-4 text-gray-800">
                       Turnos Disponibles
@@ -362,24 +362,24 @@ const SolicitarTurnoPage = () => {
                       onSelectFecha={setFechaFiltro}
                       highlightColor="green"
                       label="disponibles"
-                      totalLabel="Total disponibles"
+                      showTotal={false}
                     />
 
+                    {/* Separador */}
+                    <div className="h-px bg-gray-200 mt-2 mb-4"></div>
+
                     {/* Navegación por día */}
-                    <div className="bg-gray-100 p-4 rounded-lg">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-2">
                       {/* Mobile: Layout vertical */}
-                      <div className="md:hidden space-y-3">
+                      <div className="md:hidden w-full space-y-3">
                         <div className="flex gap-2">
-                          <input
-                            type="date"
-                            value={fechaFiltro}
-                            onChange={(e) => setFechaFiltro(e.target.value)}
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                          />
+                          <div className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-center font-medium text-gray-700 shadow-sm flex items-center justify-center">
+                            {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                          </div>
                           <Button
                             size="sm"
                             onClick={irHoy}
-                            className="whitespace-nowrap"
+                            className="whitespace-nowrap shadow-sm"
                           >
                             Hoy
                           </Button>
@@ -389,7 +389,7 @@ const SolicitarTurnoPage = () => {
                             size="sm"
                             variant="secondary"
                             onClick={retrocederDia}
-                            className="flex-1"
+                            className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
                           >
                             ← Anterior
                           </Button>
@@ -397,7 +397,7 @@ const SolicitarTurnoPage = () => {
                             size="sm"
                             variant="secondary"
                             onClick={avanzarDia}
-                            className="flex-1"
+                            className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
                           >
                             Siguiente →
                           </Button>
@@ -405,38 +405,37 @@ const SolicitarTurnoPage = () => {
                       </div>
 
                       {/* Desktop: Layout horizontal */}
-                      <div className="hidden md:flex items-center justify-between gap-4">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={retrocederDia}
-                        >
-                          ← Día Anterior
-                        </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={retrocederDia}
+                        className="hidden md:block shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
+                      >
+                        ← Día Anterior
+                      </Button>
 
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="date"
-                            value={fechaFiltro}
-                            onChange={(e) => setFechaFiltro(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-medium"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={irHoy}
-                          >
-                            Hoy
-                          </Button>
+                      <div className="hidden md:flex items-center gap-3">
+                        <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-center font-medium text-gray-700 shadow-sm flex items-center justify-center min-w-[120px]">
+                          {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                         </div>
-
                         <Button
                           size="sm"
-                          variant="secondary"
-                          onClick={avanzarDia}
+                          onClick={irHoy}
+                          variant="primary"
+                          className="px-4 shadow-sm"
                         >
-                          Día Siguiente →
+                          Hoy
                         </Button>
                       </div>
+
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={avanzarDia}
+                        className="hidden md:block shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
+                      >
+                        Día Siguiente →
+                      </Button>
                     </div>
 
                     <p className="text-sm text-gray-600 mt-3 text-center">
@@ -545,7 +544,7 @@ const SolicitarTurnoPage = () => {
           {/* Vista Mis Turnos */}
           {vistaActual === 'misTurnos' && (
             <div className="space-y-6">
-              <Card>
+              <Card className="p-6 sm:p-8">
                 <h2 className="text-2xl font-bold mb-4 text-gray-800">Mis Turnos</h2>
 
                 {/* Filtro Futuros / Pasados */}
