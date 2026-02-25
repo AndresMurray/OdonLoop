@@ -10,6 +10,7 @@ import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
 import ConfirmModal from '../components/ConfirmModal';
 import ModalAsignarPaciente from '../components/ModalAsignarPaciente';
+import TurnoCalendar from '../components/TurnoCalendar';
 
 const GestionTurnosOdonto = () => {
   const navigate = useNavigate();
@@ -531,6 +532,25 @@ const GestionTurnosOdonto = () => {
     Math.ceil(turnosReservados.length / ITEMS_POR_PAGINA)
     , [turnosReservados.length]);
 
+  // Mapas de turnos por día para el calendario
+  const turnosDisponiblesPorDia = useMemo(() => {
+    const mapa = {};
+    turnos.filter(t => t.estado === 'disponible').forEach(t => {
+      const [fechaStr] = t.fecha_hora.split('T');
+      mapa[fechaStr] = (mapa[fechaStr] || 0) + 1;
+    });
+    return mapa;
+  }, [turnos]);
+
+  const turnosReservadosPorDia = useMemo(() => {
+    const mapa = {};
+    turnos.filter(t => t.estado === 'reservado').forEach(t => {
+      const [fechaStr] = t.fecha_hora.split('T');
+      mapa[fechaStr] = (mapa[fechaStr] || 0) + 1;
+    });
+    return mapa;
+  }, [turnos]);
+
   // Compatibilidad con código existente
   const getTurnosPorEstado = useCallback((estado) => {
     if (estado === 'disponible') return turnosDisponibles;
@@ -916,6 +936,16 @@ const GestionTurnosOdonto = () => {
                       Turnos Disponibles
                     </h3>
 
+                    {/* Calendario */}
+                    <TurnoCalendar
+                      turnosPorDia={turnosDisponiblesPorDia}
+                      fechaSeleccionada={fechaFiltro}
+                      onSelectFecha={cambiarFecha}
+                      highlightColor="green"
+                      label="disponibles"
+                      totalLabel="Total disponibles"
+                    />
+
                     {/* Navegación por día */}
                     <div className="flex flex-wrap items-center justify-between gap-2 bg-gray-100 p-3 rounded-lg">
                       <Button
@@ -1124,6 +1154,16 @@ const GestionTurnosOdonto = () => {
                     <h3 className="text-xl font-bold text-gray-800 mb-4">
                       Turnos Reservados
                     </h3>
+
+                    {/* Calendario */}
+                    <TurnoCalendar
+                      turnosPorDia={turnosReservadosPorDia}
+                      fechaSeleccionada={fechaFiltro}
+                      onSelectFecha={cambiarFecha}
+                      highlightColor="blue"
+                      label="reservados"
+                      totalLabel="Total reservados"
+                    />
 
                     {/* Navegación por día */}
                     <div className="flex items-center justify-between bg-gray-100 p-4 rounded-lg">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getTurnosDisponibles, reservarTurno, getMisTurnos, cancelarTurno } from '../api/turnoService';
 import { getOdontologos } from '../api/odontologoService';
@@ -10,6 +10,7 @@ import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
 import ConfirmModal from '../components/ConfirmModal';
 import LoadingModal from '../components/LoadingModal';
+import TurnoCalendar from '../components/TurnoCalendar';
 
 const SolicitarTurnoPage = () => {
   const navigate = useNavigate();
@@ -227,6 +228,17 @@ const SolicitarTurnoPage = () => {
 
   const totalPaginas = Math.ceil(misTurnos.length / turnosPorPagina);
 
+  // Mapa de turnos disponibles por día para el calendario
+  const turnosDisponiblesPorDia = useMemo(() => {
+    const mapa = {};
+    turnosDisponibles.forEach(t => {
+      const fechaTurno = new Date(t.fecha_hora);
+      const dateStr = `${fechaTurno.getFullYear()}-${String(fechaTurno.getMonth() + 1).padStart(2, '0')}-${String(fechaTurno.getDate()).padStart(2, '0')}`;
+      mapa[dateStr] = (mapa[dateStr] || 0) + 1;
+    });
+    return mapa;
+  }, [turnosDisponibles]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
       <Navbar />
@@ -319,6 +331,16 @@ const SolicitarTurnoPage = () => {
                     <h2 className="text-2xl font-bold mb-4 text-gray-800">
                       Turnos Disponibles
                     </h2>
+
+                    {/* Calendario */}
+                    <TurnoCalendar
+                      turnosPorDia={turnosDisponiblesPorDia}
+                      fechaSeleccionada={fechaFiltro}
+                      onSelectFecha={setFechaFiltro}
+                      highlightColor="green"
+                      label="disponibles"
+                      totalLabel="Total disponibles"
+                    />
 
                     {/* Navegación por día */}
                     <div className="bg-gray-100 p-4 rounded-lg">
