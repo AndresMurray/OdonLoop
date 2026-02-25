@@ -36,6 +36,7 @@ const SolicitarTurnoPage = () => {
   const turnosPorPagina = 5;
   const turnosDisponiblesPorPagina = 6;
   const [confirmModal, setConfirmModal] = useState({ open: false, turnoId: null });
+  const [filtroMisTurnos, setFiltroMisTurnos] = useState('futuros'); // 'futuros' o 'pasados'
   const [reservaModal, setReservaModal] = useState({ open: false, status: 'loading', message: '' });
 
   const userData = authService.getUserData();
@@ -92,6 +93,18 @@ const SolicitarTurnoPage = () => {
       setLoading(false);
     }
   };
+
+  // Verificar si el paciente ya tiene un turno activo con el odontólogo seleccionado
+  const turnoExistenteConOdontologo = useMemo(() => {
+    if (!odontologoSeleccionado) return null;
+    const hoy = new Date().toISOString().split('T')[0];
+    return misTurnos.find(t => {
+      if (t.estado !== 'reservado' && t.estado !== 'confirmado') return false;
+      const [fechaStr] = t.fecha_hora.split('T');
+      if (fechaStr < hoy) return false;
+      return t.odontologo && String(t.odontologo.id) === String(odontologoSeleccionado);
+    });
+  }, [misTurnos, odontologoSeleccionado]);
 
   const handleReservarTurno = async (turnoId) => {
     setReservaModal({ open: true, status: 'loading', message: '' });
@@ -207,16 +220,19 @@ const SolicitarTurnoPage = () => {
   };
 
   const getTurnosOrganizados = () => {
-    // Separar turnos pendientes y pasados/cancelados
-    const pendientes = misTurnos.filter(t =>
-      t.estado === 'reservado' || t.estado === 'confirmado'
-    ).sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora));
+    const hoy = new Date().toISOString().split('T')[0];
 
-    const pasados = misTurnos.filter(t =>
-      t.estado === 'completado' || t.estado === 'cancelado'
-    ).sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
-
-    return [...pendientes, ...pasados];
+    if (filtroMisTurnos === 'futuros') {
+      return misTurnos.filter(t => {
+        const [fechaStr] = t.fecha_hora.split('T');
+        return fechaStr >= hoy && (t.estado === 'reservado' || t.estado === 'confirmado');
+      }).sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora));
+    } else {
+      return misTurnos.filter(t => {
+        const [fechaStr] = t.fecha_hora.split('T');
+        return fechaStr < hoy || t.estado === 'completado' || t.estado === 'cancelado';
+      }).sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+    }
   };
 
   const getTurnosPaginados = () => {
@@ -226,7 +242,7 @@ const SolicitarTurnoPage = () => {
     return turnosOrganizados.slice(inicio, fin);
   };
 
-  const totalPaginas = Math.ceil(misTurnos.length / turnosPorPagina);
+  const totalPaginas = Math.ceil(getTurnosOrganizados().length / turnosPorPagina);
 
   // Mapa de turnos disponibles por día para el calendario (solo hoy y futuro)
   const turnosDisponiblesPorDia = useMemo(() => {
@@ -276,7 +292,11 @@ const SolicitarTurnoPage = () => {
                 : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
             >
-              Mis Turnos ({misTurnos.filter(t => t.estado === 'reservado' || t.estado === 'confirmado').length})
+              Mis Turnos ({misTurnos.filter(t => {
+                const [fechaStr] = t.fecha_hora.split('T');
+                const hoy = new Date().toISOString().split('T')[0];
+                return fechaStr >= hoy && (t.estado === 'reservado' || t.estado === 'confirmado');
+              }).length})
             </button>
           </div>
 
@@ -453,6 +473,16 @@ const SolicitarTurnoPage = () => {
 
                             {turnoSeleccionado === turno.id ? (
                               <div className="space-y-3 mt-4">
+                                {turnoExistenteConOdontologo && (
+                                  <div className="p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
+                                    <p className="text-sm text-yellow-800 font-medium">
+                                      ⚠️ Ya tenés un turno {turnoExistenteConOdontologo.estado} con {turnoExistenteConOdontologo.odontologo.nombre_completo} para el {formatearFecha(turnoExistenteConOdontologo.fecha_hora)}.
+                                    </p>
+                                    <p className="text-xs text-yellow-700 mt-1">
+                                      Estás por sacar un turno adicional con el mismo odontólogo.
+                                    </p>
+                                  </div>
+                                )}
                                 <textarea
                                   value={motivo}
                                   onChange={(e) => setMotivo(e.target.value)}
@@ -517,6 +547,28 @@ const SolicitarTurnoPage = () => {
             <div className="space-y-6">
               <Card>
                 <h2 className="text-2xl font-bold mb-4 text-gray-800">Mis Turnos</h2>
+
+                {/* Filtro Futuros / Pasados */}
+                <div className="flex gap-2 mb-4">
+                  <button
+                    onClick={() => { setFiltroMisTurnos('futuros'); setPaginaActual(1); }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filtroMisTurnos === 'futuros'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                  >
+                    Próximos
+                  </button>
+                  <button
+                    onClick={() => { setFiltroMisTurnos('pasados'); setPaginaActual(1); }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filtroMisTurnos === 'pasados'
+                      ? 'bg-gray-600 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                  >
+                    Pasados
+                  </button>
+                </div>
                 {misTurnos.length === 0 ? (
                   <div className="text-center py-12">
                     <p className="text-gray-500 mb-4">No tienes turnos programados</p>
@@ -527,46 +579,57 @@ const SolicitarTurnoPage = () => {
                 ) : (
                   <>
                     <div className="space-y-4 mb-4">
-                      {getTurnosPaginados().map((turno) => (
-                        <div
-                          key={turno.id}
-                          className="p-4 bg-gray-50 rounded-lg"
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <p className="font-semibold text-gray-800">
-                                  {formatearFecha(turno.fecha_hora)}
+                      {getTurnosPaginados().map((turno) => {
+                        const hoy = new Date().toISOString().split('T')[0];
+                        const [fechaTurnoStr] = turno.fecha_hora.split('T');
+                        const esPasado = fechaTurnoStr < hoy;
+
+                        return (
+                          <div
+                            key={turno.id}
+                            className={`p-4 rounded-lg ${esPasado ? 'bg-gray-100 opacity-60' : 'bg-gray-50'}`}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2 flex-wrap">
+                                  <p className={`font-semibold ${esPasado ? 'text-gray-400' : 'text-gray-800'}`}>
+                                    {formatearFecha(turno.fecha_hora)}
+                                  </p>
+                                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(turno.estado)}`}>
+                                    {turno.estado}
+                                  </span>
+                                  {esPasado && (
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-500">
+                                      Pasado
+                                    </span>
+                                  )}
+                                </div>
+                                {turno.odontologo && (
+                                  <p className={`text-sm ${esPasado ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    Odontólogo: {turno.odontologo.nombre_completo}
+                                  </p>
+                                )}
+                                <p className={`text-sm ${esPasado ? 'text-gray-400' : 'text-gray-600'}`}>
+                                  Duración: {turno.duracion_minutos} minutos
                                 </p>
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(turno.estado)}`}>
-                                  {turno.estado}
-                                </span>
+                                {turno.motivo && (
+                                  <p className={`text-sm mt-1 ${esPasado ? 'text-gray-400' : 'text-gray-500'}`}>Motivo: {turno.motivo}</p>
+                                )}
                               </div>
-                              {turno.odontologo && (
-                                <p className="text-sm text-gray-600">
-                                  Odontólogo: {turno.odontologo.nombre_completo}
-                                </p>
-                              )}
-                              <p className="text-sm text-gray-600">
-                                Duración: {turno.duracion_minutos} minutos
-                              </p>
-                              {turno.motivo && (
-                                <p className="text-sm text-gray-500 mt-1">Motivo: {turno.motivo}</p>
+                              {!esPasado && (turno.estado === 'reservado' || turno.estado === 'confirmado') && (
+                                <Button
+                                  size="sm"
+                                  variant="danger"
+                                  onClick={() => handleCancelarTurno(turno.id)}
+                                  disabled={loading}
+                                >
+                                  Cancelar
+                                </Button>
                               )}
                             </div>
-                            {(turno.estado === 'reservado' || turno.estado === 'confirmado') && (
-                              <Button
-                                size="sm"
-                                variant="danger"
-                                onClick={() => handleCancelarTurno(turno.id)}
-                                disabled={loading}
-                              >
-                                Cancelar
-                              </Button>
-                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     <Pagination
