@@ -5,13 +5,56 @@ import Button from '../components/Button';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Alert from '../components/Alert';
-import { Clock, CheckCircle, Mail, DollarSign, AlertCircle } from 'lucide-react';
+import { Clock, CheckCircle, Mail, DollarSign, AlertCircle, Download, FileText } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { parchearOklchEnDocumento } from '../utils/exportarPDF';
 
 const PendienteAprobacionPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [alert, setAlert] = useState({ type: '', message: '' });
   const [emailVerified, setEmailVerified] = useState(true); // Por defecto true para usuarios que entren directamente
+  const [exporting, setExporting] = useState(false);
+
+  const exportPDF = async () => {
+    try {
+      setExporting(true);
+      const element = document.getElementById('info-aprobacion-pdf');
+      if (!element) return;
+
+      const elementWidth = element.scrollWidth || element.offsetWidth || 1200;
+      const elementHeight = element.scrollHeight || element.offsetHeight;
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: elementWidth,
+        height: elementHeight,
+        windowWidth: elementWidth,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (_clonedWindow, clonedElement) => {
+          parchearOklchEnDocumento(clonedElement.ownerDocument);
+        }
+      });
+      const imgData = canvas.toDataURL('image/png');
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save('Terminos_OdonLoop.pdf');
+    } catch (err) {
+      console.error('Error al exportar PDF:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Mostrar mensaje si viene del registro o verificación
   useEffect(() => {
@@ -20,12 +63,12 @@ const PendienteAprobacionPage = () => {
         type: location.state.type || 'info',
         message: location.state.message
       });
-      
+
       // Actualizar estado de verificación
       if (location.state?.emailVerified !== undefined) {
         setEmailVerified(location.state.emailVerified);
       }
-      
+
       // Limpiar el state para que no se muestre al recargar
       window.history.replaceState({}, document.title);
     }
@@ -34,7 +77,7 @@ const PendienteAprobacionPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
       <Navbar />
-      
+
       <main className="flex-grow flex items-center justify-center px-4 py-12">
         <div className="max-w-2xl w-full">
           {/* Mostrar solo mensaje de verificación si no ha verificado el email */}
@@ -62,7 +105,7 @@ const PendienteAprobacionPage = () => {
                       📧 Verificá tu email
                     </h2>
                     <p className="text-gray-700 mb-4">
-                      Te enviamos un email de verificación a tu casilla. 
+                      Te enviamos un email de verificación a tu casilla.
                     </p>
                     <p className="text-gray-700 mb-6">
                       <strong>Revisá tu bandeja de entrada</strong> y hacé clic en el enlace para activar tu cuenta.
@@ -105,141 +148,122 @@ const PendienteAprobacionPage = () => {
                 </div>
               )}
 
-              {/* Header */}
-              <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-100 rounded-full mb-4">
-              <Clock className="w-10 h-10 text-yellow-600" />
-            </div>
-            <h1 className="text-4xl font-bold text-white mb-2">
-              🚀 ¡Ya casi sos parte de OdonLoop!
-            </h1>
-            <p className="text-slate-200 text-lg">
-              Para habilitar tu panel profesional seguí estos pasos:
-            </p>
-          </div>
-
-          {/* Pasos */}
-          <div className="space-y-6 mb-8">
-            {/* Paso 1: Transferencia */}
-            <Card className="bg-white/95 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                      1
-                    </div>
+              {/* Contenedor principal para el PDF */}
+              <div id="info-aprobacion-pdf" className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 sm:p-8 shadow-xl">
+                {/* Header */}
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-4">
+                    <Clock className="w-10 h-10 text-blue-600" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                      <DollarSign className="w-5 h-5" />
-                      Realizá la transferencia
-                    </h3>
-                    <div className="space-y-2 text-gray-700">
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-600">Monto</p>
-                        <p className="text-2xl font-bold text-blue-600">$50.000</p>
-                        <p className="text-xs text-gray-500">(Suscripción mensual)</p>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-600">Alias</p>
-                        <p className="text-lg font-mono font-bold text-gray-900 select-all">
-                          odonloop.pagos
-                        </p>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-600">Titular</p>
-                        <p className="text-lg font-semibold text-gray-900">
-                          Andrés Murray Roppel
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Paso 2: Enviar comprobante */}
-            <Card className="bg-white/95 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                      2
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                      <Mail className="w-5 h-5" />
-                      Envianos el comprobante
-                    </h3>
-                    <p className="text-gray-700 mb-3">
-                      Adjuntá la captura del pago a:
-                    </p>
-                    <div className="bg-blue-50 p-3 rounded-lg border-2 border-blue-200">
-                      <a 
-                        href="mailto:sistemagestionodontologico@gmail.com"
-                        className="text-lg font-semibold text-blue-600 hover:text-blue-800 select-all break-all"
-                      >
-                        sistemagestionodontologico@gmail.com
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Paso 3: Listo */}
-            <Card className="bg-white/95 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold">
-                      <CheckCircle className="w-6 h-6" />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-green-600 mb-3">
-                      ¡Listo!
-                    </h3>
-                    <p className="text-gray-700">
-                      Una vez verificado, activaremos tu cuenta en un plazo máximo de <strong>12 horas</strong> y te notificaremos por mail.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Información importante */}
-          <Card className="bg-yellow-50 border-2 border-yellow-400">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
-                <div>
-                  <h4 className="font-bold text-gray-900 mb-2">
-                    📅 Importante: Renovación mensual
-                  </h4>
-                  <p className="text-gray-700 text-sm mb-2">
-                    Todos los meses del <strong>1 al 5</strong> debes realizar la transferencia al mismo alias para mantener tu cuenta activa.
+                  <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                    ¡Bienvenido a OdonLoop!
+                  </h1>
+                  <p className="text-gray-600 text-lg max-w-xl mx-auto">
+                    Tu cuenta está en proceso de revisión. A continuación te detallamos cómo funciona nuestra plataforma y los pasos a seguir.
                   </p>
-                  <p className="text-gray-700 text-sm">
-                    ⚠️ En caso de no recibir el pago, tu cuenta será <strong>inhabilitada temporalmente</strong> hasta que se registre la transferencia.
-                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Aspectos Comerciales */}
+                  <Card className="border-2 border-blue-100 shadow-sm">
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-bold text-blue-700 mb-4 flex items-center gap-2">
+                        <DollarSign className="w-6 h-6" />
+                        Período de Prueba y Suscripción
+                      </h3>
+                      <ul className="space-y-3 text-gray-700">
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          <span>Los primeros <strong>30 días son de prueba totalmente gratis</strong>.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          <span>Finalizado el período de prueba, el sistema tiene un valor de <strong>$50.000 mensuales</strong>.</span>
+                        </li>
+                      </ul>
+                    </CardContent>
+                  </Card>
+
+                  {/* Activación */}
+                  <Card className="border-2 border-green-100 shadow-sm">
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-bold text-green-700 mb-4 flex items-center gap-2">
+                        <CheckCircle className="w-6 h-6" />
+                        Activación de tu Cuenta
+                      </h3>
+                      <div className="space-y-3 text-gray-700">
+                        <p>
+                          Si ya te comunicaste previamente con nuestro equipo, en breve se te activará la cuenta y <strong>recibirás un mensaje por correo electrónico</strong> de confirmación.
+                        </p>
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-2">
+                          <p>
+                            En caso contrario, debes escribir a <strong>info@odonloop.com</strong> solicitando que te activen la cuenta para poder ingresar.
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Suspensión y Pagos */}
+                  <Card className="border-2 border-yellow-200 shadow-sm bg-yellow-50">
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-bold text-yellow-800 mb-4 flex items-center gap-2">
+                        <AlertCircle className="w-6 h-6" />
+                        Avisos de Pago y Suspensión
+                      </h3>
+                      <ul className="space-y-3 text-gray-800">
+                        <li>
+                          Recibirás un <strong>aviso 1 semana antes</strong> de que se venza tu período de prueba, recordándote realizar el pago y la forma de efectuarlo.
+                        </li>
+                        <li className="font-medium text-red-700">
+                          ⚠️ En caso de no registrarse el pago, la cuenta será deshabilitada automáticamente.
+                        </li>
+                        <li className="text-sm bg-white/60 p-3 rounded border border-yellow-300">
+                          <strong className="text-yellow-900">Importante:</strong> Si decidís no utilizar más el sistema, tené en cuenta que podés <strong>exportar a PDF toda la información de tus pacientes</strong> como resguardo. Deberás hacerlo <strong>antes</strong> de que se deshabilite la cuenta.
+                        </li>
+                      </ul>
+                    </CardContent>
+                  </Card>
+
+                  {/* Disclaimer Legal */}
+                  <Card className="border-2 border-gray-200 shadow-sm bg-gray-50">
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <FileText className="w-6 h-6" />
+                        Aclaración Legal (Historia Clínica)
+                      </h3>
+                      <p className="text-gray-700 leading-relaxed text-sm">
+                        Dejamos expresa constancia que el seguimiento del paciente provisto por OdonLoop <strong>de ninguna manera representa una Historia Clínica con validez legal</strong>. Es exclusivamente un registro propio a modo de agenda digital para la organización del profesional. La Historia Clínica legal debe llevarse como lo estipula la normativa vigente, por cuenta y responsabilidad absoluta del profesional de la salud.
+                      </p>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Botones de acción */}
-          <div className="mt-8 flex justify-center gap-4">
-            <Button
-              variant="secondary"
-              onClick={() => navigate('/')}
-              className="px-8"
-            >
-              Volver al inicio
-            </Button>
-          </div>
+              {/* Botones de acción */}
+              <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
+                <Button
+                  variant="primary"
+                  onClick={exportPDF}
+                  disabled={exporting}
+                  className="w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2 text-white border-transparent"
+                >
+                  {exporting ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : (
+                    <Download className="w-5 h-5 inline" />
+                  )}
+                  {exporting ? 'Generando PDF...' : 'Guardar Info (Exportar a PDF)'}
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate('/')}
+                  className="w-full sm:w-auto px-8 py-3 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                >
+                  Volver al inicio
+                </Button>
+              </div>
             </div>
           )}
         </div>

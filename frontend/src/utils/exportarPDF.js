@@ -124,7 +124,7 @@ function parchearCssText(css) {
  * También lee las reglas CSS de los stylesheets externos del documento original
  * (necesario en producción donde los estilos están en archivos .css compilados).
  */
-function parchearOklchEnDocumento(doc) {
+export function parchearOklchEnDocumento(doc) {
   // 1. Parchear etiquetas <style> del clon (dev mode)
   const styleTags = doc.querySelectorAll('style');
   styleTags.forEach((tag) => {
