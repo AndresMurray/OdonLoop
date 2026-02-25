@@ -532,21 +532,27 @@ const GestionTurnosOdonto = () => {
     Math.ceil(turnosReservados.length / ITEMS_POR_PAGINA)
     , [turnosReservados.length]);
 
-  // Mapas de turnos por día para el calendario
+  // Mapas de turnos por día para el calendario (solo hoy y futuro)
   const turnosDisponiblesPorDia = useMemo(() => {
+    const hoy = new Date().toISOString().split('T')[0];
     const mapa = {};
     turnos.filter(t => t.estado === 'disponible').forEach(t => {
       const [fechaStr] = t.fecha_hora.split('T');
-      mapa[fechaStr] = (mapa[fechaStr] || 0) + 1;
+      if (fechaStr >= hoy) {
+        mapa[fechaStr] = (mapa[fechaStr] || 0) + 1;
+      }
     });
     return mapa;
   }, [turnos]);
 
   const turnosReservadosPorDia = useMemo(() => {
+    const hoy = new Date().toISOString().split('T')[0];
     const mapa = {};
     turnos.filter(t => t.estado === 'reservado').forEach(t => {
       const [fechaStr] = t.fecha_hora.split('T');
-      mapa[fechaStr] = (mapa[fechaStr] || 0) + 1;
+      if (fechaStr >= hoy) {
+        mapa[fechaStr] = (mapa[fechaStr] || 0) + 1;
+      }
     });
     return mapa;
   }, [turnos]);

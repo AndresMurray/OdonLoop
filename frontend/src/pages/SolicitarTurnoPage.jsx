@@ -228,13 +228,16 @@ const SolicitarTurnoPage = () => {
 
   const totalPaginas = Math.ceil(misTurnos.length / turnosPorPagina);
 
-  // Mapa de turnos disponibles por día para el calendario
+  // Mapa de turnos disponibles por día para el calendario (solo hoy y futuro)
   const turnosDisponiblesPorDia = useMemo(() => {
+    const hoy = new Date().toISOString().split('T')[0];
     const mapa = {};
     turnosDisponibles.forEach(t => {
       const fechaTurno = new Date(t.fecha_hora);
       const dateStr = `${fechaTurno.getFullYear()}-${String(fechaTurno.getMonth() + 1).padStart(2, '0')}-${String(fechaTurno.getDate()).padStart(2, '0')}`;
-      mapa[dateStr] = (mapa[dateStr] || 0) + 1;
+      if (dateStr >= hoy) {
+        mapa[dateStr] = (mapa[dateStr] || 0) + 1;
+      }
     });
     return mapa;
   }, [turnosDisponibles]);
