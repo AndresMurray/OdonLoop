@@ -6,48 +6,218 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Alert from '../components/Alert';
 import { Clock, CheckCircle, Mail, DollarSign, AlertCircle, Download, FileText } from 'lucide-react';
-import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { parchearOklchEnDocumento } from '../utils/exportarPDF';
 
 const PendienteAprobacionPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [alert, setAlert] = useState({ type: '', message: '' });
-  const [emailVerified, setEmailVerified] = useState(true); // Por defecto true para usuarios que entren directamente
+  const [emailVerified, setEmailVerified] = useState(true);
   const [exporting, setExporting] = useState(false);
 
-  const exportPDF = async () => {
+  const exportPDF = () => {
     try {
       setExporting(true);
-      const element = document.getElementById('info-aprobacion-pdf');
-      if (!element) return;
-
-      const elementWidth = element.scrollWidth || element.offsetWidth || 1200;
-      const elementHeight = element.scrollHeight || element.offsetHeight;
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        width: elementWidth,
-        height: elementHeight,
-        windowWidth: elementWidth,
-        scrollX: 0,
-        scrollY: 0,
-        onclone: (_clonedWindow, clonedElement) => {
-          parchearOklchEnDocumento(clonedElement.ownerDocument);
-        }
-      });
-      const imgData = canvas.toDataURL('image/png');
 
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      const contentWidth = pageWidth - margin * 2;
+      let y = margin;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      // --- Helper: salto de pagina si no hay espacio ---
+      const checkPage = (needed) => {
+        if (y + needed > pageHeight - margin) {
+          pdf.addPage();
+          y = margin;
+        }
+      };
+
+      // --- Helper: texto con word-wrap ---
+      const addWrappedText = (text, x, maxWidth, lineHeight = 5.5) => {
+        const lines = pdf.splitTextToSize(text, maxWidth);
+        lines.forEach((line) => {
+          checkPage(lineHeight);
+          pdf.text(line, x, y);
+          y += lineHeight;
+        });
+      };
+
+      // ============================================
+      // PORTADA
+      // ============================================
+      pdf.setFillColor(30, 58, 138);
+      pdf.rect(0, 0, pageWidth, 45, 'F');
+
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(22);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('OdonLoop', pageWidth / 2, 18, { align: 'center' });
+
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Terminos y Condiciones del Servicio', pageWidth / 2, 28, { align: 'center' });
+
+      pdf.setFontSize(10);
+      pdf.text(
+        'Fecha: ' + new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' }),
+        pageWidth / 2, 38, { align: 'center' }
+      );
+
+      y = 55;
+
+      // ============================================
+      // SECCION 1: Periodo de Prueba y Suscripcion
+      // ============================================
+      pdf.setFillColor(219, 234, 254); // azul claro
+      pdf.roundedRect(margin, y, contentWidth, 8, 2, 2, 'F');
+      pdf.setTextColor(29, 78, 216);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('$ Periodo de Prueba y Suscripcion', margin + 4, y + 5.5);
+      y += 13;
+
+      pdf.setTextColor(55, 65, 81);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+
+      const items1 = [
+        'Los primeros 30 dias son de prueba totalmente gratis.',
+        'Finalizado el periodo de prueba, el sistema tiene un valor de $50.000 mensuales.',
+      ];
+      items1.forEach((item) => {
+        checkPage(8);
+        pdf.setTextColor(34, 197, 94);
+        pdf.text('\u2713', margin + 2, y);
+        pdf.setTextColor(55, 65, 81);
+        addWrappedText(item, margin + 8, contentWidth - 10);
+        y += 2;
+      });
+
+      y += 5;
+
+      // ============================================
+      // SECCION 2: Activacion de tu Cuenta
+      // ============================================
+      checkPage(40);
+      pdf.setFillColor(220, 252, 231); // verde claro
+      pdf.roundedRect(margin, y, contentWidth, 8, 2, 2, 'F');
+      pdf.setTextColor(21, 128, 61);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Activacion de tu Cuenta', margin + 4, y + 5.5);
+      y += 13;
+
+      pdf.setTextColor(55, 65, 81);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      addWrappedText(
+        'Si ya te comunicaste previamente con nuestro equipo, en breve se te activara la cuenta y recibiras un mensaje por correo electronico de confirmacion.',
+        margin + 2, contentWidth - 4
+      );
+      y += 3;
+
+      // Caja gris
+      checkPage(15);
+      pdf.setFillColor(249, 250, 251);
+      pdf.setDrawColor(229, 231, 235);
+      pdf.roundedRect(margin + 2, y, contentWidth - 4, 14, 1, 1, 'FD');
+      y += 5;
+      pdf.setFontSize(10);
+      addWrappedText(
+        'En caso contrario, debes escribir a info@odonloop.com solicitando que te activen la cuenta para poder ingresar.',
+        margin + 5, contentWidth - 10
+      );
+      y += 5;
+
+      y += 5;
+
+      // ============================================
+      // SECCION 3: Avisos de Pago y Suspension
+      // ============================================
+      checkPage(50);
+      pdf.setFillColor(254, 249, 195); // amarillo claro
+      pdf.roundedRect(margin, y, contentWidth, 8, 2, 2, 'F');
+      pdf.setTextColor(133, 100, 4);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Avisos de Pago y Suspension', margin + 4, y + 5.5);
+      y += 13;
+
+      pdf.setTextColor(31, 41, 55);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+
+      addWrappedText(
+        'Recibiras un aviso 1 semana antes de que se venza tu periodo de prueba, recordandote realizar el pago y la forma de efectuarlo.',
+        margin + 2, contentWidth - 4
+      );
+      y += 3;
+
+      // Aviso en rojo
+      checkPage(10);
+      pdf.setTextColor(185, 28, 28);
+      pdf.setFont('helvetica', 'bold');
+      addWrappedText(
+        'En caso de no registrarse el pago, la cuenta sera deshabilitada automaticamente.',
+        margin + 2, contentWidth - 4
+      );
+      y += 3;
+
+      // Caja importante
+      checkPage(20);
+      pdf.setFillColor(255, 255, 255);
+      pdf.setDrawColor(253, 224, 71);
+      pdf.roundedRect(margin + 2, y, contentWidth - 4, 20, 1, 1, 'FD');
+      y += 5;
+      pdf.setTextColor(113, 63, 18);
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Importante:', margin + 5, y);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(55, 65, 81);
+      y += 4;
+      addWrappedText(
+        'Si decidis no utilizar mas el sistema, tene en cuenta que podes exportar a PDF toda la informacion de tus pacientes como resguardo. Deberas hacerlo antes de que se deshabilite la cuenta.',
+        margin + 5, contentWidth - 10, 4.5
+      );
+      y += 8;
+
+      y += 5;
+
+      // ============================================
+      // SECCION 4: Aclaracion Legal
+      // ============================================
+      checkPage(45);
+      pdf.setFillColor(243, 244, 246); // gris claro
+      pdf.roundedRect(margin, y, contentWidth, 8, 2, 2, 'F');
+      pdf.setTextColor(31, 41, 55);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Aclaracion Legal (Historia Clinica)', margin + 4, y + 5.5);
+      y += 13;
+
+      pdf.setTextColor(55, 65, 81);
+      pdf.setFontSize(9.5);
+      pdf.setFont('helvetica', 'normal');
+      addWrappedText(
+        'Dejamos expresa constancia que el seguimiento del paciente provisto por OdonLoop de ninguna manera representa una Historia Clinica con validez legal. Es exclusivamente un registro propio a modo de agenda digital para la organizacion del profesional. La Historia Clinica legal debe llevarse como lo estipula la normativa vigente, por cuenta y responsabilidad absoluta del profesional de la salud.',
+        margin + 2, contentWidth - 4, 5
+      );
+
+      // ============================================
+      // PIE DE PAGINA
+      // ============================================
+      const totalPages = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(156, 163, 175);
+        pdf.text('OdonLoop - Terminos y Condiciones', margin, pageHeight - 8);
+        pdf.text(`Pagina ${i} de ${totalPages}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+      }
+
       pdf.save('Terminos_OdonLoop.pdf');
     } catch (err) {
       console.error('Error al exportar PDF:', err);
@@ -149,7 +319,7 @@ const PendienteAprobacionPage = () => {
               )}
 
               {/* Contenedor principal para el PDF */}
-              <div id="info-aprobacion-pdf" className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 sm:p-8 shadow-xl">
+              <div id="info-aprobacion-pdf" className="bg-white rounded-2xl p-6 sm:p-8 shadow-xl">
                 {/* Header */}
                 <div className="text-center mb-8">
                   <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-4">

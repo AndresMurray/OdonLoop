@@ -111,12 +111,59 @@ function convertirLab(match) {
 }
 
 /**
+ * Convierte oklab(L a b) a rgb().
+ * OKLab usa coordenadas cartesianas (L, a, b) en el espacio perceptual OKLab.
+ */
+function oklabToRgb(l, a, b) {
+  const l_ = l + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = l - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = l - 0.0894841775 * a - 1.2914855480 * b;
+
+  const lv = l_ * l_ * l_;
+  const mv = m_ * m_ * m_;
+  const sv = s_ * s_ * s_;
+
+  let r = 4.0767416621 * lv - 3.3077115913 * mv + 0.2309699292 * sv;
+  let g = -1.2684380046 * lv + 2.6097574011 * mv - 0.3413193965 * sv;
+  let bv = -0.0041960863 * lv - 0.7034186147 * mv + 1.7076147010 * sv;
+
+  const toSrgb = (x) => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 255;
+    return Math.round((x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055) * 255);
+  };
+
+  return `rgb(${toSrgb(r)}, ${toSrgb(g)}, ${toSrgb(bv)})`;
+}
+
+function convertirOklab(match) {
+  try {
+    const inner = match.replace(/^oklab\(/, '').replace(/\)$/, '');
+    const sinAlpha = inner.split('/')[0].trim();
+    const partes = sinAlpha.trim().split(/[\s,]+/);
+
+    if (partes.length < 3) return '#888888';
+
+    let l = parseFloat(partes[0]);
+    const a = parseFloat(partes[1]);
+    const b = parseFloat(partes[2]);
+
+    if (partes[0].endsWith('%')) l = l / 100;
+
+    return oklabToRgb(l, a, b);
+  } catch {
+    return '#888888';
+  }
+}
+
+/**
  * Parchea un texto CSS reemplazando oklch() y lab() por rgb()
  */
 function parchearCssText(css) {
   return css
     .replace(/oklch\([^)]+\)/g, convertirOklch)
-    .replace(/\blab\([^)]+\)/g, convertirLab);
+    .replace(/oklab\([^)]+\)/g, convertirOklab)
+    .replace(/(?<!ok)lab\([^)]+\)/g, convertirLab);
 }
 
 /**
@@ -128,7 +175,7 @@ export function parchearOklchEnDocumento(doc) {
   // 1. Parchear etiquetas <style> del clon (dev mode)
   const styleTags = doc.querySelectorAll('style');
   styleTags.forEach((tag) => {
-    if (tag.textContent.includes('oklch') || tag.textContent.includes('lab(')) {
+    if (tag.textContent.includes('oklch') || tag.textContent.includes('oklab') || tag.textContent.includes('lab(')) {
       tag.textContent = parchearCssText(tag.textContent);
     }
   });
@@ -137,7 +184,7 @@ export function parchearOklchEnDocumento(doc) {
   const todosLosEls = doc.querySelectorAll('[style]');
   todosLosEls.forEach((el) => {
     const s = el.getAttribute('style');
-    if (s && (s.includes('oklch') || s.includes('lab('))) {
+    if (s && (s.includes('oklch') || s.includes('oklab') || s.includes('lab('))) {
       el.setAttribute('style', parchearCssText(s));
     }
   });
@@ -155,7 +202,7 @@ export function parchearOklchEnDocumento(doc) {
         if (!rules) continue;
         for (let j = 0; j < rules.length; j++) {
           const ruleText = rules[j].cssText || '';
-          if (ruleText.includes('oklch') || ruleText.includes('lab(')) {
+          if (ruleText.includes('oklch') || ruleText.includes('oklab') || ruleText.includes('lab(')) {
             cssAcumulado += parchearCssText(ruleText) + '\n';
           }
         }
