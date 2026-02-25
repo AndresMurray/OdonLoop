@@ -9,6 +9,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
 import ConfirmModal from '../components/ConfirmModal';
+import LoadingModal from '../components/LoadingModal';
 
 const SolicitarTurnoPage = () => {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ const SolicitarTurnoPage = () => {
   const turnosPorPagina = 5;
   const turnosDisponiblesPorPagina = 6;
   const [confirmModal, setConfirmModal] = useState({ open: false, turnoId: null });
+  const [reservaModal, setReservaModal] = useState({ open: false, status: 'loading', message: '' });
 
   const userData = authService.getUserData();
 
@@ -91,21 +93,27 @@ const SolicitarTurnoPage = () => {
   };
 
   const handleReservarTurno = async (turnoId) => {
-    setLoading(true);
+    setReservaModal({ open: true, status: 'loading', message: '' });
     setError('');
     setSuccess('');
 
     try {
       await reservarTurno(turnoId, motivo);
-      setSuccess('¡Turno reservado exitosamente!');
+      setReservaModal({ open: true, status: 'success', message: '¡Tu turno fue reservado exitosamente!' });
       setTurnoSeleccionado(null);
       setMotivo('');
+    } catch (err) {
+      const errorMsg = err.response?.data?.detail || 'Error al reservar el turno';
+      setReservaModal({ open: true, status: 'error', message: errorMsg });
+    }
+  };
+
+  const handleCerrarReservaModal = () => {
+    const wasSuccess = reservaModal.status === 'success';
+    setReservaModal({ open: false, status: 'loading', message: '' });
+    if (wasSuccess) {
       buscarTurnos();
       cargarMisTurnos();
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Error al reservar el turno');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -240,8 +248,8 @@ const SolicitarTurnoPage = () => {
             <button
               onClick={() => setVistaActual('buscar')}
               className={`px-4 sm:px-6 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${vistaActual === 'buscar'
-                  ? 'bg-blue-700 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-blue-700 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
             >
               Buscar Turnos
@@ -249,8 +257,8 @@ const SolicitarTurnoPage = () => {
             <button
               onClick={() => setVistaActual('misTurnos')}
               className={`px-4 sm:px-6 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${vistaActual === 'misTurnos'
-                  ? 'bg-blue-700 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-blue-700 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
             >
               Mis Turnos ({misTurnos.filter(t => t.estado === 'reservado' || t.estado === 'confirmado').length})
@@ -561,6 +569,13 @@ const SolicitarTurnoPage = () => {
         confirmText="Sí, cancelar turno"
         cancelText="No, mantener turno"
         variant="danger"
+      />
+
+      <LoadingModal
+        isOpen={reservaModal.open}
+        status={reservaModal.status}
+        message={reservaModal.message}
+        onClose={handleCerrarReservaModal}
       />
     </div>
   );
