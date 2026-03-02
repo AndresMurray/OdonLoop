@@ -131,7 +131,8 @@ const OdontogramaPage = () => {
       await exportarHistorialPacientePDF(
         pacienteId,
         odontogramaData?.paciente?.nombre_completo || 'Paciente',
-        odontogramaRef
+        odontogramaRef,
+        descripcion
       );
       setAlert({ type: 'success', message: 'PDF exportado exitosamente' });
       setTimeout(() => setAlert({ type: '', message: '' }), 3000);

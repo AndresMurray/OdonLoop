@@ -224,7 +224,7 @@ export function parchearOklchEnDocumento(doc) {
 /**
  * Exportar a PDF: Odontograma + Todos los seguimientos de un paciente
  */
-export const exportarHistorialPacientePDF = async (pacienteId, pacienteNombre, odontogramaRef) => {
+export const exportarHistorialPacientePDF = async (pacienteId, pacienteNombre, odontogramaRef, descripcionGeneral = '') => {
   const pdf = new jsPDF('p', 'mm', 'a4');
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
@@ -288,8 +288,11 @@ export const exportarHistorialPacientePDF = async (pacienteId, pacienteNombre, o
         scrollX: 0,
         scrollY: 0,
         // Parchar oklch() de Tailwind v4 antes de que html2canvas intente parsear los estilos
+        // y ocultar elementos marcados con data-no-pdf (botones, leyenda, etc.)
         onclone: (_clonedWindow, clonedElement) => {
           parchearOklchEnDocumento(clonedElement.ownerDocument);
+          const ocultar = clonedElement.querySelectorAll('[data-no-pdf]');
+          ocultar.forEach(el => { el.style.display = 'none'; });
         },
       });
 
@@ -321,6 +324,42 @@ export const exportarHistorialPacientePDF = async (pacienteId, pacienteNombre, o
       pdf.text('No se pudo capturar el odontograma: ' + err.message, margin, yPos);
       yPos += 10;
     }
+  }
+
+  // ============================================
+  // DESCRIPCIÓN / RECORDATORIOS
+  // ============================================
+  if (descripcionGeneral && descripcionGeneral.trim()) {
+    if (yPos > pageHeight - 40) {
+      pdf.addPage();
+      yPos = margin;
+    }
+
+    pdf.setTextColor(30, 58, 138);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Descripción / Recordatorios', margin, yPos);
+    yPos += 3;
+
+    pdf.setDrawColor(30, 58, 138);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 6;
+
+    pdf.setTextColor(50, 50, 50);
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'normal');
+
+    const lineasDesc = pdf.splitTextToSize(descripcionGeneral.trim(), contentWidth - 6);
+    for (const linea of lineasDesc) {
+      if (yPos > pageHeight - 20) {
+        pdf.addPage();
+        yPos = margin;
+      }
+      pdf.text(linea, margin + 3, yPos);
+      yPos += 6;
+    }
+    yPos += 5;
   }
 
   // ============================================

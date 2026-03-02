@@ -190,7 +190,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
     <div ref={containerRef} className="relative bg-white rounded-xl p-4 md:p-8 shadow-2xl" style={{ isolation: 'isolate' }}>
       {/* Botones para activar modos — ocultos en modoCaptura */}
       {!modoCaptura && (
-        <div className="mb-4 flex flex-wrap justify-between items-center gap-2">
+        <div data-no-pdf className="mb-4 flex flex-wrap justify-between items-center gap-2">
           {/* Botón de Nuevo Seguimiento */}
           <button
             onClick={onNuevoSeguimiento}
@@ -234,7 +234,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
       )}
 
       {modoMarca && !modoCaptura && (
-        <div className="mb-4 p-3 bg-red-50 border-2 border-red-300 rounded-lg text-sm text-red-800">
+        <div data-no-pdf className="mb-4 p-3 bg-red-50 border-2 border-red-300 rounded-lg text-sm text-red-800">
           <strong>{modoMarca === 'puente' ? 'Modo Puente Activo' : 'Modo Prótesis Removible Activo'}:</strong>
           {!marcaEnProgreso.inicio && ' Haz clic en la primera pieza'}
           {marcaEnProgreso.inicio && !marcaEnProgreso.fin && ` Pieza ${marcaEnProgreso.inicio} seleccionada. Haz clic en la segunda pieza`}
@@ -242,7 +242,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
       )}
 
       {/* Leyenda — oculta en modoCaptura */}
-      {!modoCaptura && <div className="mb-8 bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg">
+      {!modoCaptura && <div data-no-pdf className="mb-8 bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg">
         <h3 className="text-lg font-bold text-gray-800 mb-3">Sistema de Marcado Profesional</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
@@ -476,7 +476,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
 
       {/* Nota final — oculta en modoCaptura */}
       {!modoCaptura && (
-        <div className="mt-8 text-center text-xs text-gray-500 bg-gray-50 p-3 rounded">
+        <div data-no-pdf className="mt-8 text-center text-xs text-gray-500 bg-gray-50 p-3 rounded">
           <p className="font-semibold">Odontograma profesional con notación FDI - Total: 52 piezas dentales</p>
           <p className="mt-1">Sistema de 5 caras por pieza: Oclusal (centro), Vestibular (arriba), Lingual (abajo), Mesial (izq), Distal (der)</p>
           <p className="mt-1 text-blue-600">Click en cara para tratamiento | Clic derecho / mantener presionado en centro para estado de pieza</p>
