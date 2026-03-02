@@ -317,6 +317,12 @@ class OdontogramaView(APIView):
             # Obtener todas las piezas dentales definidas
             piezas = [p[0] for p in RegistroDental.PIEZAS_DENTALES]
             
+            # Obtener descripción general del odontograma (del primer registro que la tenga)
+            descripcion_general = ''
+            primer_registro = RegistroDental.objects.filter(paciente=paciente).first()
+            if primer_registro and primer_registro.descripcion_general:
+                descripcion_general = primer_registro.descripcion_general
+            
             # Construir el odontograma con el último registro de cada pieza
             odontograma = []
             for pieza in piezas:
@@ -343,7 +349,56 @@ class OdontogramaView(APIView):
             
             return Response({
                 'paciente': paciente_data,
-                'odontograma': odontograma
+                'odontograma': odontograma,
+                'descripcion_general': descripcion_general
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def patch(self, request, paciente_id):
+        """Actualizar solo la descripción general del odontograma"""
+        try:
+            # Verificar que el usuario sea odontólogo
+            if not hasattr(request.user, 'perfil_odontologo'):
+                return Response(
+                    {'error': 'Solo odontólogos pueden acceder'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Verificar que el paciente existe
+            try:
+                paciente = Paciente.objects.get(id=paciente_id)
+            except Paciente.DoesNotExist:
+                return Response(
+                    {'error': 'Paciente no encontrado'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            descripcion_general = request.data.get('descripcion_general', '')
+            odontologo = request.user.perfil_odontologo
+            
+            # Actualizar la descripción en todos los registros existentes del paciente
+            registros_actualizados = RegistroDental.objects.filter(paciente=paciente).update(
+                descripcion_general=descripcion_general
+            )
+            
+            # Si no hay registros, crear uno dummy solo para guardar la descripción
+            if registros_actualizados == 0:
+                RegistroDental.objects.create(
+                    paciente=paciente,
+                    pieza_dental=11,  # Pieza por defecto
+                    descripcion_general=descripcion_general,
+                    actualizado_por=odontologo
+                )
+            
+            return Response({
+                'success': True,
+                'descripcion_general': descripcion_general,
+                'registros_actualizados': registros_actualizados
             }, status=status.HTTP_200_OK)
             
         except Exception as e:

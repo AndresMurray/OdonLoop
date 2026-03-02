@@ -6,10 +6,12 @@ import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Odontograma from '../components/Odontograma';
+import StatusModal from '../components/StatusModal';
 import { ArrowLeft, FileDown } from 'lucide-react';
 import { 
   getOdontograma,
-  guardarRegistroDental
+  guardarRegistroDental,
+  guardarDescripcionGeneral
 } from '../api/odontogramaService';
 import { exportarHistorialPacientePDF } from '../utils/exportarPDF';
 
@@ -18,6 +20,10 @@ const OdontogramaPage = () => {
   const navigate = useNavigate();
   
   const [odontogramaData, setOdontogramaData] = useState(null);
+  // Descripción general editable
+  const [descripcion, setDescripcion] = useState('');
+  const [guardandoDescripcion, setGuardandoDescripcion] = useState(false);
+  const [modalDescripcion, setModalDescripcion] = useState({ isOpen: false, status: 'loading', message: '' });
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState({ type: '', message: '' });
   const [guardando, setGuardando] = useState(false);
@@ -33,6 +39,8 @@ const OdontogramaPage = () => {
     try {
       const data = await getOdontograma(pacienteId);
       setOdontogramaData(data);
+      // Si el backend devuelve una descripción general, cargarla
+      setDescripcion(data.descripcion_general || '');
     } catch (error) {
       setAlert({
         type: 'error',
@@ -40,6 +48,31 @@ const OdontogramaPage = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Guardar la descripción general
+  const handleGuardarDescripcion = async () => {
+    setGuardandoDescripcion(true);
+    setModalDescripcion({ isOpen: true, status: 'loading', message: 'Guardando descripción...' });
+    try {
+      await guardarDescripcionGeneral(pacienteId, descripcion);
+      setModalDescripcion({ 
+        isOpen: true, 
+        status: 'success',
+        title: '¡Descripción guardada!',
+        message: 'La descripción se guardó correctamente' 
+      });
+    } catch (error) {
+      console.error('Error al guardar descripción:', error);
+      setModalDescripcion({ 
+        isOpen: true, 
+        status: 'error',
+        title: 'Error al guardar',
+        message: 'No se pudo guardar la descripción. Por favor, intenta nuevamente.' 
+      });
+    } finally {
+      setGuardandoDescripcion(false);
     }
   };
 
@@ -189,13 +222,37 @@ const OdontogramaPage = () => {
               </CardContent>
             </Card>
           ) : odontogramaData ? (
-            <div ref={odontogramaRef}>
-              <Odontograma 
-                odontograma={odontogramaData.odontograma} 
-                onChange={handlePiezaChange}
-                onNuevoSeguimiento={handleNuevoSeguimiento}
-              />
-            </div>
+            <>
+              <div ref={odontogramaRef}>
+                <Odontograma 
+                  odontograma={odontogramaData.odontograma} 
+                  onChange={handlePiezaChange}
+                  onNuevoSeguimiento={handleNuevoSeguimiento}
+                />
+              </div>
+              {/* Cuadro de texto de descripción general */}
+              <div className="max-w-2xl mx-auto mt-8 bg-white rounded-lg shadow-md p-6">
+                <label htmlFor="descripcion-odontograma" className="block text-sm font-semibold text-gray-900 mb-2">Descripción / Recordatorios</label>
+                <textarea
+                  id="descripcion-odontograma"
+                  className="w-full min-h-[100px] rounded-lg border-2 border-gray-300 p-3 text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all resize-y"
+                  placeholder="Escriba aquí recordatorios, tratamientos, notas generales del paciente..."
+                  value={descripcion}
+                  onChange={e => setDescripcion(e.target.value)}
+                  disabled={guardandoDescripcion}
+                />
+                <div className="flex justify-end mt-3">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleGuardarDescripcion}
+                    disabled={guardandoDescripcion}
+                  >
+                    {guardandoDescripcion ? 'Guardando...' : 'Guardar descripción'}
+                  </Button>
+                </div>
+              </div>
+            </>
           ) : (
             <Card>
               <CardContent className="p-8 text-center">
@@ -208,6 +265,15 @@ const OdontogramaPage = () => {
       </main>
       
       <Footer />
+      
+      {/* Modal de confirmación de guardado */}
+      <StatusModal
+        isOpen={modalDescripcion.isOpen}
+        status={modalDescripcion.status}
+        title={modalDescripcion.title}
+        message={modalDescripcion.message}
+        onClose={() => setModalDescripcion({ ...modalDescripcion, isOpen: false })}
+      />
     </div>
   );
 };

@@ -70,10 +70,26 @@ export const getRegistrosDentales = async (pacienteId) => {
   }
 };
 
+/**
+ * Guardar la descripción general del odontograma del paciente
+ */
+export const guardarDescripcionGeneral = async (pacienteId, descripcion) => {
+  try {
+    const response = await apiClient.patch(`/api/pacientes/odontograma/${pacienteId}/`, {
+      descripcion_general: descripcion
+    });
+    return response;
+  } catch (error) {
+    console.error('Error al guardar descripción general:', error);
+    throw error;
+  }
+};
+
 export default {
   getOdontograma,
   getRegistroPieza,
   guardarRegistroDental,
-  getRegistrosDentales
+  getRegistrosDentales,
+  guardarDescripcionGeneral
 };
 

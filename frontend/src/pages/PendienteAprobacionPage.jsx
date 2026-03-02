@@ -126,7 +126,7 @@ const PendienteAprobacionPage = () => {
       y += 5;
       pdf.setFontSize(10);
       addWrappedText(
-        'En caso contrario, debes escribir a sistemagestionodontologico@gmail.com solicitando que te activen la cuenta para poder ingresar.',
+        'En caso contrario, debes escribir a info@odonloop.com solicitando que te activen la cuenta para poder ingresar.',
         margin + 5, contentWidth - 10
       );
       y += 5;
@@ -367,7 +367,7 @@ const PendienteAprobacionPage = () => {
                         </p>
                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-2">
                           <p>
-                            En caso contrario, debes escribir a <strong>sistemagestionodontologico@gmail.com</strong> solicitando que te activen la cuenta para poder ingresar.
+                            En caso contrario, debes escribir a <strong>info@odonloop.com</strong> solicitando que te activen la cuenta para poder ingresar.
                           </p>
                         </div>
                       </div>

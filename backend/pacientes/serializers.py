@@ -151,7 +151,6 @@ class RegistroDentalSerializer(serializers.ModelSerializer):
     """Serializer para leer registros dentales completos"""
     odontologo_nombre = serializers.CharField(source='actualizado_por.user.get_full_name', read_only=True)
     pieza_nombre = serializers.CharField(source='get_pieza_dental_display', read_only=True)
-    
     class Meta:
         model = RegistroDental
         fields = [
@@ -159,7 +158,7 @@ class RegistroDentalSerializer(serializers.ModelSerializer):
             'pieza_dental', 'pieza_nombre',
             'cara_vestibular', 'cara_lingual', 'cara_mesial', 'cara_distal', 'cara_oclusal',
             'estado_pieza', 'puente',
-            'observaciones', 'fecha_actualizacion'
+            'observaciones', 'fecha_actualizacion', 'descripcion_general'
         ]
         read_only_fields = ['id', 'actualizado_por', 'fecha_actualizacion']
 
@@ -176,13 +175,14 @@ class RegistroDentalCreateUpdateSerializer(serializers.ModelSerializer):
     estado_pieza = serializers.JSONField(required=False, allow_null=True)  # Ahora es array
     puente = serializers.JSONField(required=False, allow_null=True)  # Info de puente
     observaciones = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    descripcion_general = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     
     class Meta:
         model = RegistroDental
         fields = [
             'paciente', 'pieza_dental',
             'cara_vestibular', 'cara_lingual', 'cara_mesial', 'cara_distal', 'cara_oclusal',
-            'estado_pieza', 'puente', 'observaciones'
+            'estado_pieza', 'puente', 'observaciones', 'descripcion_general'
         ]
     
     def create(self, validated_data):

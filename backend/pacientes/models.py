@@ -331,6 +331,13 @@ class RegistroDental(models.Model):
         related_name='registros_dentales_actualizados',
         verbose_name='Actualizado por'
     )
+
+    # Descripción general del odontograma del paciente (nota global editable)
+    descripcion_general = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name='Descripción general del odontograma'
+    )
     fecha_actualizacion = models.DateTimeField(
         auto_now=True,
         verbose_name='Última Actualización'
