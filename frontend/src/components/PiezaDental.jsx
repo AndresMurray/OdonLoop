@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, memo } from 'react';
 import TratamientoMenu from './TratamientoMenu';
 
 /**
@@ -9,7 +9,7 @@ import TratamientoMenu from './TratamientoMenu';
  * - Azul = pendiente, Rojo = realizado
  * - Estados especiales: X (ausente/extracción), ◯ (corona), I (implante), etc.
  */
-const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOpen, deshabilitarMenu = false }) => {
+const PiezaDental = memo(({ numero, registro, onChange, tipo = 'permanente', onMenuOpen, deshabilitarMenu = false }) => {
   const [hoveredCara, setHoveredCara] = useState(null);
   const [menuAbierto, setMenuAbierto] = useState(null);
   const longPressTimerRef = useRef(null);
@@ -152,7 +152,7 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
       </div>
 
       {/* Número de la pieza */}
-      <div className={`text-xs font-bold mb-0.5 ${esTemporal ? 'text-purple-600' : 'text-gray-700'}`}>
+      <div className={`text-xs font-bold mb-1.5 ${esTemporal ? 'text-purple-600' : 'text-gray-700'}`}>
         {numero}
       </div>
 
@@ -163,7 +163,7 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
           className="absolute inset-0 m-[18px] rounded-full cursor-pointer transition-all duration-150 hover:scale-110 hover:shadow-lg hover:ring-2 hover:ring-gray-400"
           style={{
             backgroundColor: getColorCara('oclusal'),
-            ...(esRealizadoFiltrado('oclusal') ? { boxShadow: 'inset 0 0 0 3px #2563EB' } : {})
+            ...(esRealizadoFiltrado('oclusal') ? { border: '3px solid #2563EB', boxSizing: 'border-box' } : {})
           }}
           onClick={(e) => handleCaraClick(e, 'oclusal')}
           onContextMenu={(e) => {
@@ -191,7 +191,7 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
           className="absolute top-0 left-1/4 right-1/4 h-3.5 cursor-pointer transition-all duration-150 hover:brightness-110 hover:shadow-md rounded-t-lg"
           style={{
             backgroundColor: getColorCara('vestibular'),
-            ...(esRealizadoFiltrado('vestibular') ? { boxShadow: 'inset 0 0 0 3px #2563EB' } : {})
+            ...(esRealizadoFiltrado('vestibular') ? { border: '3px solid #2563EB', boxSizing: 'border-box' } : {})
           }}
           onClick={(e) => handleCaraClick(e, 'vestibular')}
           onMouseEnter={() => setHoveredCara('vestibular')}
@@ -204,7 +204,7 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
           className="absolute bottom-0 left-1/4 right-1/4 h-3.5 cursor-pointer transition-all duration-150 hover:brightness-110 hover:shadow-md rounded-b-lg"
           style={{
             backgroundColor: getColorCara('lingual'),
-            ...(esRealizadoFiltrado('lingual') ? { boxShadow: 'inset 0 0 0 3px #2563EB' } : {})
+            ...(esRealizadoFiltrado('lingual') ? { border: '3px solid #2563EB', boxSizing: 'border-box' } : {})
           }}
           onClick={(e) => handleCaraClick(e, 'lingual')}
           onMouseEnter={() => setHoveredCara('lingual')}
@@ -217,7 +217,7 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
           className="absolute left-0 top-1/4 bottom-1/4 w-3.5 cursor-pointer transition-all duration-150 hover:brightness-110 hover:shadow-md rounded-l-lg"
           style={{
             backgroundColor: getColorCara('mesial'),
-            ...(esRealizadoFiltrado('mesial') ? { boxShadow: 'inset 0 0 0 3px #2563EB' } : {})
+            ...(esRealizadoFiltrado('mesial') ? { border: '3px solid #2563EB', boxSizing: 'border-box' } : {})
           }}
           onClick={(e) => handleCaraClick(e, 'mesial')}
           onMouseEnter={() => setHoveredCara('mesial')}
@@ -230,7 +230,7 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
           className="absolute right-0 top-1/4 bottom-1/4 w-3.5 cursor-pointer transition-all duration-150 hover:brightness-110 hover:shadow-md rounded-r-lg"
           style={{
             backgroundColor: getColorCara('distal'),
-            ...(esRealizadoFiltrado('distal') ? { boxShadow: 'inset 0 0 0 3px #2563EB' } : {})
+            ...(esRealizadoFiltrado('distal') ? { border: '3px solid #2563EB', boxSizing: 'border-box' } : {})
           }}
           onClick={(e) => handleCaraClick(e, 'distal')}
           onMouseEnter={() => setHoveredCara('distal')}
@@ -259,14 +259,20 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
 
         {/* Marcadores especiales para estados de pieza */}
         {tieneEstado('ausente') && (
-          <div className="absolute inset-0 flex items-center justify-center text-red-600 text-xl font-bold pointer-events-none">
-            ✕
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="4" y1="4" x2="20" y2="20" stroke="#DC2626" strokeWidth="3.5" strokeLinecap="round" />
+              <line x1="20" y1="4" x2="4" y2="20" stroke="#DC2626" strokeWidth="3.5" strokeLinecap="round" />
+            </svg>
           </div>
         )}
 
         {tieneEstado('extraccion') && (
-          <div className="absolute inset-0 flex items-center justify-center text-blue-600 text-xl font-bold pointer-events-none">
-            ✕
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="4" y1="4" x2="20" y2="20" stroke="#2563EB" strokeWidth="3.5" strokeLinecap="round" />
+              <line x1="20" y1="4" x2="4" y2="20" stroke="#2563EB" strokeWidth="3.5" strokeLinecap="round" />
+            </svg>
           </div>
         )}
 
@@ -310,6 +316,14 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
       )}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  // Solo re-renderizar si cambia el registro de ESTA pieza, el modo marca o el tipo
+  return (
+    prevProps.numero === nextProps.numero &&
+    prevProps.tipo === nextProps.tipo &&
+    prevProps.deshabilitarMenu === nextProps.deshabilitarMenu &&
+    prevProps.registro === nextProps.registro
+  );
+});
 
 export default PiezaDental;

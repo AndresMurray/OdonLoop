@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../components/Card';
 import Button from '../components/Button';
@@ -28,6 +28,7 @@ const OdontogramaPage = () => {
   const [alert, setAlert] = useState({ type: '', message: '' });
   const [guardando, setGuardando] = useState(false);
   const [exportando, setExportando] = useState(false);
+  const [modoCaptura, setModoCaptura] = useState(false);
   const odontogramaRef = useRef(null);
 
   useEffect(() => {
@@ -77,7 +78,7 @@ const OdontogramaPage = () => {
   };
 
   // Manejar cambios en una pieza dental con autoguardado
-  const handlePiezaChange = async (numeroPieza, nuevoRegistro) => {
+  const handlePiezaChange = useCallback(async (numeroPieza, nuevoRegistro) => {
     // Actualizar el estado local del odontograma inmediatamente
     // Usar updater funcional para que funcione correctamente con múltiples cambios rápidos
     setOdontogramaData(prevData => {
@@ -115,19 +116,24 @@ const OdontogramaPage = () => {
     } finally {
       setGuardando(false);
     }
-  };
+  }, [pacienteId]);
 
 
 
   // Navegar a la página de nuevo seguimiento
-  const handleNuevoSeguimiento = () => {
+  const handleNuevoSeguimiento = useCallback(() => {
     navigate(`/seguimiento-paciente/${pacienteId}`);
-  };
+  }, [navigate, pacienteId]);
 
   // Exportar PDF
   const handleExportarPDF = async () => {
     setExportando(true);
     try {
+      // Activar modoCaptura para ocultar botones/leyenda y recalcular puentes
+      setModoCaptura(true);
+      // Esperar render + recalculo de puentes (useEffect con setTimeout 500ms)
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
       await exportarHistorialPacientePDF(
         pacienteId,
         odontogramaData?.paciente?.nombre_completo || 'Paciente',
@@ -140,6 +146,7 @@ const OdontogramaPage = () => {
       console.error('Error al exportar PDF:', err);
       setAlert({ type: 'error', message: 'Error al exportar el PDF' });
     } finally {
+      setModoCaptura(false);
       setExportando(false);
     }
   };
@@ -229,6 +236,7 @@ const OdontogramaPage = () => {
                   odontograma={odontogramaData.odontograma} 
                   onChange={handlePiezaChange}
                   onNuevoSeguimiento={handleNuevoSeguimiento}
+                  modoCaptura={modoCaptura}
                 />
               </div>
               {/* Cuadro de texto de descripción general */}

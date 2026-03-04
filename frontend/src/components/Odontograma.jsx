@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import PiezaDental from './PiezaDental';
 import { Link2, Square, ClipboardPlus, XCircle } from 'lucide-react';
 import ModalSeleccionarPiezasAusentes from './ModalSeleccionarPiezasAusentes';
@@ -15,11 +15,14 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
   const [modalAusentesAbierto, setModalAusentesAbierto] = useState(null); // 'permanente' o 'temporal' cuando está abierto
   const containerRef = ref || useRef(null);
 
-  // Convertir array a objeto para acceso rápido
-  const odontogramaMap = {};
-  odontograma.forEach(item => {
-    odontogramaMap[item.pieza_dental] = item;
-  });
+  // Convertir array a objeto para acceso rápido (memoizado)
+  const odontogramaMap = useMemo(() => {
+    const map = {};
+    odontograma.forEach(item => {
+      map[item.pieza_dental] = item;
+    });
+    return map;
+  }, [odontograma]);
 
   // Dientes permanentes - Numeración FDI
   const permanentes = {
@@ -38,7 +41,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
   };
 
   // Manejar click en pieza cuando está en modo marca (puente o prótesis)
-  const handlePiezaClickMarca = (numero) => {
+  const handlePiezaClickMarca = useCallback((numero) => {
     if (!modoMarca) return;
 
     if (!marcaEnProgreso.inicio) {
@@ -72,10 +75,10 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
       setMarcaEnProgreso({ inicio: null, fin: null });
       setModoMarca(null);
     }
-  };
+  }, [modoMarca, marcaEnProgreso, odontogramaMap, onChange]);
 
-  // Función para obtener todos los puentes existentes
-  const obtenerPuentes = () => {
+  // Función para obtener todos los puentes existentes (memoizada)
+  const obtenerPuentes = useCallback(() => {
     const puentes = [];
     const puentesVistos = new Set();
 
@@ -97,7 +100,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
     });
 
     return puentes;
-  };
+  }, [odontograma]);
 
   // Estado para posiciones de líneas de puente
   const [lineasPuente, setLineasPuente] = useState([]);
@@ -159,12 +162,12 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
       window.removeEventListener('resize', handleResize);
       clearTimeout(timeoutId);
     };
-  }, [odontograma, modoMarca]);
+  }, [odontograma, modoMarca, modoCaptura]);
 
 
 
   // Función para confirmar el marcado de piezas como ausentes
-  const confirmarMarcarAusentes = (piezasSeleccionadas) => {
+  const confirmarMarcarAusentes = useCallback((piezasSeleccionadas) => {
     // Marcar cada pieza seleccionada como ausente usando el formato correcto
     piezasSeleccionadas.forEach(numero => {
       const item = odontogramaMap[numero];
@@ -187,7 +190,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
       
       onChange(numero, nuevoRegistro);
     });
-  };
+  }, [odontogramaMap, onChange]);
 
   // Abrir modal para marcar piezas temporales
   const abrirModalTemporales = () => {
@@ -199,7 +202,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
     setModalAusentesAbierto('permanente');
   };
 
-  const renderPieza = (numero, tipo = 'permanente') => {
+  const renderPieza = useCallback((numero, tipo = 'permanente') => {
     const item = odontogramaMap[numero];
     const registro = item?.registro;
     const isSeleccionado = modoMarca && marcaEnProgreso.inicio === numero;
@@ -224,7 +227,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
         />
       </div>
     );
-  };
+  }, [odontogramaMap, modoMarca, marcaEnProgreso.inicio, onChange, handlePiezaClickMarca]);
 
   return (
     <div ref={containerRef} className="relative bg-white rounded-xl p-4 md:p-8 shadow-2xl" style={{ isolation: 'isolate' }}>
@@ -298,7 +301,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
                 <span><strong>Rojo:</strong> Realizado</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 bg-red-500 rounded" style={{ boxShadow: 'inset 0 0 0 3px #2563EB' }}></div>
+                <div className="w-5 h-5 bg-red-500 rounded" style={{ border: '3px solid #2563EB', boxSizing: 'border-box' }}></div>
                 <span><strong>Rojo + Borde Azul:</strong> Realizado Filtrado</span>
               </div>
               <div className="flex items-center gap-2">
@@ -495,7 +498,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
               const height = 12;
 
               return (
-                <g key={`protesis-${linea.inicio}-${linea.fin}-${index}`}>
+                <g key={`protesis-${linea.inicio}-${linea.fin}-${index}`} data-inicio={linea.inicio} data-fin={linea.fin} data-tipo-marca="protesis">
                   <rect
                     x={x}
                     y={y}
@@ -517,7 +520,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
               const path = `M ${linea.x1},${linea.y1} L ${linea.x1},${yBase} L ${linea.x2},${yBase} L ${linea.x2},${linea.y2}`;
 
               return (
-                <g key={`puente-${linea.inicio}-${linea.fin}-${index}`}>
+                <g key={`puente-${linea.inicio}-${linea.fin}-${index}`} data-inicio={linea.inicio} data-fin={linea.fin} data-tipo-marca="puente">
                   <path
                     d={path}
                     fill="none"

@@ -290,9 +290,8 @@ export const exportarHistorialPacientePDF = async (pacienteId, pacienteNombre, o
         // Parchar oklch() de Tailwind v4 antes de que html2canvas intente parsear los estilos
         // y ocultar elementos marcados con data-no-pdf (botones, leyenda, etc.)
         onclone: (_clonedWindow, clonedElement) => {
+          // Solo parchear colores oklch/lab de Tailwind v4
           parchearOklchEnDocumento(clonedElement.ownerDocument);
-          const ocultar = clonedElement.querySelectorAll('[data-no-pdf]');
-          ocultar.forEach(el => { el.style.display = 'none'; });
         },
       });
 
