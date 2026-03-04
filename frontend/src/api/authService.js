@@ -93,6 +93,10 @@ export const authService = {
       if (response.access) {
         localStorage.setItem(TOKEN_KEY, response.access);
       }
+      // Si hay rotación de refresh tokens, guardar el nuevo
+      if (response.refresh) {
+        localStorage.setItem(REFRESH_TOKEN_KEY, response.refresh);
+      }
 
       return response;
     } catch (error) {
