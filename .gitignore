@@ -1,3 +1,6 @@
+# ========================
+# Documentación interna / guías personales
+# ========================
 SEGUIMIENTO_PACIENTES.md
 PACIENTES_FLEXIBLES.md
 CONFIGURACION_CLOUDINARY.md
@@ -13,3 +16,58 @@ GUIA_MULTI_ENTORNO.md
 SOLUCION_EMAIL_RAILWAY.md
 GUIA_CONFIGURACION_BREVO.md
 PASOS_MIGRACION_BREVO.md
+SOLUCION_ERRORES_RAILWAY.md
+SOLUCION_HOTMAIL_EMAIL.md
+SISTEMA_ODONTOGRAMA_PROFESIONAL.md
+gen_pdf.py
+
+# Capturar cualquier otro .md de guía/solución en la raíz (excepto README.md y LICENSE.md)
+/GUIA_*.md
+/SOLUCION_*.md
+/CONFIGURACION_*.md
+/CHECKLIST_*.md
+/PASOS_*.md
+/FIX_*.md
+/DEPLOY_*.md
+/ACTUALIZACION_*.md
+/AUTENTICACION.md
+/CONFIGURACION.md
+
+# Sub-project READMEs (el principal está en la raíz)
+backend/README.md
+frontend/README.md
+
+# ========================
+# Python / Backend
+# ========================
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+*.so
+venv/
+.env
+*.sqlite3
+db.sqlite3
+*.log
+
+# ========================
+# Node / Frontend
+# ========================
+node_modules/
+dist/
+.cache/
+*.local
+
+# ========================
+# IDEs y sistema
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
