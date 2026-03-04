@@ -137,9 +137,21 @@ class SeguimientoViewSet(viewsets.ModelViewSet):
         return Seguimiento.objects.none()
     
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action in ('create', 'update', 'partial_update'):
             return SeguimientoCreateSerializer
         return SeguimientoSerializer
+
+    def perform_destroy(self, instance):
+        """Al eliminar un seguimiento, borrar también sus archivos de Cloudinary"""
+        import cloudinary.uploader
+        for archivo in instance.archivos.all():
+            if archivo.public_id:
+                try:
+                    resource_type = 'image' if archivo.tipo == 'imagen' else 'raw'
+                    cloudinary.uploader.destroy(archivo.public_id, resource_type=resource_type)
+                except Exception:
+                    pass
+        instance.delete()
     
     @action(detail=False, methods=['get'], url_path='paciente/(?P<paciente_id>[^/.]+)')
     def por_paciente(self, request, paciente_id=None):

@@ -75,10 +75,12 @@ class PacientePerfilSerializer(serializers.ModelSerializer):
 
 class SeguimientoArchivoSerializer(serializers.ModelSerializer):
     """Serializer para archivos de seguimiento"""
+    id = serializers.IntegerField(required=False)
+
     class Meta:
         model = SeguimientoArchivo
         fields = ['id', 'tipo', 'url', 'nombre_original', 'public_id', 'fecha_subida']
-        read_only_fields = ['id', 'fecha_subida']
+        read_only_fields = ['fecha_subida']
 
 
 class SeguimientoSerializer(serializers.ModelSerializer):
@@ -118,6 +120,32 @@ class SeguimientoCreateSerializer(serializers.ModelSerializer):
             SeguimientoArchivo.objects.create(seguimiento=seguimiento, **archivo_data)
         
         return seguimiento
+
+    def update(self, instance, validated_data):
+        import cloudinary.uploader
+        archivos_data = validated_data.pop('archivos', None)
+        instance = super().update(instance, validated_data)
+
+        if archivos_data is not None:
+            # IDs de archivos que vienen en el payload (los que ya existían y se conservan)
+            ids_recibidos = [a.get('id') for a in archivos_data if a.get('id')]
+            # Obtener archivos que serán eliminados y borrarlos de Cloudinary
+            archivos_a_eliminar = instance.archivos.exclude(id__in=ids_recibidos)
+            for archivo in archivos_a_eliminar:
+                if archivo.public_id:
+                    try:
+                        resource_type = 'image' if archivo.tipo == 'imagen' else 'raw'
+                        cloudinary.uploader.destroy(archivo.public_id, resource_type=resource_type)
+                    except Exception:
+                        pass  # Si falla la eliminación en Cloudinary, continuar
+            archivos_a_eliminar.delete()
+            # Crear archivos nuevos (los que no tienen id)
+            for archivo_data in archivos_data:
+                if not archivo_data.get('id'):
+                    archivo_data.pop('id', None)
+                    SeguimientoArchivo.objects.create(seguimiento=instance, **archivo_data)
+
+        return instance
 
 
 class MisPacientesSerializer(serializers.ModelSerializer):

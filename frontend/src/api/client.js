@@ -22,6 +22,12 @@ class ApiClient {
       const url = this.baseURL ? `${this.baseURL}${endpoint}` : endpoint;
       
       const response = await fetch(url, config);
+
+      // 204 No Content (DELETE) — no hay body que parsear
+      if (response.status === 204) {
+        return null;
+      }
+
       const data = await response.json();
 
       if (!response.ok) {

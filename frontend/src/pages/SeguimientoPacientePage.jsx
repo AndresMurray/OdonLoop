@@ -9,8 +9,8 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
 import Odontograma from '../components/Odontograma';
-import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter, Smile, Download, FileDown } from 'lucide-react';
-import { getSeguimientosPorPaciente, crearSeguimiento } from '../api/seguimientoService';
+import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter, Smile, Download, FileDown, Pencil, Trash2 } from 'lucide-react';
+import { getSeguimientosPorPaciente, crearSeguimiento, actualizarSeguimiento, eliminarSeguimiento } from '../api/seguimientoService';
 import { getPacienteById } from '../api/userService';
 import { getOdontograma } from '../api/odontogramaService';
 import { exportarHistorialPacientePDF } from '../utils/exportarPDF';
@@ -34,11 +34,25 @@ const SeguimientoPacientePage = () => {
   // Modal de detalles
   const [seguimientoSeleccionado, setSeguimientoSeleccionado] = useState(null);
   const [mostrarDetalles, setMostrarDetalles] = useState(false);
+  const [imagenPreview, setImagenPreview] = useState(null);
 
   // Filtros de búsqueda
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
+
+  // Editar seguimiento
+  const [editandoSeguimiento, setEditandoSeguimiento] = useState(null);
+  const [editFormData, setEditFormData] = useState({ descripcion: '', fecha_atencion: '' });
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+  const [editArchivosExistentes, setEditArchivosExistentes] = useState([]);
+  const [editArchivosNuevos, setEditArchivosNuevos] = useState([]);
+  const [subiendoArchivoEdit, setSubiendoArchivoEdit] = useState(false);
+  const editFileInputRef = useRef(null);
+
+  // Eliminar seguimiento
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(null);
+  const [eliminando, setEliminando] = useState(false);
 
   // PDF Export
   const [exportando, setExportando] = useState(false);
@@ -255,6 +269,151 @@ const SeguimientoPacientePage = () => {
   const cerrarDetalles = () => {
     setSeguimientoSeleccionado(null);
     setMostrarDetalles(false);
+  };
+
+  // --- Editar seguimiento ---
+  const abrirEdicion = (seguimiento) => {
+    setEditandoSeguimiento(seguimiento);
+    setEditFormData({
+      descripcion: seguimiento.descripcion,
+      fecha_atencion: seguimiento.fecha_atencion
+    });
+    setEditArchivosExistentes(seguimiento.archivos || []);
+    setEditArchivosNuevos([]);
+  };
+
+  const cerrarEdicion = () => {
+    setEditandoSeguimiento(null);
+    setEditFormData({ descripcion: '', fecha_atencion: '' });
+    setEditArchivosExistentes([]);
+    setEditArchivosNuevos([]);
+  };
+
+  const handleEditFileUpload = () => {
+    editFileInputRef.current?.click();
+  };
+
+  const handleEditFilesSelected = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+      setAlert({ type: 'error', message: 'Cloudinary no configurado', detail: 'Configurar VITE_CLOUDINARY_CLOUD_NAME y VITE_CLOUDINARY_UPLOAD_PRESET en .env' });
+      return;
+    }
+
+    setSubiendoArchivoEdit(true);
+
+    for (const file of files) {
+      try {
+        const esImagen = file.type.startsWith('image/');
+        const resourceType = esImagen ? 'image' : 'raw';
+
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('upload_preset', uploadPreset);
+        fd.append('folder', 'seguimientos');
+
+        const response = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+          { method: 'POST', body: fd }
+        );
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error?.message || 'Error al subir archivo');
+        }
+
+        const data = await response.json();
+
+        setEditArchivosNuevos(prev => [...prev, {
+          tipo: esImagen ? 'imagen' : 'documento',
+          url: data.secure_url,
+          nombre_original: file.name,
+          public_id: data.public_id
+        }]);
+        setAlert({ type: 'success', message: `Archivo cargado: ${file.name}` });
+      } catch (err) {
+        setAlert({ type: 'error', message: `Error al subir ${file.name}`, detail: err.message });
+      }
+    }
+
+    setSubiendoArchivoEdit(false);
+    e.target.value = '';
+  };
+
+  const eliminarArchivoExistente = (index) => {
+    setEditArchivosExistentes(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const eliminarArchivoNuevo = (index) => {
+    setEditArchivosNuevos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleGuardarEdicion = async (e) => {
+    e.preventDefault();
+    if (!editFormData.descripcion.trim()) {
+      setAlert({ type: 'error', message: 'La descripción es obligatoria' });
+      return;
+    }
+    setGuardandoEdicion(true);
+    try {
+      // Combinar archivos existentes (con id) y nuevos (sin id)
+      const archivosParaEnviar = [
+        ...editArchivosExistentes.map(a => ({ id: a.id, tipo: a.tipo, url: a.url, nombre_original: a.nombre_original, public_id: a.public_id })),
+        ...editArchivosNuevos.map(a => ({ tipo: a.tipo, url: a.url, nombre_original: a.nombre_original, public_id: a.public_id }))
+      ];
+      await actualizarSeguimiento(editandoSeguimiento.id, {
+        paciente: parseInt(pacienteId),
+        descripcion: editFormData.descripcion,
+        fecha_atencion: editFormData.fecha_atencion,
+        archivos: archivosParaEnviar
+      });
+      setAlert({ type: 'success', message: 'Seguimiento actualizado exitosamente' });
+      cerrarEdicion();
+      await cargarSeguimientos();
+    } catch (err) {
+      setAlert({
+        type: 'error',
+        message: 'Error al actualizar seguimiento',
+        detail: err.response?.data?.error || err.message
+      });
+    } finally {
+      setGuardandoEdicion(false);
+    }
+  };
+
+  // --- Eliminar seguimiento ---
+  const handleEliminarSeguimiento = async () => {
+    if (!confirmandoEliminar) return;
+    setEliminando(true);
+    try {
+      await eliminarSeguimiento(confirmandoEliminar.id);
+      setAlert({ type: 'success', message: 'Seguimiento eliminado exitosamente' });
+      setConfirmandoEliminar(null);
+      // Si era el último de la página, retroceder
+      if (seguimientos.length === 1 && currentPage > 1) {
+        setCurrentPage(prev => prev - 1);
+      } else {
+        await cargarSeguimientos();
+      }
+    } catch (err) {
+      setAlert({
+        type: 'error',
+        message: 'Error al eliminar seguimiento',
+        detail: err.response?.data?.error || err.message
+      });
+    } finally {
+      setEliminando(false);
+    }
   };
 
   // Exportar PDF
@@ -661,14 +820,29 @@ const SeguimientoPacientePage = () => {
                               <span>Por: {seguimiento.odontologo_nombre}</span>
                             </div>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => verDetalles(seguimiento)}
-                            className="ml-4"
-                          >
-                            Ver Detalles
-                          </Button>
+                          <div className="flex items-center gap-2 ml-4 shrink-0">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => verDetalles(seguimiento)}
+                            >
+                              Ver Detalles
+                            </Button>
+                            <button
+                              onClick={() => abrirEdicion(seguimiento)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Editar seguimiento"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setConfirmandoEliminar(seguimiento)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Eliminar seguimiento"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -744,7 +918,7 @@ const SeguimientoPacientePage = () => {
 
                       const handleOpenFile = async () => {
                         if (esImagen) {
-                          window.open(archivo.url, '_blank');
+                          setImagenPreview(archivo);
                           return;
                         }
 
@@ -852,6 +1026,229 @@ const SeguimientoPacientePage = () => {
                   Cerrar
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox de previsualización de imagen */}
+      {imagenPreview && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[60] p-4 cursor-zoom-out"
+          onClick={() => setImagenPreview(null)}
+        >
+          <div className="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute -top-2 right-0 flex items-center gap-2 z-10">
+              <a
+                href={imagenPreview.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+                title="Abrir en nueva pestaña"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Download className="w-5 h-5 text-gray-700" />
+              </a>
+              <button
+                onClick={() => setImagenPreview(null)}
+                className="p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+                title="Cerrar"
+              >
+                <X className="w-5 h-5 text-gray-700" />
+              </button>
+            </div>
+            <img
+              src={imagenPreview.url}
+              alt={imagenPreview.nombre_original || 'Imagen'}
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            />
+            <p className="mt-3 text-white text-sm font-medium bg-black bg-opacity-50 px-4 py-2 rounded-full">
+              {imagenPreview.nombre_original || 'Imagen'}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de edición de seguimiento */}
+      {editandoSeguimiento && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Pencil className="w-5 h-5 text-blue-600" />
+                Editar Seguimiento
+              </h3>
+              <button
+                onClick={cerrarEdicion}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleGuardarEdicion} className="p-6 space-y-6">
+              <Input
+                label="Fecha de Atención"
+                type="date"
+                name="fecha_atencion"
+                value={editFormData.fecha_atencion}
+                onChange={handleEditInputChange}
+                required
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Descripción del Seguimiento *
+                </label>
+                <textarea
+                  name="descripcion"
+                  value={editFormData.descripcion}
+                  onChange={handleEditInputChange}
+                  rows={6}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Describe el tratamiento, observaciones, diagnóstico..."
+                  required
+                />
+              </div>
+
+              {/* Archivos existentes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Archivos
+                </label>
+                {editArchivosExistentes.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {editArchivosExistentes.map((archivo, index) => (
+                      <div key={`existente-${archivo.id}`} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          {archivo.tipo === 'imagen' ? (
+                            <ImageIcon className="w-4 h-4 text-blue-500 shrink-0" />
+                          ) : (
+                            <File className="w-4 h-4 text-gray-500 shrink-0" />
+                          )}
+                          <a
+                            href={archivo.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline truncate"
+                          >
+                            {archivo.nombre_original}
+                          </a>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => eliminarArchivoExistente(index)}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors shrink-0 ml-2"
+                          title="Quitar archivo"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Archivos nuevos */}
+                {editArchivosNuevos.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {editArchivosNuevos.map((archivo, index) => (
+                      <div key={`nuevo-${index}`} className="flex items-center justify-between bg-green-50 p-3 rounded-lg border border-green-200">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          {archivo.tipo === 'imagen' ? (
+                            <ImageIcon className="w-4 h-4 text-blue-500 shrink-0" />
+                          ) : (
+                            <File className="w-4 h-4 text-gray-500 shrink-0" />
+                          )}
+                          <span className="text-sm text-gray-700 truncate">{archivo.nombre_original}</span>
+                          <span className="text-xs text-green-600 font-medium shrink-0">(nuevo)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => eliminarArchivoNuevo(index)}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors shrink-0 ml-2"
+                          title="Quitar archivo"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {editArchivosExistentes.length === 0 && editArchivosNuevos.length === 0 && (
+                  <p className="text-sm text-gray-400 italic mb-3">Sin archivos adjuntos</p>
+                )}
+
+                <input
+                  ref={editFileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={handleEditFilesSelected}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleEditFileUpload}
+                  disabled={subiendoArchivoEdit}
+                  className="w-full"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  {subiendoArchivoEdit ? 'Subiendo...' : 'Agregar Archivos'}
+                </Button>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={cerrarEdicion}>
+                  Cancelar
+                </Button>
+                <Button type="submit" variant="primary" disabled={guardandoEdicion || subiendoArchivoEdit}>
+                  {guardandoEdicion ? 'Guardando...' : 'Guardar Cambios'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación de eliminación */}
+      {confirmandoEliminar && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-red-100 p-3 rounded-full">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Eliminar Seguimiento</h3>
+                <p className="text-sm text-gray-500">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3 mb-4">
+              <p className="text-sm text-gray-700">
+                <span className="font-semibold">Fecha:</span> {formatearFecha(confirmandoEliminar.fecha_atencion)}
+              </p>
+              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                {confirmandoEliminar.descripcion}
+              </p>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              ¿Estás seguro de que deseas eliminar este seguimiento?
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setConfirmandoEliminar(null)}
+                disabled={eliminando}
+              >
+                Cancelar
+              </Button>
+              <button
+                onClick={handleEliminarSeguimiento}
+                disabled={eliminando}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold disabled:opacity-50"
+              >
+                {eliminando ? 'Eliminando...' : 'Eliminar'}
+              </button>
             </div>
           </div>
         </div>
