@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import PiezaDental from './PiezaDental';
-import { Link2, Square, ClipboardPlus } from 'lucide-react';
+import { Link2, Square, ClipboardPlus, XCircle } from 'lucide-react';
+import ModalSeleccionarPiezasAusentes from './ModalSeleccionarPiezasAusentes';
 
 /**
  * Componente Odontograma Profesional
@@ -11,6 +12,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
   const [hoveredPieza, setHoveredPieza] = useState(null);
   const [modoMarca, setModoMarca] = useState(null); // 'puente' o 'protesis'
   const [marcaEnProgreso, setMarcaEnProgreso] = useState({ inicio: null, fin: null });
+  const [modalAusentesAbierto, setModalAusentesAbierto] = useState(null); // 'permanente' o 'temporal' cuando está abierto
   const containerRef = ref || useRef(null);
 
   // Convertir array a objeto para acceso rápido
@@ -158,6 +160,44 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
       clearTimeout(timeoutId);
     };
   }, [odontograma, modoMarca]);
+
+
+
+  // Función para confirmar el marcado de piezas como ausentes
+  const confirmarMarcarAusentes = (piezasSeleccionadas) => {
+    // Marcar cada pieza seleccionada como ausente usando el formato correcto
+    piezasSeleccionadas.forEach(numero => {
+      const item = odontogramaMap[numero];
+      const registroActual = item?.registro || {};
+      
+      // Agregar 'ausente' al array de estados de pieza
+      let estadosPieza = Array.isArray(registroActual.estado_pieza) 
+        ? [...registroActual.estado_pieza] 
+        : [];
+      
+      // Solo agregar si no está ya presente
+      if (!estadosPieza.includes('ausente')) {
+        estadosPieza.push('ausente');
+      }
+      
+      const nuevoRegistro = {
+        ...registroActual,
+        estado_pieza: estadosPieza
+      };
+      
+      onChange(numero, nuevoRegistro);
+    });
+  };
+
+  // Abrir modal para marcar piezas temporales
+  const abrirModalTemporales = () => {
+    setModalAusentesAbierto('temporal');
+  };
+
+  // Abrir modal para marcar piezas permanentes
+  const abrirModalPermanentes = () => {
+    setModalAusentesAbierto('permanente');
+  };
 
   const renderPieza = (numero, tipo = 'permanente') => {
     const item = odontogramaMap[numero];
@@ -315,6 +355,20 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
           DENTICIÓN PERMANENTE (32 piezas)
         </h3>
 
+        {/* Botón para marcar permanentes ausentes */}
+        {!modoCaptura && (
+          <div data-no-pdf className="flex justify-center mb-4">
+            <button
+              onClick={abrirModalPermanentes}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all bg-gray-600 text-white hover:bg-gray-700 shadow-md text-sm"
+              title="Marcar piezas permanentes como ausentes"
+            >
+              <XCircle size={16} />
+              Marcar permanentes como ausentes
+            </button>
+          </div>
+        )}
+
         {/* Arcada Superior Permanente */}
         <div className="mb-8">
           <div className="text-center text-sm font-semibold text-gray-700 mb-3">
@@ -365,6 +419,20 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
         <h3 className="text-center text-lg font-bold text-purple-700 mb-4 bg-purple-100 py-2 rounded">
           DENTICIÓN TEMPORAL / DECIDUA (20 piezas)
         </h3>
+
+        {/* Botón para marcar todas las temporales como ausentes - oculto en modoCaptura */}
+        {!modoCaptura && (
+          <div data-no-pdf className="flex justify-center mb-4">
+            <button
+              onClick={abrirModalTemporales}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all bg-purple-600 text-white hover:bg-purple-700 shadow-md text-sm"
+              title="Marcar piezas temporales como ausentes"
+            >
+              <XCircle size={16} />
+              Marcar temporales como ausentes
+            </button>
+          </div>
+        )}
 
         {/* Arcada Superior Temporal */}
         <div className="mb-8">
@@ -481,6 +549,18 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
           <p className="mt-1">Sistema de 5 caras por pieza: Oclusal (centro), Vestibular (arriba), Lingual (abajo), Mesial (izq), Distal (der)</p>
           <p className="mt-1 text-blue-600">Click en cara para tratamiento | Clic derecho / mantener presionado en centro para estado de pieza</p>
         </div>
+      )}
+
+      {/* Modal para seleccionar piezas ausentes */}
+      {modalAusentesAbierto && (
+        <ModalSeleccionarPiezasAusentes
+          key={`modal-${modalAusentesAbierto}-${Date.now()}`}
+          isOpen={!!modalAusentesAbierto}
+          onClose={() => setModalAusentesAbierto(null)}
+          onConfirm={confirmarMarcarAusentes}
+          cuadrantes={modalAusentesAbierto === 'temporal' ? temporales : permanentes}
+          tipo={modalAusentesAbierto}
+        />
       )}
     </div>
   );

@@ -79,22 +79,22 @@ const OdontogramaPage = () => {
   // Manejar cambios en una pieza dental con autoguardado
   const handlePiezaChange = async (numeroPieza, nuevoRegistro) => {
     // Actualizar el estado local del odontograma inmediatamente
-    if (odontogramaData) {
-      const nuevoOdontograma = odontogramaData.odontograma.map(item => {
-        if (item.pieza_dental === numeroPieza) {
-          return {
-            ...item,
-            registro: nuevoRegistro
-          };
-        }
-        return item;
-      });
-      
-      setOdontogramaData({
-        ...odontogramaData,
-        odontograma: nuevoOdontograma
-      });
-    }
+    // Usar updater funcional para que funcione correctamente con múltiples cambios rápidos
+    setOdontogramaData(prevData => {
+      if (!prevData) return prevData;
+      return {
+        ...prevData,
+        odontograma: prevData.odontograma.map(item => {
+          if (item.pieza_dental === numeroPieza) {
+            return {
+              ...item,
+              registro: nuevoRegistro
+            };
+          }
+          return item;
+        })
+      };
+    });
     
     // Guardar automáticamente en el backend
     try {
