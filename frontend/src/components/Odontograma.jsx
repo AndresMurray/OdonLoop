@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import PiezaDental from './PiezaDental';
-import { Link2, Square, ClipboardPlus, XCircle } from 'lucide-react';
+import { Link2, Square, ClipboardPlus, XCircle, Trash2 } from 'lucide-react';
 import ModalSeleccionarPiezasAusentes from './ModalSeleccionarPiezasAusentes';
 
 /**
@@ -192,6 +192,22 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
     });
   }, [odontogramaMap, onChange]);
 
+  // Función para eliminar una marca de puente/prótesis
+  const eliminarMarca = useCallback((inicio, fin) => {
+    // Quitar el campo 'puente' del registro de ambas piezas
+    const itemInicio = odontogramaMap[inicio];
+    if (itemInicio?.registro?.puente) {
+      const { puente, ...restoRegistro } = itemInicio.registro;
+      onChange(inicio, restoRegistro);
+    }
+
+    const itemFin = odontogramaMap[fin];
+    if (itemFin?.registro?.puente) {
+      const { puente, ...restoRegistro } = itemFin.registro;
+      onChange(fin, restoRegistro);
+    }
+  }, [odontogramaMap, onChange]);
+
   // Abrir modal para marcar piezas temporales
   const abrirModalTemporales = () => {
     setModalAusentesAbierto('temporal');
@@ -281,6 +297,37 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
           <strong>{modoMarca === 'puente' ? 'Modo Puente Activo' : 'Modo Prótesis Removible Activo'}:</strong>
           {!marcaEnProgreso.inicio && ' Haz clic en la primera pieza'}
           {marcaEnProgreso.inicio && !marcaEnProgreso.fin && ` Pieza ${marcaEnProgreso.inicio} seleccionada. Haz clic en la segunda pieza`}
+        </div>
+      )}
+
+      {/* Lista de puentes/prótesis existentes con botón eliminar */}
+      {!modoCaptura && obtenerPuentes().length > 0 && (
+        <div data-no-pdf className="mb-4 bg-orange-50 border border-orange-200 rounded-lg p-3">
+          <h4 className="text-sm font-semibold text-gray-700 mb-2">Puentes y prótesis marcados:</h4>
+          <div className="flex flex-wrap gap-2">
+            {obtenerPuentes().map(({ inicio, fin, tipo }) => (
+              <div
+                key={`marca-${inicio}-${fin}`}
+                className="flex items-center gap-2 bg-white border border-red-200 rounded-lg px-3 py-1.5 shadow-sm"
+              >
+                {tipo === 'protesis' ? (
+                  <Square size={14} className="text-red-500" />
+                ) : (
+                  <Link2 size={14} className="text-red-500" />
+                )}
+                <span className="text-xs font-medium text-gray-700">
+                  {tipo === 'protesis' ? 'Prótesis' : 'Puente'} {inicio} → {fin}
+                </span>
+                <button
+                  onClick={() => eliminarMarca(inicio, fin)}
+                  className="ml-1 p-1 rounded-full hover:bg-red-100 transition-colors text-red-400 hover:text-red-600"
+                  title={`Eliminar ${tipo === 'protesis' ? 'prótesis' : 'puente'} entre pieza ${inicio} y ${fin}`}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
