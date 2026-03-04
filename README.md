@@ -113,59 +113,7 @@ OdonLoop/
 | **PDF** | html2canvas + jsPDF |
 | **Deploy** | Railway (backend), Vercel (frontend) |
 
-## 🚀 Instalación local
-
-### Prerrequisitos
-- Python 3.12+
-- Node.js 18+
-- PostgreSQL (opcional, usa SQLite por defecto en desarrollo)
-
-### Backend
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate        # Linux/Mac
-# .\venv\Scripts\activate       # Windows
-
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### Variables de entorno
-
-Crear archivo `.env` en `backend/`:
-
-```env
-SECRET_KEY=tu-secret-key
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-CORS_ALLOWED_ORIGINS=http://localhost:5173
-
-# Base de datos (opcional, por defecto usa SQLite)
-DATABASE_URL=postgres://user:pass@host:5432/dbname
-
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=tu-cloud
-CLOUDINARY_API_KEY=tu-api-key
-CLOUDINARY_API_SECRET=tu-api-secret
-
-# Brevo (email)
-BREVO_API_KEY=tu-brevo-key
-DEFAULT_FROM_EMAIL=noreply@tudominio.com
-```
-
-## 📸 Capturas
+## � Capturas
 
 > *Próximamente*
 
@@ -173,7 +121,7 @@ DEFAULT_FROM_EMAIL=noreply@tudominio.com
 
 Este software es **propietario**. Todos los derechos reservados.
 
-**© 2024-2026 OdonLoop - Andrés Murray Roppel**
+**© 2026 OdonLoop - Andrés Murray Roppel**
 
 No se permite copiar, modificar, distribuir ni utilizar comercialmente este software sin autorización previa por escrito del titular. Consultar el archivo [LICENSE](LICENSE) para más detalles.
 
