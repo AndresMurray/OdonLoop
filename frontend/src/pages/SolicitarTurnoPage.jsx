@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { getTurnosDisponibles, reservarTurno, getMisTurnos, cancelarTurno } from '../api/turnoService';
 import { getOdontologos } from '../api/odontologoService';
 import { authService } from '../api/authService';
+import { Search, UserRound } from 'lucide-react';
 import Button from '../components/Button';
 import { Card } from '../components/Card';
 import Navbar from '../components/Navbar';
@@ -12,12 +13,18 @@ import ConfirmModal from '../components/ConfirmModal';
 import LoadingModal from '../components/LoadingModal';
 import TurnoCalendar from '../components/TurnoCalendar';
 
+// Normalizar texto: minúsculas + sin tildes
+const normalizar = (str) =>
+  str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
 const SolicitarTurnoPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const vistaInicial = location.state?.vistaInicial || 'buscar';
   const [odontologos, setOdontologos] = useState([]);
-  const [odontologoSeleccionado, setOdontologoSeleccionado] = useState('');
+  const [searchOdontologo, setSearchOdontologo] = useState('');
+  const [odontologoSeleccionado, setOdontologoSeleccionado] = useState(null);
+  const [mostrarResultados, setMostrarResultados] = useState(false);
   const [turnosDisponibles, setTurnosDisponibles] = useState([]);
   const [misTurnos, setMisTurnos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -40,6 +47,18 @@ const SolicitarTurnoPage = () => {
   const [reservaModal, setReservaModal] = useState({ open: false, status: 'loading', message: '' });
 
   const userData = authService.getUserData();
+
+  // Filtrar odontólogos con normalización (case + accent insensitive)
+  const odontologosFiltrados = useMemo(() => {
+    const term = searchOdontologo.trim();
+    if (!term) return [];
+    const termNorm = normalizar(term);
+    return odontologos.filter(o => {
+      const nombreCompleto = normalizar(`${o.user.first_name} ${o.user.last_name}`);
+      const especialidad = normalizar(o.especialidad || '');
+      return nombreCompleto.includes(termNorm) || especialidad.includes(termNorm);
+    });
+  }, [searchOdontologo, odontologos]);
 
   useEffect(() => {
     cargarOdontologos();
@@ -73,16 +92,13 @@ const SolicitarTurnoPage = () => {
     }
   };
 
-  const buscarTurnos = async () => {
-    if (!odontologoSeleccionado) {
-      setError('Por favor seleccione un odontólogo');
-      return;
-    }
+  const buscarTurnos = async (odontologoId) => {
+    if (!odontologoId) return;
 
     setLoading(true);
     setError('');
     try {
-      const data = await getTurnosDisponibles(odontologoSeleccionado);
+      const data = await getTurnosDisponibles(odontologoId);
       setTurnosDisponibles(data);
       if (data.length === 0) {
         setError('No hay turnos disponibles para este odontólogo');
@@ -94,6 +110,13 @@ const SolicitarTurnoPage = () => {
     }
   };
 
+  const handleSeleccionarOdontologo = (odontologo) => {
+    setOdontologoSeleccionado(odontologo);
+    setSearchOdontologo(`Dr. ${odontologo.user.first_name} ${odontologo.user.last_name}`);
+    setMostrarResultados(false);
+    buscarTurnos(odontologo.id);
+  };
+
   // Verificar si el paciente ya tiene un turno activo con el odontólogo seleccionado
   const turnoExistenteConOdontologo = useMemo(() => {
     if (!odontologoSeleccionado) return null;
@@ -102,7 +125,7 @@ const SolicitarTurnoPage = () => {
       if (t.estado !== 'reservado' && t.estado !== 'confirmado') return false;
       const [fechaStr] = t.fecha_hora.split('T');
       if (fechaStr < hoy) return false;
-      return t.odontologo && String(t.odontologo.id) === String(odontologoSeleccionado);
+      return t.odontologo && String(t.odontologo.id) === String(odontologoSeleccionado.id);
     });
   }, [misTurnos, odontologoSeleccionado]);
 
@@ -317,34 +340,89 @@ const SolicitarTurnoPage = () => {
             <div className="space-y-6">
               {/* Seleccionar Odontólogo */}
               <Card className="p-6 sm:p-8">
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">Seleccionar Odontólogo</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Odontólogo
-                    </label>
-                    <select
-                      value={odontologoSeleccionado}
-                      onChange={(e) => {
-                        setOdontologoSeleccionado(e.target.value);
-                        setTurnosDisponibles([]);
-                        setError('');
-                      }}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    >
-                      <option value="">Seleccione un odontólogo</option>
-                      {odontologos.map((odontologo) => (
-                        <option key={odontologo.id} value={odontologo.id}>
-                          Dr. {odontologo.user.first_name} {odontologo.user.last_name} - {odontologo.especialidad}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <h2 className="text-2xl font-bold mb-4 text-gray-800">Buscar Odontólogo</h2>
+                
+                {!odontologoSeleccionado ? (
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Empezá a escribir el nombre del odontólogo..."
+                        value={searchOdontologo}
+                        onChange={(e) => {
+                          setSearchOdontologo(e.target.value);
+                          setMostrarResultados(true);
+                        }}
+                        onFocus={() => setMostrarResultados(true)}
+                        autoFocus
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-base"
+                      />
+                    </div>
 
-                  <Button onClick={buscarTurnos} disabled={loading || !odontologoSeleccionado}>
-                    {loading ? 'Buscando...' : 'Buscar Turnos Disponibles'}
-                  </Button>
-                </div>
+                    {/* Resultados de búsqueda */}
+                    {mostrarResultados && searchOdontologo.trim() && (
+                      <div className="border border-gray-200 rounded-lg shadow-sm max-h-80 overflow-y-auto">
+                        {odontologosFiltrados.length === 0 ? (
+                          <div className="p-6 text-center text-gray-500">
+                            <UserRound className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                            <p>No se encontró ningún odontólogo</p>
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-gray-200">
+                            {odontologosFiltrados.map((odontologo) => (
+                              <button
+                                key={odontologo.id}
+                                onClick={() => handleSeleccionarOdontologo(odontologo)}
+                                className="w-full p-4 text-left hover:bg-teal-50 transition-colors flex items-center gap-3"
+                              >
+                                <UserRound className="w-8 h-8 text-teal-600 shrink-0" />
+                                <div>
+                                  <p className="font-semibold text-gray-800">
+                                    Dr. {odontologo.user.first_name} {odontologo.user.last_name}
+                                  </p>
+                                  <p className="text-sm text-gray-600">{odontologo.especialidad}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3">
+                        <UserRound className="w-8 h-8 text-teal-600 shrink-0" />
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-800">
+                            Dr. {odontologoSeleccionado.user.first_name} {odontologoSeleccionado.user.last_name}
+                          </p>
+                          <p className="text-sm text-gray-600">{odontologoSeleccionado.especialidad}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setOdontologoSeleccionado(null);
+                            setSearchOdontologo('');
+                            setTurnosDisponibles([]);
+                            setError('');
+                          }}
+                        >
+                          Cambiar
+                        </Button>
+                      </div>
+                    </div>
+                    {loading && (
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto"></div>
+                        <p className="mt-2 text-gray-600 text-sm">Cargando turnos disponibles...</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </Card>
 
               {/* Turnos Disponibles */}
