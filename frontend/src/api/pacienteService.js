@@ -17,6 +17,16 @@ export const crearPacienteRapido = async (pacienteData) => {
   }
 };
 
+// Editar datos de un paciente (como odontólogo)
+export const editarPaciente = async (pacienteId, data) => {
+  try {
+    const response = await apiClient.patch(`/api/pacientes/mis-pacientes/${pacienteId}/editar/`, data);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 /**
  * Servicio para el perfil del paciente
  */
@@ -56,6 +66,7 @@ export { getMisPacientes } from './seguimientoService';
 
 export default {
   crearPacienteRapido,
+  editarPaciente,
   getMiPerfil,
   actualizarMiPerfil,
   getObrasSociales,

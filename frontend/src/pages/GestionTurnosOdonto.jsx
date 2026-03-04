@@ -513,6 +513,13 @@ const GestionTurnosOdonto = () => {
     reservados: turnosReservados.length
   }), [turnosDisponibles, turnosReservados]);
 
+  // Contadores globales (sin filtro de fecha)
+  const contadoresGlobales = useMemo(() => {
+    const totalReservados = turnos.filter(t => t.estado === 'reservado').length;
+    const totalDisponibles = turnos.filter(t => t.estado === 'disponible').length;
+    return { reservados: totalReservados, disponibles: totalDisponibles };
+  }, [turnos]);
+
   // Funciones de paginación memoizadas
   const turnosDisponiblesPaginados = useMemo(() => {
     const inicio = (paginaDisponibles - 1) * ITEMS_POR_PAGINA;
@@ -602,6 +609,30 @@ const GestionTurnosOdonto = () => {
             <Button onClick={() => navigate('/home-odontologo')} variant="secondary" className="w-full sm:w-auto">
               Volver al Inicio
             </Button>
+          </div>
+
+          {/* Indicadores globales */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-300">Total Reservados</p>
+                  <p className="text-3xl font-bold text-blue-300">{contadoresGlobales.reservados}</p>
+                </div>
+                <span className="text-3xl">👤</span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">Todas las fechas</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-300">Total Disponibles</p>
+                  <p className="text-3xl font-bold text-green-300">{contadoresGlobales.disponibles}</p>
+                </div>
+                <span className="text-3xl">📅</span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">Todas las fechas</p>
+            </div>
           </div>
 
           {/* Tabs de navegación */}

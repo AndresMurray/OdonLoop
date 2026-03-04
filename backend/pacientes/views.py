@@ -114,6 +114,88 @@ class MisPacientesView(APIView):
             )
 
 
+class EditarPacienteView(APIView):
+    """Permite al odontólogo editar datos de un paciente que tiene asignado"""
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, paciente_id):
+        try:
+            if not hasattr(request.user, 'perfil_odontologo'):
+                return Response(
+                    {'error': 'Solo odontólogos pueden editar pacientes'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            odontologo = request.user.perfil_odontologo
+
+            # Verificar que el paciente exista y esté vinculado al odontólogo
+            paciente = Paciente.objects.select_related('user', 'obra_social').filter(
+                Q(id=paciente_id),
+                Q(creado_por_odontologo=odontologo) |
+                Q(odontologos_asignados=odontologo) |
+                Q(id__in=Turno.objects.filter(odontologo=odontologo).exclude(
+                    paciente__isnull=True
+                ).values_list('paciente_id', flat=True))
+            ).distinct().first()
+
+            if not paciente:
+                return Response(
+                    {'error': 'Paciente no encontrado o no tiene permisos'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            data = request.data
+
+            # Actualizar campos del usuario (first_name, last_name, telefono, fecha_nacimiento)
+            user = paciente.user
+            if 'first_name' in data:
+                user.first_name = data['first_name'].strip()
+            if 'last_name' in data:
+                user.last_name = data['last_name'].strip()
+            if 'telefono' in data:
+                user.telefono = data['telefono'].strip() if data['telefono'] else ''
+            if 'fecha_nacimiento' in data:
+                user.fecha_nacimiento = data['fecha_nacimiento'] if data['fecha_nacimiento'] else None
+            user.save()
+
+            # Actualizar campos del paciente
+            if 'dni' in data:
+                nuevo_dni = data['dni'].strip()
+                # Verificar unicidad de DNI si cambió
+                if nuevo_dni and nuevo_dni != paciente.dni:
+                    if Paciente.objects.filter(dni=nuevo_dni).exclude(id=paciente.id).exists():
+                        return Response(
+                            {'error': 'Ya existe otro paciente con ese DNI'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                paciente.dni = nuevo_dni if nuevo_dni else None
+            if 'direccion' in data:
+                paciente.direccion = data['direccion'].strip() if data['direccion'] else ''
+            if 'obra_social' in data:
+                paciente.obra_social_id = data['obra_social'] if data['obra_social'] else None
+            if 'obra_social_otra' in data:
+                paciente.obra_social_otra = data['obra_social_otra'].strip() if data['obra_social_otra'] else ''
+            if 'alergias' in data:
+                paciente.alergias = data['alergias'].strip() if data['alergias'] else ''
+            if 'antecedentes_medicos' in data:
+                paciente.antecedentes_medicos = data['antecedentes_medicos'].strip() if data['antecedentes_medicos'] else ''
+            paciente.save()
+
+            # Devolver paciente actualizado
+            paciente.refresh_from_db()
+            serializer = MisPacientesSerializer(
+                paciente,
+                context={'odontologo': odontologo}
+            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {'error': f'Error al actualizar paciente: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class SeguimientoViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar seguimientos de pacientes"""
     permission_classes = [IsAuthenticated]

@@ -6,9 +6,10 @@ import Input from '../components/Input';
 import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { ArrowLeft, Search, User, FileText, Smile, UserPlus } from 'lucide-react';
+import { ArrowLeft, Search, User, FileText, Smile, UserPlus, Pencil } from 'lucide-react';
 import { getMisPacientes } from '../api/seguimientoService';
 import ModalAsignarPaciente from '../components/ModalAsignarPaciente';
+import ModalEditarPaciente from '../components/ModalEditarPaciente';
 
 const MisPacientesPage = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const MisPacientesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [alert, setAlert] = useState({ type: '', message: '', detail: '' });
   const [modalNuevoPaciente, setModalNuevoPaciente] = useState(false);
+  const [pacienteEditar, setPacienteEditar] = useState(null);
 
   useEffect(() => {
     cargarPacientes();
@@ -255,6 +257,18 @@ const MisPacientesPage = () => {
                       {/* Botones de acción */}
                       <div className="flex flex-row sm:flex-col gap-2 sm:ml-2">
                         <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPacienteEditar(paciente);
+                          }}
+                          className="flex-1 sm:flex-none text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+                        >
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Editar
+                        </Button>
+                        <Button
                           variant="primary"
                           size="sm"
                           onClick={(e) => {
@@ -301,6 +315,20 @@ const MisPacientesPage = () => {
           cargarPacientes();
           setModalNuevoPaciente(false);
           setAlert({ type: 'success', message: 'Paciente agregado a tu lista exitosamente' });
+        }}
+      />
+
+      {/* Modal Editar Paciente */}
+      <ModalEditarPaciente
+        isOpen={!!pacienteEditar}
+        onClose={() => setPacienteEditar(null)}
+        paciente={pacienteEditar}
+        onGuardado={(pacienteActualizado) => {
+          // Actualizar el paciente en la lista local
+          setPacientes(prev =>
+            prev.map(p => p.id === pacienteActualizado.id ? pacienteActualizado : p)
+          );
+          setAlert({ type: 'success', message: 'Paciente actualizado exitosamente' });
         }}
       />
     </div>

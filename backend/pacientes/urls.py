@@ -4,7 +4,7 @@ from .views import (
     PacienteViewSet, ObraSocialViewSet, 
     MisPacientesView, SeguimientoViewSet, MiPerfilPacienteView,
     OdontogramaView, HistorialPiezaDentalView, RegistroDentalViewSet,
-    DescargarArchivoView
+    DescargarArchivoView, EditarPacienteView
 )
 
 router = DefaultRouter()
@@ -15,6 +15,7 @@ router.register(r'', PacienteViewSet, basename='paciente')
 
 urlpatterns = [
     path('mis-pacientes/', MisPacientesView.as_view(), name='mis-pacientes'),
+    path('mis-pacientes/<int:paciente_id>/editar/', EditarPacienteView.as_view(), name='editar-paciente'),
     path('mi-perfil/', MiPerfilPacienteView.as_view(), name='mi-perfil-paciente'),
     path('odontograma/<int:paciente_id>/', OdontogramaView.as_view(), name='odontograma'),
     path('odontograma/<int:paciente_id>/pieza/<int:pieza>/', HistorialPiezaDentalView.as_view(), name='historial-pieza'),
