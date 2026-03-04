@@ -4,11 +4,15 @@ from .models import Odontologo
 
 @admin.register(Odontologo)
 class OdontologoAdmin(admin.ModelAdmin):
-    list_display = ['get_nombre_completo', 'matricula', 'especialidad', 'anos_experiencia', 'activo', 'fecha_alta']
-    list_filter = ['activo', 'especialidad', 'fecha_alta']
+    list_display = [
+        'get_nombre_completo', 'matricula', 'especialidad',
+        'anos_experiencia', 'estado', 'activo', 'fecha_alta',
+        'fecha_aprobacion',
+    ]
+    list_filter = ['estado', 'activo', 'especialidad', 'fecha_alta']
     search_fields = ['user__first_name', 'user__last_name', 'matricula', 'especialidad']
-    readonly_fields = ['fecha_alta']
-    
+    readonly_fields = ['fecha_alta', 'fecha_aprobacion', 'fecha_suspension']
+
     fieldsets = (
         ('Información del Usuario', {
             'fields': ('user',)
@@ -20,6 +24,14 @@ class OdontologoAdmin(admin.ModelAdmin):
             'fields': ('horario_atencion',)
         }),
         ('Estado', {
-            'fields': ('activo', 'fecha_alta')
+            'fields': ('estado', 'activo', 'fecha_alta', 'fecha_aprobacion')
+        }),
+        ('Suspensión', {
+            'fields': ('fecha_suspension', 'motivo_suspension'),
+            'classes': ('collapse',),
         }),
     )
+
+    def get_nombre_completo(self, obj):
+        return obj.get_nombre_completo()
+    get_nombre_completo.short_description = 'Nombre Completo'

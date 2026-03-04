@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Paciente, ObraSocial, Seguimiento, SeguimientoArchivo
+from .models import Paciente, ObraSocial, Seguimiento, SeguimientoArchivo, RegistroDental
 
 
 class SeguimientoArchivoInline(admin.TabularInline):
@@ -10,7 +10,7 @@ class SeguimientoArchivoInline(admin.TabularInline):
 
 @admin.register(Seguimiento)
 class SeguimientoAdmin(admin.ModelAdmin):
-    list_display = ('paciente', 'odontologo', 'fecha_atencion', 'fecha_creacion')
+    list_display = ('paciente', 'odontologo', 'descripcion', 'imagen_url', 'fecha_atencion', 'fecha_creacion')
     list_filter = ('fecha_atencion', 'fecha_creacion')
     search_fields = ('paciente__user__first_name', 'paciente__user__last_name', 'descripcion')
     readonly_fields = ('fecha_creacion',)
@@ -19,7 +19,7 @@ class SeguimientoAdmin(admin.ModelAdmin):
 
 @admin.register(SeguimientoArchivo)
 class SeguimientoArchivoAdmin(admin.ModelAdmin):
-    list_display = ('seguimiento', 'tipo', 'nombre_original', 'fecha_subida')
+    list_display = ('seguimiento', 'tipo', 'nombre_original', 'url', 'public_id', 'fecha_subida')
     list_filter = ('tipo', 'fecha_subida')
     readonly_fields = ('fecha_subida',)
 
@@ -33,19 +33,36 @@ class ObraSocialAdmin(admin.ModelAdmin):
 
 @admin.register(Paciente)
 class PacienteAdmin(admin.ModelAdmin):
-    # Columnas que se ven en el listado
-    list_display = ('dni', 'get_first_name', 'get_last_name', 'obra_social', 'activo', 'fecha_alta')
-    
-    # Buscador (podés buscar por DNI o por nombre del usuario relacionado)
+    list_display = (
+        'dni', 'get_first_name', 'get_last_name', 'obra_social',
+        'obra_social_otra', 'activo', 'creado_por_odontologo', 'fecha_alta',
+    )
     search_fields = ('dni', 'user__first_name', 'user__last_name', 'numero_afiliado')
-    
-    # Filtros
-    list_filter = ('activo', 'obra_social', 'fecha_alta')
-    
-    # Campos de solo lectura
+    list_filter = ('activo', 'obra_social', 'fecha_alta', 'creado_por_odontologo')
     readonly_fields = ('fecha_alta',)
+    filter_horizontal = ('odontologos_asignados',)
 
-    # Métodos para traer datos del modelo User
+    fieldsets = (
+        ('Usuario', {
+            'fields': ('user',)
+        }),
+        ('Datos Personales', {
+            'fields': ('dni', 'direccion')
+        }),
+        ('Obra Social', {
+            'fields': ('obra_social', 'obra_social_otra', 'numero_afiliado')
+        }),
+        ('Datos Médicos', {
+            'fields': ('alergias', 'antecedentes_medicos')
+        }),
+        ('Relaciones', {
+            'fields': ('creado_por_odontologo', 'odontologos_asignados')
+        }),
+        ('Estado', {
+            'fields': ('activo', 'fecha_alta')
+        }),
+    )
+
     def get_first_name(self, obj):
         return obj.user.first_name
     get_first_name.short_description = 'Nombre'
@@ -53,3 +70,35 @@ class PacienteAdmin(admin.ModelAdmin):
     def get_last_name(self, obj):
         return obj.user.last_name
     get_last_name.short_description = 'Apellido'
+
+
+@admin.register(RegistroDental)
+class RegistroDentalAdmin(admin.ModelAdmin):
+    list_display = (
+        'paciente', 'pieza_dental', 'estado_pieza',
+        'actualizado_por', 'fecha_actualizacion',
+    )
+    list_filter = ('pieza_dental', 'fecha_actualizacion')
+    search_fields = (
+        'paciente__user__first_name', 'paciente__user__last_name',
+        'observaciones',
+    )
+    readonly_fields = ('fecha_actualizacion',)
+
+    fieldsets = (
+        ('Pieza', {
+            'fields': ('paciente', 'pieza_dental')
+        }),
+        ('Caras', {
+            'fields': (
+                'cara_vestibular', 'cara_lingual',
+                'cara_mesial', 'cara_distal', 'cara_oclusal',
+            )
+        }),
+        ('Estado y Puente', {
+            'fields': ('estado_pieza', 'puente')
+        }),
+        ('Metadata', {
+            'fields': ('observaciones', 'descripcion_general', 'actualizado_por', 'fecha_actualizacion')
+        }),
+    )
