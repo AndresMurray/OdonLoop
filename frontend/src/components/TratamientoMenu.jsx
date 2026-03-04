@@ -196,6 +196,13 @@ const TratamientoMenu = ({
           🔴 Realizado (Rojo)
         </button>
 
+        <button
+          onClick={() => handleEstadoSelect('realizado_filtrado')}
+          className="w-full px-5 py-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all font-semibold text-base shadow-md hover:shadow-lg transform hover:scale-[1.02] ring-4 ring-blue-500"
+        >
+          🔴🔵 Realizado Filtrado (Rojo + Borde Azul)
+        </button>
+
         <div className="mt-3 pt-3 border-t-2 border-gray-200">
           <button
             onClick={() => {

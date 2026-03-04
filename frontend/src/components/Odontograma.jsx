@@ -298,6 +298,10 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
                 <span><strong>Rojo:</strong> Realizado</span>
               </div>
               <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-red-500 rounded" style={{ boxShadow: 'inset 0 0 0 3px #2563EB' }}></div>
+                <span><strong>Rojo + Borde Azul:</strong> Realizado Filtrado</span>
+              </div>
+              <div className="flex items-center gap-2">
                 <div className="w-5 h-5 bg-yellow-500 rounded"></div>
                 <span><strong>Amarillo:</strong> Absceso/Fístula</span>
               </div>

@@ -56,10 +56,17 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
     // Absceso tiene color amarillo
     if (estado.tipo === 'absceso') return '#EAB308'; // Amarillo
 
-    // Color basado en el estado (pendiente = azul, realizado = rojo)
+    // Color basado en el estado (pendiente = azul, realizado = rojo, realizado_filtrado = rojo)
     if (estado.estado === 'pendiente') return '#3B82F6'; // Azul
     if (estado.estado === 'realizado') return '#EF4444'; // Rojo
+    if (estado.estado === 'realizado_filtrado') return '#EF4444'; // Rojo (el borde azul se maneja aparte)
     return '#E5E7EB';
+  };
+
+  // Verificar si una cara tiene estado "realizado filtrado" para el borde azul
+  const esRealizadoFiltrado = (cara) => {
+    const estado = getEstadoCara(cara);
+    return estado?.estado === 'realizado_filtrado';
   };
 
   // Obtener estados de la pieza completa (ahora es un array)
@@ -154,7 +161,10 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
         {/* Cara Oclusal (Centro) */}
         <div
           className="absolute inset-0 m-[18px] rounded-full cursor-pointer transition-all duration-150 hover:scale-110 hover:shadow-lg hover:ring-2 hover:ring-gray-400"
-          style={{ backgroundColor: getColorCara('oclusal') }}
+          style={{
+            backgroundColor: getColorCara('oclusal'),
+            ...(esRealizadoFiltrado('oclusal') ? { boxShadow: 'inset 0 0 0 3px #2563EB' } : {})
+          }}
           onClick={(e) => handleCaraClick(e, 'oclusal')}
           onContextMenu={(e) => {
             if (!deshabilitarMenu) {
@@ -179,7 +189,10 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
         {/* Cara Vestibular (Arriba) */}
         <div
           className="absolute top-0 left-1/4 right-1/4 h-3.5 cursor-pointer transition-all duration-150 hover:brightness-110 hover:shadow-md rounded-t-lg"
-          style={{ backgroundColor: getColorCara('vestibular') }}
+          style={{
+            backgroundColor: getColorCara('vestibular'),
+            ...(esRealizadoFiltrado('vestibular') ? { boxShadow: 'inset 0 0 0 3px #2563EB' } : {})
+          }}
           onClick={(e) => handleCaraClick(e, 'vestibular')}
           onMouseEnter={() => setHoveredCara('vestibular')}
           onMouseLeave={() => setHoveredCara(null)}
@@ -189,7 +202,10 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
         {/* Cara Lingual (Abajo) */}
         <div
           className="absolute bottom-0 left-1/4 right-1/4 h-3.5 cursor-pointer transition-all duration-150 hover:brightness-110 hover:shadow-md rounded-b-lg"
-          style={{ backgroundColor: getColorCara('lingual') }}
+          style={{
+            backgroundColor: getColorCara('lingual'),
+            ...(esRealizadoFiltrado('lingual') ? { boxShadow: 'inset 0 0 0 3px #2563EB' } : {})
+          }}
           onClick={(e) => handleCaraClick(e, 'lingual')}
           onMouseEnter={() => setHoveredCara('lingual')}
           onMouseLeave={() => setHoveredCara(null)}
@@ -199,7 +215,10 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
         {/* Cara Mesial (Izquierda) */}
         <div
           className="absolute left-0 top-1/4 bottom-1/4 w-3.5 cursor-pointer transition-all duration-150 hover:brightness-110 hover:shadow-md rounded-l-lg"
-          style={{ backgroundColor: getColorCara('mesial') }}
+          style={{
+            backgroundColor: getColorCara('mesial'),
+            ...(esRealizadoFiltrado('mesial') ? { boxShadow: 'inset 0 0 0 3px #2563EB' } : {})
+          }}
           onClick={(e) => handleCaraClick(e, 'mesial')}
           onMouseEnter={() => setHoveredCara('mesial')}
           onMouseLeave={() => setHoveredCara(null)}
@@ -209,7 +228,10 @@ const PiezaDental = ({ numero, registro, onChange, tipo = 'permanente', onMenuOp
         {/* Cara Distal (Derecha) */}
         <div
           className="absolute right-0 top-1/4 bottom-1/4 w-3.5 cursor-pointer transition-all duration-150 hover:brightness-110 hover:shadow-md rounded-r-lg"
-          style={{ backgroundColor: getColorCara('distal') }}
+          style={{
+            backgroundColor: getColorCara('distal'),
+            ...(esRealizadoFiltrado('distal') ? { boxShadow: 'inset 0 0 0 3px #2563EB' } : {})
+          }}
           onClick={(e) => handleCaraClick(e, 'distal')}
           onMouseEnter={() => setHoveredCara('distal')}
           onMouseLeave={() => setHoveredCara(null)}

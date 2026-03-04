@@ -163,7 +163,7 @@ const OdontogramaPage = () => {
               </Button>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                  Odontograma Profesional
+                  Odontograma
                 </h1>
                 {odontogramaData?.paciente && (
                   <p className="text-gray-600 mt-1">
