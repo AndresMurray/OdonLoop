@@ -297,10 +297,10 @@ const MisPacientesPage = () => {
         onClose={() => setModalNuevoPaciente(false)}
         soloCrear={true}
         onSeleccionar={() => {
-          // Al crear un paciente, refrescar la lista y cerrar el modal
+          // Al crear o asignar un paciente, refrescar la lista y cerrar el modal
           cargarPacientes();
           setModalNuevoPaciente(false);
-          setAlert({ type: 'success', message: 'Paciente creado y agregado a tu lista exitosamente' });
+          setAlert({ type: 'success', message: 'Paciente agregado a tu lista exitosamente' });
         }}
       />
     </div>

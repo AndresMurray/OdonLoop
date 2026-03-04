@@ -66,6 +66,12 @@ class Paciente(models.Model):
         related_name='pacientes_creados',
         verbose_name='Creado por odontólogo'
     )
+    odontologos_asignados = models.ManyToManyField(
+        'odontologos.Odontologo',
+        blank=True,
+        related_name='pacientes_asignados',
+        verbose_name='Odontólogos asignados'
+    )
     
     class Meta:
         verbose_name = 'Paciente'

@@ -106,6 +106,16 @@ export const crearPacienteRapido = async (pacienteData) => {
   }
 };
 
+// Asignar paciente existente al odontólogo
+export const asignarPacienteExistente = async (pacienteId) => {
+  try {
+    const response = await apiClient.post('/api/odontologos/asignar-paciente/', { paciente_id: pacienteId });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export default {
   getMisPacientes,
   getTodosPacientes,
@@ -115,5 +125,6 @@ export default {
   actualizarSeguimiento,
   eliminarSeguimiento,
   getTodosSeguimientosPaciente,
-  crearPacienteRapido
+  crearPacienteRapido,
+  asignarPacienteExistente
 };

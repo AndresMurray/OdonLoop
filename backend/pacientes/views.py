@@ -82,12 +82,12 @@ class MisPacientesView(APIView):
                 odontologo=odontologo
             ).exclude(paciente__isnull=True).values_list('paciente_id', flat=True).distinct()
             
-            # Filtrar pacientes: los que tienen turnos O los creados manualmente por este odontólogo
+            # Filtrar pacientes: los que tienen turnos, creados por este odontólogo, o asignados vía M2M
             from django.db.models import Q as DQ
             pacientes = Paciente.objects.filter(
-                DQ(id__in=pacientes_con_turno_ids) | DQ(creado_por_odontologo=odontologo),
+                DQ(id__in=pacientes_con_turno_ids) | DQ(creado_por_odontologo=odontologo) | DQ(odontologos_asignados=odontologo),
                 activo=True
-            ).select_related('user', 'obra_social')
+            ).distinct().select_related('user', 'obra_social')
             
             # Aplicar búsqueda por nombre si existe
             if search:

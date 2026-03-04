@@ -250,11 +250,16 @@ def crear_paciente_rapido(request):
     
     # Verificar que el DNI no exista
     from pacientes.models import Paciente
-    if Paciente.objects.filter(dni=dni).exists():
-        return Response(
-            {'error': 'Ya existe un paciente con este DNI'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    paciente_existente = Paciente.objects.filter(dni=dni).select_related('user', 'obra_social').first()
+    if paciente_existente:
+        from pacientes.serializers import PacienteSerializer
+        odontologo = request.user.perfil_odontologo
+        ya_asignado = paciente_existente.odontologos_asignados.filter(id=odontologo.id).exists()
+        return Response({
+            'error': 'Ya existe un paciente con este DNI',
+            'paciente_existente': PacienteSerializer(paciente_existente).data,
+            'ya_asignado': ya_asignado
+        }, status=status.HTTP_409_CONFLICT)
     
     try:
         # Generar username único basado en DNI
@@ -284,6 +289,8 @@ def crear_paciente_rapido(request):
             obra_social_id=obra_social_id if obra_social_id else None,
             creado_por_odontologo=odontologo
         )
+        # También agregar la relación M2M
+        paciente.odontologos_asignados.add(odontologo)
         
         from pacientes.serializers import PacienteSerializer
         serializer = PacienteSerializer(paciente)
@@ -298,6 +305,55 @@ def crear_paciente_rapido(request):
             {'error': f'Error al crear paciente: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def asignar_paciente_existente(request):
+    """
+    Asignar un paciente existente al odontólogo actual.
+    Si el paciente no tiene creado_por_odontologo, se le asigna.
+    En cualquier caso, queda vinculado a través del campo creado_por_odontologo.
+    """
+    if not hasattr(request.user, 'perfil_odontologo'):
+        return Response(
+            {'error': 'Solo odontólogos pueden asignar pacientes'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    paciente_id = request.data.get('paciente_id')
+    if not paciente_id:
+        return Response(
+            {'error': 'ID del paciente es obligatorio'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    from pacientes.models import Paciente
+    try:
+        paciente = Paciente.objects.select_related('user').get(id=paciente_id)
+    except Paciente.DoesNotExist:
+        return Response(
+            {'error': 'Paciente no encontrado'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    odontologo = request.user.perfil_odontologo
+
+    # Agregar relación M2M (idempotente, no falla si ya existe)
+    paciente.odontologos_asignados.add(odontologo)
+
+    # Si no tiene creado_por_odontologo, asignarlo también
+    if not paciente.creado_por_odontologo:
+        paciente.creado_por_odontologo = odontologo
+        paciente.save(update_fields=['creado_por_odontologo'])
+
+    from pacientes.serializers import PacienteSerializer
+    serializer = PacienteSerializer(paciente)
+
+    return Response({
+        'message': 'Paciente asignado exitosamente',
+        'paciente': serializer.data
+    }, status=status.HTTP_200_OK)
 
 
 class MiPerfilOdontologoView(APIView):
