@@ -126,8 +126,8 @@ const SolicitarTurnoPage = () => {
     const wasSuccess = reservaModal.status === 'success';
     setReservaModal({ open: false, status: 'loading', message: '' });
     if (wasSuccess) {
-      buscarTurnos();
       cargarMisTurnos();
+      setVistaActual('misTurnos');
     }
   };
 

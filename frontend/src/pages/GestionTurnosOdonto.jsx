@@ -513,10 +513,11 @@ const GestionTurnosOdonto = () => {
     reservados: turnosReservados.length
   }), [turnosDisponibles, turnosReservados]);
 
-  // Contadores globales (sin filtro de fecha)
+  // Contadores globales (solo turnos futuros)
   const contadoresGlobales = useMemo(() => {
-    const totalReservados = turnos.filter(t => t.estado === 'reservado').length;
-    const totalDisponibles = turnos.filter(t => t.estado === 'disponible').length;
+    const hoy = new Date().toISOString().split('T')[0];
+    const totalReservados = turnos.filter(t => t.estado === 'reservado' && t.fecha_hora.split('T')[0] >= hoy).length;
+    const totalDisponibles = turnos.filter(t => t.estado === 'disponible' && t.fecha_hora.split('T')[0] >= hoy).length;
     return { reservados: totalReservados, disponibles: totalDisponibles };
   }, [turnos]);
 
@@ -621,7 +622,7 @@ const GestionTurnosOdonto = () => {
                 </div>
                 <span className="text-3xl">👤</span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">Todas las fechas</p>
+              <p className="text-xs text-slate-400 mt-1">Turnos futuros</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
               <div className="flex items-center justify-between">
@@ -631,7 +632,7 @@ const GestionTurnosOdonto = () => {
                 </div>
                 <span className="text-3xl">📅</span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">Todas las fechas</p>
+              <p className="text-xs text-slate-400 mt-1">Turnos futuros</p>
             </div>
           </div>
 

@@ -1,15 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { X, Search, UserPlus, User, UserCheck, AlertCircle } from 'lucide-react';
 import Button from './Button';
 import Input from './Input';
 import { Card, CardContent } from './Card';
 import Alert from './Alert';
-import { getMisPacientes, getTodosPacientes, crearPacienteRapido, asignarPacienteExistente } from '../api/seguimientoService';
+import { getMisPacientes, crearPacienteRapido, asignarPacienteExistente } from '../api/seguimientoService';
 import { obraSocialService } from '../api/obraSocialService';
+
+// Normalizar texto: minúsculas + sin tildes
+const normalizar = (str) =>
+  str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = false }) => {
   const [modo, setModo] = useState(soloCrear ? 'crear' : 'buscar');
-  const [pacientes, setPacientes] = useState([]);
+  const [todosPacientes, setTodosPacientes] = useState([]); // Lista completa cargada una vez
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({ type: '', message: '', detail: '' });
@@ -31,11 +35,23 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
     obra_social: ''
   });
 
+  // Filtrado client-side: case + accent insensitive, en tiempo real
+  const pacientesFiltrados = useMemo(() => {
+    const term = searchTerm.trim();
+    if (!term) return [];
+    const termNorm = normalizar(term);
+    return todosPacientes.filter(p => {
+      const nombre = normalizar(p.nombre_completo || '');
+      const dni = (p.dni || '').toLowerCase();
+      return nombre.includes(termNorm) || dni.includes(termNorm);
+    });
+  }, [searchTerm, todosPacientes]);
+
   useEffect(() => {
     if (isOpen) {
       setModo(soloCrear ? 'crear' : 'buscar');
-      if (!soloCrear) cargarPacientes();
       cargarObrasSociales();
+      if (!soloCrear) cargarTodosPacientes();
     }
   }, [isOpen]);
 
@@ -49,11 +65,11 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
     }
   };
 
-  const cargarPacientes = async () => {
+  const cargarTodosPacientes = async () => {
     setLoading(true);
     try {
-      const data = await getTodosPacientes(searchTerm);
-      setPacientes(data);
+      const data = await getMisPacientes();
+      setTodosPacientes(Array.isArray(data) ? data : data.results || []);
       setAlert({ type: '', message: '', detail: '' });
     } catch (err) {
       setAlert({
@@ -64,10 +80,6 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleBuscar = () => {
-    cargarPacientes();
   };
 
   const handleInputChange = (e) => {
@@ -156,6 +168,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
   const handleClose = () => {
     setModo('buscar');
     setSearchTerm('');
+    setTodosPacientes([]);
     setNuevoPaciente({
       first_name: '',
       last_name: '',
@@ -173,6 +186,8 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
     if (!isOpen) {
       setModo(soloCrear ? 'crear' : 'buscar');
       setPacienteExistente(null);
+      setTodosPacientes([]);
+      setSearchTerm('');
     }
   }, [isOpen]);
 
@@ -231,22 +246,21 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
 
           {modo === 'buscar' ? (
             <>
-              {/* Búsqueda */}
+              {/* Búsqueda en tiempo real */}
               <div className="mb-6">
-                <div className="flex gap-3">
-                  <div className="flex-grow">
-                    <Input
-                      type="text"
-                      placeholder="Buscar por nombre o DNI..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleBuscar()}
-                    />
-                  </div>
-                  <Button variant="primary" onClick={handleBuscar} disabled={loading}>
-                    <Search className="w-4 h-4 mr-2" />
-                    Buscar
-                  </Button>
+                <p className="text-sm text-gray-500 mb-3">
+                  Buscá entre tus pacientes vinculados por nombre o DNI.
+                </p>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Empezá a escribir nombre o DNI..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    autoFocus
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-base"
+                  />
                 </div>
               </div>
 
@@ -255,17 +269,30 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
                   <p className="mt-4 text-gray-600">Cargando pacientes...</p>
                 </div>
-              ) : pacientes.length === 0 ? (
+              ) : !searchTerm.trim() ? (
+                <div className="text-center py-8">
+                  <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Empezá a escribir para buscar</p>
+                </div>
+              ) : pacientesFiltrados.length === 0 ? (
                 <div className="text-center py-8">
                   <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No se encontraron pacientes</p>
+                  <p className="text-gray-600 font-medium">No se encontró el paciente en tu lista</p>
                   <p className="text-sm text-gray-500 mt-2">
-                    Intenta con otros términos o crea un nuevo paciente
+                    Si es un paciente nuevo, podés crearlo desde la pestaña &quot;Crear Nuevo Paciente&quot;.
                   </p>
+                  <Button
+                    variant="secondary"
+                    className="mt-4"
+                    onClick={() => { setModo('crear'); setSearchTerm(''); }}
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Crear Nuevo Paciente
+                  </Button>
                 </div>
               ) : (
                 <div className="grid gap-3 max-h-96 overflow-y-auto">
-                  {pacientes.map((paciente) => (
+                  {pacientesFiltrados.map((paciente) => (
                     <Card
                       key={paciente.id}
                       className="cursor-pointer hover:shadow-md transition-shadow"
