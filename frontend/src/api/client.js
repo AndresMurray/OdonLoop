@@ -105,18 +105,22 @@ class ApiClient {
       }
 
       // 401 Unauthorized → intentar refresh y reintentar UNA vez
+      // Solo intentar refresh si el usuario ya tiene sesión (hay refresh token)
       if (response.status === 401 && !_isRetry) {
-        const refreshed = await this._tryRefreshToken();
-        if (refreshed) {
-          // Reintentar el request original con el token nuevo
-          return this.request(endpoint, options, true);
+        const hasRefreshToken = !!localStorage.getItem('refresh_token');
+        if (hasRefreshToken) {
+          const refreshed = await this._tryRefreshToken();
+          if (refreshed) {
+            // Reintentar el request original con el token nuevo
+            return this.request(endpoint, options, true);
+          }
+          // Si no se pudo refrescar, _forceLogout ya se ejecutó
+          throw {
+            status: 401,
+            message: 'Sesión expirada. Por favor, iniciá sesión nuevamente.',
+            errors: {},
+          };
         }
-        // Si no se pudo refrescar, _forceLogout ya se ejecutó
-        throw {
-          status: 401,
-          message: 'Sesión expirada. Por favor, iniciá sesión nuevamente.',
-          errors: {},
-        };
       }
 
       const data = await response.json();
