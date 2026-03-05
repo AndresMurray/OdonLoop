@@ -8,4 +8,4 @@ echo "Populating obras sociales..."
 python manage.py poblar_obras_sociales || echo "Obras sociales already populated"
 
 echo "Starting gunicorn server..."
-gunicorn config.wsgi --bind 0.0.0.0:$PORT
+gunicorn config.wsgi --bind 0.0.0.0:$PORT --workers 3 --threads 2
