@@ -22,7 +22,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        image: postgres:17
         env:
           POSTGRES_DB: restore_test
           POSTGRES_USER: test_user
@@ -75,7 +75,7 @@ jobs:
           DUMP_FILE=$(find ./backup -name "*.dump" | head -1)
           echo "Restaurando: $DUMP_FILE"
 
-          pg_restore \
+          /usr/lib/postgresql/17/bin/pg_restore \
             --no-owner \
             --no-privileges \
             --dbname=restore_test \
