@@ -1,0 +1,114 @@
+name: Restaurar Backup Encriptado (Manual)
+
+# Este workflow es para restaurar un backup encriptado manualmente
+# Se ejecuta SOLO de forma manual desde GitHub Actions
+
+on:
+  workflow_dispatch:
+    inputs:
+      backup_date:
+        description: 'Fecha del backup a restaurar (ej: 2026-03-06_03-00-00)'
+        required: true
+        type: string
+      confirm:
+        description: 'Escribir CONFIRMAR para proceder'
+        required: true
+        type: string
+
+jobs:
+  restore-test:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm == 'CONFIRMAR' }}
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: restore_test
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Descargar backup encriptado
+        uses: actions/download-artifact@v4
+        with:
+          name: db-backup-${{ github.event.inputs.backup_date }}
+          path: ./backup
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Desencriptar backup
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          GPG_FILE=$(find ./backup -name "*.gpg" | head -1)
+          DUMP_FILE="${GPG_FILE%.gpg}"
+
+          gpg --batch --yes --decrypt \
+            --passphrase "$BACKUP_PASSPHRASE" \
+            --output "$DUMP_FILE" \
+            "$GPG_FILE"
+
+          echo "Backup desencriptado: $DUMP_FILE"
+
+      - name: Restaurar en PostgreSQL de prueba
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: test_user
+          PGPASSWORD: test_password
+          PGDATABASE: restore_test
+        run: |
+          DUMP_FILE=$(find ./backup -name "*.dump" | head -1)
+          echo "Restaurando: $DUMP_FILE"
+
+          pg_restore \
+            --no-owner \
+            --no-privileges \
+            --dbname=restore_test \
+            "$DUMP_FILE"
+
+      - name: Verificar integridad
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: test_user
+          PGPASSWORD: test_password
+          PGDATABASE: restore_test
+        run: |
+          echo "=== Verificación de integridad ==="
+
+          echo "Tablas:"
+          psql -c "\dt"
+
+          echo ""
+          echo "Conteo de registros:"
+          psql -c "
+            SELECT schemaname, relname AS tabla, n_live_tup AS registros
+            FROM pg_stat_user_tables
+            ORDER BY n_live_tup DESC;
+          "
+
+          echo ""
+          echo "Verificación de foreign keys:"
+          psql -c "
+            SELECT conname, conrelid::regclass AS tabla,
+                   confrelid::regclass AS referencia
+            FROM pg_constraint
+            WHERE contype = 'f'
+            ORDER BY conrelid::regclass::text;
+          "
+
+          echo ""
+          echo "=== Restauración verificada ==="

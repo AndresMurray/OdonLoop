@@ -1,0 +1,163 @@
+name: Backup Railway PostgreSQL (Encriptado)
+
+on:
+  schedule:
+    # Todos los días a las 3:00 AM UTC (00:00 hora Argentina)
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    # Permite ejecutar manualmente desde GitHub Actions
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    outputs:
+      backup_date: ${{ steps.date.outputs.date }}
+
+    steps:
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Generar fecha para el nombre del archivo
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_OUTPUT
+
+      - name: Realizar backup con pg_dump
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          pg_dump "$DATABASE_URL" \
+            --format=custom \
+            --no-owner \
+            --no-privileges \
+            --verbose \
+            -f backup_${{ steps.date.outputs.date }}.dump
+
+      - name: Verificar que el backup no está vacío
+        run: |
+          BACKUP_SIZE=$(stat -c%s "backup_${{ steps.date.outputs.date }}.dump")
+          echo "Tamaño del backup: $BACKUP_SIZE bytes"
+
+          if [ "$BACKUP_SIZE" -lt 1000 ]; then
+            echo "ERROR: El backup es demasiado pequeño, algo salió mal"
+            exit 1
+          fi
+
+          echo "Backup generado correctamente"
+
+      - name: Encriptar backup con GPG
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          gpg --batch --yes --symmetric \
+            --cipher-algo AES256 \
+            --passphrase "$BACKUP_PASSPHRASE" \
+            --output backup_${{ steps.date.outputs.date }}.dump.gpg \
+            backup_${{ steps.date.outputs.date }}.dump
+
+          # Eliminar el archivo sin encriptar
+          rm backup_${{ steps.date.outputs.date }}.dump
+
+          echo "Backup encriptado con AES-256"
+          ls -lh *.gpg
+
+      - name: Subir backup encriptado como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ steps.date.outputs.date }}
+          path: backup_${{ steps.date.outputs.date }}.dump.gpg
+          retention-days: 90
+
+  verify:
+    runs-on: ubuntu-latest
+    needs: backup
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: test_restore
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Descargar backup encriptado
+        uses: actions/download-artifact@v4
+        with:
+          name: db-backup-${{ needs.backup.outputs.backup_date }}
+          path: ./backup
+
+      - name: Desencriptar backup
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          GPG_FILE=$(find ./backup -name "*.gpg" | head -1)
+          DUMP_FILE="${GPG_FILE%.gpg}"
+
+          gpg --batch --yes --decrypt \
+            --passphrase "$BACKUP_PASSPHRASE" \
+            --output "$DUMP_FILE" \
+            "$GPG_FILE"
+
+          echo "Backup desencriptado: $DUMP_FILE"
+
+      - name: Restaurar backup en PostgreSQL de prueba
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: test_user
+          PGPASSWORD: test_password
+          PGDATABASE: test_restore
+        run: |
+          DUMP_FILE=$(find ./backup -name "*.dump" | head -1)
+          echo "Restaurando: $DUMP_FILE"
+
+          pg_restore \
+            --no-owner \
+            --no-privileges \
+            --dbname=test_restore \
+            "$DUMP_FILE"
+
+      - name: Verificar tablas restauradas
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: test_user
+          PGPASSWORD: test_password
+          PGDATABASE: test_restore
+        run: |
+          echo "=== Tablas en la base de datos ==="
+          psql -c "\dt" | tee tables.txt
+
+          echo ""
+          echo "=== Conteo de registros por tabla ==="
+          psql -c "
+            SELECT schemaname, relname AS tabla, n_live_tup AS registros
+            FROM pg_stat_user_tables
+            ORDER BY n_live_tup DESC;
+          "
+
+          # Verificar que existan las tablas principales
+          for table in usuarios_usuario pacientes_paciente odontologos_odontologo turnos_turno; do
+            if psql -c "\dt" | grep -q "$table"; then
+              echo "OK: Tabla $table existe"
+            else
+              echo "ADVERTENCIA: Tabla $table no encontrada"
+            fi
+          done
+
+          echo ""
+          echo "=== Backup verificado exitosamente ==="
