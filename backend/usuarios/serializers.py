@@ -32,11 +32,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     dni = serializers.CharField(max_length=20, required=False, allow_blank=True)
     obra_social = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
     obra_social_otra = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    numero_afiliado = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    plan = serializers.CharField(max_length=100, required=False, allow_blank=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'password2', 'first_name', 'last_name', 
-                  'telefono', 'fecha_nacimiento', 'tipo_usuario', 'dni', 'obra_social', 'obra_social_otra']
+                  'telefono', 'fecha_nacimiento', 'tipo_usuario', 'dni', 'obra_social', 'obra_social_otra',
+                  'numero_afiliado', 'plan']
 
     def validate_obra_social(self, value):
         """Convertir a entero o None"""
@@ -94,6 +97,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         dni = validated_data.pop('dni', None)
         obra_social_id = validated_data.pop('obra_social', None)
         obra_social_otra = validated_data.pop('obra_social_otra', None)
+        numero_afiliado = validated_data.pop('numero_afiliado', None)
+        plan = validated_data.pop('plan', None)
         
         # Generar username automáticamente desde el email
         email = validated_data.get('email')
@@ -114,5 +119,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         self.context['dni'] = dni
         self.context['obra_social_id'] = obra_social_id
         self.context['obra_social_otra'] = obra_social_otra
+        self.context['numero_afiliado'] = numero_afiliado
+        self.context['plan'] = plan
         
         return user

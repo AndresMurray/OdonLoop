@@ -32,7 +32,9 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
     last_name: '',
     dni: '',
     telefono: '',
-    obra_social: ''
+    obra_social: '',
+    numero_afiliado: '',
+    plan: ''
   });
 
   // Filtrado client-side: case + accent insensitive, en tiempo real
@@ -174,7 +176,9 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
       last_name: '',
       dni: '',
       telefono: '',
-      obra_social: ''
+      obra_social: '',
+      numero_afiliado: '',
+      plan: ''
     });
     setAlert({ type: '', message: '', detail: '' });
     setPacienteExistente(null);
@@ -435,6 +439,23 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      label="N° de Afiliado"
+                      name="numero_afiliado"
+                      value={nuevoPaciente.numero_afiliado}
+                      onChange={handleInputChange}
+                      placeholder="Número de afiliado"
+                    />
+                    <Input
+                      label="Plan"
+                      name="plan"
+                      value={nuevoPaciente.plan}
+                      onChange={handleInputChange}
+                      placeholder="Plan de la obra social"
+                    />
                   </div>
 
                   <div className="flex justify-end gap-3 pt-4">

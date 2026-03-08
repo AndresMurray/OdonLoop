@@ -30,6 +30,7 @@ class Paciente(models.Model):
     # Datos médicos
     obra_social = models.CharField(max_length=100, blank=True, null=True, verbose_name='Obra Social')
     numero_afiliado = models.CharField(max_length=50, blank=True, null=True, verbose_name='Número de Afiliado')
+    plan = models.CharField(max_length=100, blank=True, null=True, verbose_name='Plan')
     alergias = models.TextField(blank=True, null=True, verbose_name='Alergias')
     antecedentes_medicos = models.TextField(blank=True, null=True, verbose_name='Antecedentes Médicos')
 

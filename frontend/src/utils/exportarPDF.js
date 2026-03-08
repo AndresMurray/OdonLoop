@@ -224,7 +224,7 @@ export function parchearOklchEnDocumento(doc) {
 /**
  * Exportar a PDF: Odontograma + Todos los seguimientos de un paciente
  */
-export const exportarHistorialPacientePDF = async (pacienteId, pacienteNombre, odontogramaRef, descripcionGeneral = '') => {
+export const exportarHistorialPacientePDF = async (pacienteId, pacienteNombre, odontogramaRef, descripcionGeneral = '', paciente = null) => {
   const pdf = new jsPDF('p', 'mm', 'a4');
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
@@ -251,6 +251,122 @@ export const exportarHistorialPacientePDF = async (pacienteId, pacienteNombre, o
   pdf.text(`Fecha de exportación: ${new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })}`, pageWidth / 2, 40, { align: 'center' });
 
   yPos = 55;
+
+  // ============================================
+  // INFORMACIÓN DEL PACIENTE
+  // ============================================
+  if (paciente) {
+    pdf.setTextColor(30, 58, 138);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Datos del Paciente', margin, yPos);
+    yPos += 3;
+
+    pdf.setDrawColor(30, 58, 138);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 7;
+
+    pdf.setFontSize(10);
+    pdf.setTextColor(50, 50, 50);
+
+    const datosPaciente = [];
+    if (paciente.dni) datosPaciente.push({ label: 'DNI', value: paciente.dni });
+    if (paciente.email) datosPaciente.push({ label: 'Email', value: paciente.email });
+    if (paciente.telefono) datosPaciente.push({ label: 'Teléfono', value: paciente.telefono });
+    if (paciente.fecha_nacimiento) {
+      datosPaciente.push({
+        label: 'Fecha de Nacimiento',
+        value: new Date(paciente.fecha_nacimiento).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      });
+    }
+    if (paciente.direccion) datosPaciente.push({ label: 'Dirección', value: paciente.direccion });
+
+    // Renderizar datos cortos en dos columnas
+    const colWidth = contentWidth / 2;
+    for (let i = 0; i < datosPaciente.length; i += 2) {
+      const left = datosPaciente[i];
+      const right = datosPaciente[i + 1];
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${left.label}:`, margin, yPos);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(` ${left.value}`, margin + pdf.getTextWidth(`${left.label}: `), yPos);
+
+      if (right) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`${right.label}:`, margin + colWidth, yPos);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(` ${right.value}`, margin + colWidth + pdf.getTextWidth(`${right.label}: `), yPos);
+      }
+      yPos += 6;
+    }
+
+    // Obra social, nro afiliado y plan en líneas separadas (ancho completo)
+    const obraSocial = paciente.obra_social_otra
+      ? paciente.obra_social_otra
+      : paciente.obra_social_detalle?.sigla
+        ? `${paciente.obra_social_detalle.sigla} - ${paciente.obra_social_detalle.nombre}`
+        : paciente.obra_social_detalle?.nombre;
+    if (obraSocial) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Obra Social:', margin, yPos);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(` ${obraSocial}`, margin + pdf.getTextWidth('Obra Social: '), yPos);
+      yPos += 6;
+    }
+    if (paciente.numero_afiliado || paciente.plan) {
+      let xPos = margin;
+      if (paciente.numero_afiliado) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Nro Afiliado:', xPos, yPos);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(` ${paciente.numero_afiliado}`, xPos + pdf.getTextWidth('Nro Afiliado: '), yPos);
+        xPos += pdf.getTextWidth(`Nro Afiliado: ${paciente.numero_afiliado}`) + 15;
+      }
+      if (paciente.plan) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Plan:', xPos, yPos);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(` ${paciente.plan}`, xPos + pdf.getTextWidth('Plan: '), yPos);
+      }
+      yPos += 6;
+    }
+
+    // Antecedentes y alergias (texto largo, ancho completo)
+    if (paciente.antecedentes_medicos) {
+      yPos += 2;
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Antecedentes Médicos:', margin, yPos);
+      yPos += 5;
+      pdf.setFont('helvetica', 'normal');
+      const lineas = pdf.splitTextToSize(paciente.antecedentes_medicos, contentWidth - 4);
+      for (const linea of lineas) {
+        if (yPos > pageHeight - 20) { pdf.addPage(); yPos = margin; }
+        pdf.text(linea, margin + 2, yPos);
+        yPos += 5;
+      }
+    }
+
+    if (paciente.alergias) {
+      yPos += 2;
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(180, 0, 0);
+      pdf.text('Alergias:', margin, yPos);
+      yPos += 5;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(180, 0, 0);
+      const lineas = pdf.splitTextToSize(paciente.alergias, contentWidth - 4);
+      for (const linea of lineas) {
+        if (yPos > pageHeight - 20) { pdf.addPage(); yPos = margin; }
+        pdf.text(linea, margin + 2, yPos);
+        yPos += 5;
+      }
+      pdf.setTextColor(50, 50, 50);
+    }
+
+    yPos += 8;
+  }
 
   // ============================================
   // ODONTOGRAMA (captura del componente)

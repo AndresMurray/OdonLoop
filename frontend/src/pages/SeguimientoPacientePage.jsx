@@ -10,6 +10,7 @@ import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
 import Odontograma from '../components/Odontograma';
 import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter, Smile, Download, FileDown, Pencil, Trash2 } from 'lucide-react';
+import ModalEditarPaciente from '../components/ModalEditarPaciente';
 import { getSeguimientosPorPaciente, crearSeguimiento, actualizarSeguimiento, eliminarSeguimiento } from '../api/seguimientoService';
 import { getPacienteById } from '../api/userService';
 import { getOdontograma } from '../api/odontogramaService';
@@ -43,6 +44,9 @@ const SeguimientoPacientePage = () => {
 
   // Editar seguimiento
   const [editandoSeguimiento, setEditandoSeguimiento] = useState(null);
+  
+  // Modal editar paciente
+  const [mostrarEditarPaciente, setMostrarEditarPaciente] = useState(false);
   const [editFormData, setEditFormData] = useState({ descripcion: '', fecha_atencion: '' });
   const [guardandoEdicion, setGuardandoEdicion] = useState(false);
   const [editArchivosExistentes, setEditArchivosExistentes] = useState([]);
@@ -439,7 +443,9 @@ const SeguimientoPacientePage = () => {
       await exportarHistorialPacientePDF(
         pacienteId,
         paciente?.nombre_completo || 'Paciente',
-        captureWrapperRef
+        captureWrapperRef,
+        '',
+        paciente
       );
       setShowOdontogramaModal(false);
       setOdontogramaParaCaptura(null);
@@ -543,23 +549,86 @@ const SeguimientoPacientePage = () => {
           {paciente && (
             <Card className="mb-6">
               <CardContent className="p-6">
-                <div className="flex items-center gap-4">
+                <div className="flex items-start gap-4">
                   <div className="bg-emerald-100 p-4 rounded-full">
                     <User className="w-10 h-10 text-emerald-600" />
                   </div>
                   <div className="flex-grow">
                     <h2 className="text-2xl font-bold text-gray-900">{paciente.nombre_completo}</h2>
-                    <div className="flex items-center gap-6 mt-2 text-gray-600">
+                    
+                    {/* Datos de contacto */}
+                    <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
                       {paciente.dni && <span>DNI: {paciente.dni}</span>}
                       {paciente.email && <span>📧 {paciente.email}</span>}
                       {paciente.telefono && <span>📱 {paciente.telefono}</span>}
+                      {paciente.fecha_nacimiento && (
+                        <span>Nac: {new Date(paciente.fecha_nacimiento).toLocaleDateString('es-AR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        })}</span>
+                      )}
                     </div>
-                    {paciente.obra_social_detalle && (
-                      <div className="mt-2 text-gray-600">
-                        <span className="font-medium">Obra Social:</span> {paciente.obra_social_detalle.nombre}
+
+                    {/* Dirección */}
+                    {paciente.direccion && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        <span className="font-medium">Dirección:</span> {paciente.direccion}
+                      </div>
+                    )}
+
+                    {/* Obra Social */}
+                    {(paciente.obra_social_detalle || paciente.obra_social_otra) && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        <span className="font-medium">Obra Social:</span>{' '}
+                        {paciente.obra_social_otra
+                          ? paciente.obra_social_otra
+                          : paciente.obra_social_detalle?.sigla
+                            ? `${paciente.obra_social_detalle.sigla} - ${paciente.obra_social_detalle.nombre}`
+                            : paciente.obra_social_detalle?.nombre
+                        }
+                      </div>
+                    )}
+
+                    {/* Nro Afiliado y Plan */}
+                    {(paciente.numero_afiliado || paciente.plan) && (
+                      <div className="mt-1 text-sm text-gray-600 flex gap-4">
+                        {paciente.numero_afiliado && (
+                          <span><span className="font-medium">Nro Afiliado:</span> {paciente.numero_afiliado}</span>
+                        )}
+                        {paciente.plan && (
+                          <span><span className="font-medium">Plan:</span> {paciente.plan}</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Información médica */}
+                    {(paciente.antecedentes_medicos || paciente.alergias) && (
+                      <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm">
+                        {paciente.antecedentes_medicos && (
+                          <div className="mb-2">
+                            <span className="font-medium text-gray-700">Antecedentes:</span>{' '}
+                            <span className="text-gray-600">{paciente.antecedentes_medicos}</span>
+                          </div>
+                        )}
+                        {paciente.alergias && (
+                          <div>
+                            <span className="font-medium text-red-700">Alergias:</span>{' '}
+                            <span className="text-red-600">{paciente.alergias}</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMostrarEditarPaciente(true)}
+                    className="text-emerald-600 border-emerald-300 hover:bg-emerald-50 shrink-0"
+                  >
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -1287,6 +1356,17 @@ const SeguimientoPacientePage = () => {
         </div>,
         document.body
       )}
+
+      {/* Modal Editar Paciente */}
+      <ModalEditarPaciente
+        isOpen={mostrarEditarPaciente}
+        onClose={() => setMostrarEditarPaciente(false)}
+        paciente={paciente}
+        onGuardado={(pacienteActualizado) => {
+          setPaciente(pacienteActualizado);
+          setAlert({ type: 'success', message: 'Paciente actualizado exitosamente' });
+        }}
+      />
 
       <Footer />
     </div>

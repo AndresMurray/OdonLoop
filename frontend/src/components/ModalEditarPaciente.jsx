@@ -15,6 +15,8 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
     direccion: '',
     obra_social: '',
     obra_social_otra: '',
+    numero_afiliado: '',
+    plan: '',
     alergias: '',
     antecedentes_medicos: '',
   });
@@ -38,6 +40,8 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
         direccion: paciente.direccion || '',
         obra_social: paciente.obra_social_detalle?.id || '',
         obra_social_otra: paciente.obra_social_otra || '',
+        numero_afiliado: paciente.numero_afiliado || '',
+        plan: paciente.plan || '',
         alergias: paciente.alergias || '',
         antecedentes_medicos: paciente.antecedentes_medicos || '',
       });
@@ -77,6 +81,8 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
         direccion: form.direccion.trim(),
         obra_social: form.obra_social || null,
         obra_social_otra: form.obra_social_otra.trim(),
+        numero_afiliado: form.numero_afiliado.trim(),
+        plan: form.plan.trim(),
         alergias: form.alergias.trim(),
         antecedentes_medicos: form.antecedentes_medicos.trim(),
       };
@@ -208,6 +214,26 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
               />
             </div>
           )}
+
+          {/* Número de Afiliado y Plan */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">N° de Afiliado</label>
+              <Input
+                value={form.numero_afiliado}
+                onChange={(e) => handleChange('numero_afiliado', e.target.value)}
+                placeholder="Número de afiliado"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+              <Input
+                value={form.plan}
+                onChange={(e) => handleChange('plan', e.target.value)}
+                placeholder="Plan de la obra social"
+              />
+            </div>
+          </div>
 
           {/* Alergias */}
           <div>

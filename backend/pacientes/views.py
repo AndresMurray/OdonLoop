@@ -175,6 +175,10 @@ class EditarPacienteView(APIView):
                 paciente.obra_social_id = data['obra_social'] if data['obra_social'] else None
             if 'obra_social_otra' in data:
                 paciente.obra_social_otra = data['obra_social_otra'].strip() if data['obra_social_otra'] else ''
+            if 'numero_afiliado' in data:
+                paciente.numero_afiliado = data['numero_afiliado'].strip() if data['numero_afiliado'] else ''
+            if 'plan' in data:
+                paciente.plan = data['plan'].strip() if data['plan'] else ''
             if 'alergias' in data:
                 paciente.alergias = data['alergias'].strip() if data['alergias'] else ''
             if 'antecedentes_medicos' in data:
@@ -353,8 +357,8 @@ class MiPerfilPacienteView(APIView):
                 setattr(user, field, value)
             user.save()
             
-            # Datos del paciente (dni, direccion, obra_social, numero_afiliado, alergias, antecedentes_medicos)
-            paciente_fields = ['dni', 'direccion', 'obra_social', 'numero_afiliado', 'alergias', 'antecedentes_medicos']
+            # Datos del paciente (dni, direccion, obra_social, numero_afiliado, plan, alergias, antecedentes_medicos)
+            paciente_fields = ['dni', 'direccion', 'obra_social', 'numero_afiliado', 'plan', 'alergias', 'antecedentes_medicos']
             paciente_data = {k: v for k, v in request.data.items() if k in paciente_fields}
             
             # Actualizar campos del paciente

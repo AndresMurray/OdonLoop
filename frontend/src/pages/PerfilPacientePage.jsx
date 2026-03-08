@@ -39,7 +39,9 @@ const PerfilPacientePage = () => {
     dni: '',
     direccion: '',
     obra_social: '',
-    obra_social_otra: ''
+    obra_social_otra: '',
+    numero_afiliado: '',
+    plan: ''
   });
 
   useEffect(() => {
@@ -66,7 +68,9 @@ const PerfilPacientePage = () => {
         dni: perfilData.dni || '',
         direccion: perfilData.direccion || '',
         obra_social: perfilData.obra_social || '',
-        obra_social_otra: perfilData.obra_social_otra || ''
+        obra_social_otra: perfilData.obra_social_otra || '',
+        numero_afiliado: perfilData.numero_afiliado || '',
+        plan: perfilData.plan || ''
       });
 
       // Si tiene obra_social_otra, mostrar el input manual
@@ -132,7 +136,9 @@ const PerfilPacientePage = () => {
         dni: perfil.dni || '',
         direccion: perfil.direccion || '',
         obra_social: perfil.obra_social || '',
-        obra_social_otra: perfil.obra_social_otra || ''
+        obra_social_otra: perfil.obra_social_otra || '',
+        numero_afiliado: perfil.numero_afiliado || '',
+        plan: perfil.plan || ''
       });
       setMostrarOtraOS(!!perfil.obra_social_otra);
     }
@@ -445,6 +451,41 @@ const PerfilPacientePage = () => {
                           : 'Sin obra social'}
                     </span>
                   </div>
+                )}
+
+                {/* Número de Afiliado y Plan */}
+                {editando ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">N° de Afiliado</label>
+                      <Input
+                        name="numero_afiliado"
+                        value={formData.numero_afiliado}
+                        onChange={handleInputChange}
+                        placeholder="Número de afiliado"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                      <Input
+                        name="plan"
+                        value={formData.plan}
+                        onChange={handleInputChange}
+                        placeholder="Plan de la obra social"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between py-2">
+                      <span className="text-gray-600">N° de Afiliado</span>
+                      <span className="font-medium">{perfil?.numero_afiliado || 'No especificado'}</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="text-gray-600">Plan</span>
+                      <span className="font-medium">{perfil?.plan || 'No especificado'}</span>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>

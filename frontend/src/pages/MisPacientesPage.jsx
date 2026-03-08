@@ -6,7 +6,7 @@ import Input from '../components/Input';
 import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { ArrowLeft, Search, User, FileText, Smile, UserPlus, Pencil } from 'lucide-react';
+import { ArrowLeft, Search, User, FileText, Smile, UserPlus, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getMisPacientes } from '../api/seguimientoService';
 import ModalAsignarPaciente from '../components/ModalAsignarPaciente';
 import ModalEditarPaciente from '../components/ModalEditarPaciente';
@@ -20,6 +20,9 @@ const MisPacientesPage = () => {
   const [alert, setAlert] = useState({ type: '', message: '', detail: '' });
   const [modalNuevoPaciente, setModalNuevoPaciente] = useState(false);
   const [pacienteEditar, setPacienteEditar] = useState(null);
+  const [paginaActual, setPaginaActual] = useState(1);
+  
+  const ITEMS_POR_PAGINA = 5;
 
   useEffect(() => {
     cargarPacientes();
@@ -36,6 +39,8 @@ const MisPacientesPage = () => {
       );
       setPacientesFiltrados(filtered);
     }
+    // Resetear a la primera página cuando cambian los filtros
+    setPaginaActual(1);
   }, [searchTerm, pacientes]);
 
   const cargarPacientes = async () => {
@@ -72,6 +77,24 @@ const MisPacientesPage = () => {
       month: '2-digit',
       year: 'numeric'
     });
+  };
+
+  // Calcular paginación
+  const totalPaginas = Math.ceil(pacientesFiltrados.length / ITEMS_POR_PAGINA);
+  const indiceInicio = (paginaActual - 1) * ITEMS_POR_PAGINA;
+  const indiceFin = indiceInicio + ITEMS_POR_PAGINA;
+  const pacientesPaginados = pacientesFiltrados.slice(indiceInicio, indiceFin);
+
+  const irAPaginaAnterior = () => {
+    if (paginaActual > 1) {
+      setPaginaActual(paginaActual - 1);
+    }
+  };
+
+  const irAPaginaSiguiente = () => {
+    if (paginaActual < totalPaginas) {
+      setPaginaActual(paginaActual + 1);
+    }
   };
 
   return (
@@ -174,8 +197,9 @@ const MisPacientesPage = () => {
               </CardContent>
             </Card>
           ) : (
+            <>
             <div className="grid gap-4">
-              {pacientesFiltrados.map((paciente) => (
+              {pacientesPaginados.map((paciente) => (
                 <Card
                   key={paciente.id}
                   className="hover:shadow-lg transition-shadow cursor-pointer"
@@ -225,6 +249,18 @@ const MisPacientesPage = () => {
                                   ? `${paciente.obra_social_detalle.sigla} - ${paciente.obra_social_detalle.nombre}`
                                   : paciente.obra_social_detalle?.nombre
                               }
+                            </div>
+                          )}
+
+                          {/* Nro Afiliado y Plan */}
+                          {(paciente.numero_afiliado || paciente.plan) && (
+                            <div className="mt-1 text-sm text-gray-600 flex gap-4">
+                              {paciente.numero_afiliado && (
+                                <span><span className="font-medium">Nro Afiliado:</span> {paciente.numero_afiliado}</span>
+                              )}
+                              {paciente.plan && (
+                                <span><span className="font-medium">Plan:</span> {paciente.plan}</span>
+                              )}
                             </div>
                           )}
 
@@ -298,6 +334,40 @@ const MisPacientesPage = () => {
                 </Card>
               ))}
             </div>
+
+            {/* Controles de paginación */}
+            {totalPaginas > 1 && (
+              <Card className="mt-6">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      Página {paginaActual} de {totalPaginas} • Mostrando {indiceInicio + 1}-{Math.min(indiceFin, pacientesFiltrados.length)} de {pacientesFiltrados.length} paciente{pacientesFiltrados.length !== 1 ? 's' : ''}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={irAPaginaAnterior}
+                        disabled={paginaActual === 1}
+                      >
+                        <ChevronLeft className="w-4 h-4 mr-1" />
+                        Anterior
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={irAPaginaSiguiente}
+                        disabled={paginaActual === totalPaginas}
+                      >
+                        Siguiente
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            </>
           )}
 
         </div>

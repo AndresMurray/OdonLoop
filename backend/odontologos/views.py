@@ -241,6 +241,8 @@ def crear_paciente_rapido(request):
     dni = request.data.get('dni', '').strip()
     telefono = request.data.get('telefono', '').strip()
     obra_social_id = request.data.get('obra_social')
+    numero_afiliado = request.data.get('numero_afiliado', '').strip()
+    plan = request.data.get('plan', '').strip()
     
     if not all([first_name, last_name, dni]):
         return Response(
@@ -287,6 +289,8 @@ def crear_paciente_rapido(request):
             user=user,
             dni=dni,
             obra_social_id=obra_social_id if obra_social_id else None,
+            numero_afiliado=numero_afiliado or None,
+            plan=plan or None,
             creado_por_odontologo=odontologo
         )
         # También agregar la relación M2M

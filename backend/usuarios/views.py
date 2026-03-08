@@ -234,6 +234,8 @@ class UserRegistrationView(generics.CreateAPIView):
             dni = serializer.context.get('dni')
             obra_social_id = serializer.context.get('obra_social_id')
             obra_social_otra = serializer.context.get('obra_social_otra')
+            numero_afiliado = serializer.context.get('numero_afiliado')
+            plan = serializer.context.get('plan')
             
             # Obtener la obra social si se proporcionó un ID
             obra_social = None
@@ -247,7 +249,9 @@ class UserRegistrationView(generics.CreateAPIView):
                 user=user,
                 dni=dni,
                 obra_social=obra_social,
-                obra_social_otra=obra_social_otra if not obra_social else None
+                obra_social_otra=obra_social_otra if not obra_social else None,
+                numero_afiliado=numero_afiliado or None,
+                plan=plan or None
             )
             
             # Enviar email de verificación

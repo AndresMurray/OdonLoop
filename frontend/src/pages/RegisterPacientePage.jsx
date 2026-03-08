@@ -70,6 +70,8 @@ const RegisterPacientePage = () => {
       fecha_nacimiento: '',
       obra_social: '',
       obra_social_otra: '',
+      numero_afiliado: '',
+      plan: '',
       tipo_usuario: 'paciente',
     },
     validationRules
@@ -272,6 +274,25 @@ const RegisterPacientePage = () => {
                       </button>
                     </>
                   )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    label="Número de Afiliado (opcional)"
+                    name="numero_afiliado"
+                    value={values.numero_afiliado}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="Número de afiliado"
+                  />
+                  <Input
+                    label="Plan (opcional)"
+                    name="plan"
+                    value={values.plan}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="Plan de la obra social"
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
