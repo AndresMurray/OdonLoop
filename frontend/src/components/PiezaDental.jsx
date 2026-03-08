@@ -14,6 +14,7 @@ const PiezaDental = memo(({ numero, registro, onChange, tipo = 'permanente', onM
   const [menuAbierto, setMenuAbierto] = useState(null);
   const longPressTimerRef = useRef(null);
   const touchMovedRef = useRef(false);
+  const clickTimerRef = useRef(null);
 
   // Manejar long-press táctil en la cara oclusal para abrir menú de estado de pieza (mobile)
   const handleTouchStart = (e) => {
@@ -87,13 +88,40 @@ const PiezaDental = memo(({ numero, registro, onChange, tipo = 'permanente', onM
     if (onMenuOpen) onMenuOpen();
   };
 
-  // Manejar click central largo para menú de pieza completa
-  const handleCenterLongClick = (e) => {
-    if (deshabilitarMenu) {
-      // En modo marca (puente/prótesis), permitir propagación del evento
+  // Click simple en centro: abre menú de tratamiento oclusal (con debounce para distinguir de doble click)
+  const handleCenterSingleClick = (e) => {
+    if (deshabilitarMenu) return;
+    e.stopPropagation();
+
+    // Si ya hay un timer pendiente, es el segundo click del doble click → cancelar y dejar que onDoubleClick lo maneje
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
       return;
     }
 
+    clickTimerRef.current = setTimeout(() => {
+      clickTimerRef.current = null;
+      setMenuAbierto({ tipo: 'cara', cara: 'oclusal' });
+      if (onMenuOpen) onMenuOpen();
+    }, 250);
+  };
+
+  // Doble click en centro: abre menú de estado de pieza (TC, corona, etc.)
+  const handleCenterDoubleClick = (e) => {
+    if (deshabilitarMenu) return;
+    e.stopPropagation();
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = null;
+    }
+    setMenuAbierto({ tipo: 'pieza' });
+    if (onMenuOpen) onMenuOpen();
+  };
+
+  // Mantener para uso en long-press táctil (mobile)
+  const handleCenterLongClick = (e) => {
+    if (deshabilitarMenu) return;
     e.stopPropagation();
     setMenuAbierto({ tipo: 'pieza' });
     if (onMenuOpen) onMenuOpen();
@@ -165,19 +193,14 @@ const PiezaDental = memo(({ numero, registro, onChange, tipo = 'permanente', onM
             backgroundColor: getColorCara('oclusal'),
             ...(esRealizadoFiltrado('oclusal') ? { border: '3px solid #2563EB', boxSizing: 'border-box' } : {})
           }}
-          onClick={(e) => handleCaraClick(e, 'oclusal')}
-          onContextMenu={(e) => {
-            if (!deshabilitarMenu) {
-              e.preventDefault();
-              handleCenterLongClick(e);
-            }
-          }}
+          onClick={handleCenterSingleClick}
+          onDoubleClick={handleCenterDoubleClick}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onMouseEnter={() => setHoveredCara('oclusal')}
           onMouseLeave={() => setHoveredCara(null)}
-          title="Clic: Tratamiento | Clic derecho / mantener presionado: Estado de pieza"
+          title="Clic: Tratamiento oclusal | Doble clic: Estado de pieza"
         >
           {hoveredCara === 'oclusal' && estadosPieza.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold drop-shadow">

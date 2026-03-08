@@ -50,24 +50,11 @@ const TratamientoMenu = ({
   };
 
   const handleToggleEstado = (estadoValue) => {
-    setEstadosSeleccionados(prev => {
-      if (prev.includes(estadoValue)) {
-        // Si ya está seleccionado, quitarlo
-        return prev.filter(e => e !== estadoValue);
-      } else {
-        // Si no está, agregarlo
-        return [...prev, estadoValue];
-      }
-    });
-  };
-
-  const handleAplicar = () => {
-    onSelect({ estadoPieza: estadosSeleccionados });
-  };
-
-  const handleLimpiar = () => {
-    setEstadosSeleccionados([]);
-    onSelect({ estadoPieza: [] });
+    const nuevosEstados = estadosSeleccionados.includes(estadoValue)
+      ? estadosSeleccionados.filter(e => e !== estadoValue)
+      : [...estadosSeleccionados, estadoValue];
+    setEstadosSeleccionados(nuevosEstados);
+    onSelect({ estadoPieza: nuevosEstados });
   };
 
   // Menú para pieza completa
@@ -134,16 +121,13 @@ const TratamientoMenu = ({
 
           <div className="mt-4 pt-3 border-t-2 border-gray-200 flex gap-2">
             <button
-              onClick={handleLimpiar}
-              className="flex-1 px-4 py-2.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-semibold border-2 border-red-200"
+              onClick={() => {
+                setEstadosSeleccionados([]);
+                onSelect({ estadoPieza: [] });
+              }}
+              className="w-full px-4 py-2.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-semibold border-2 border-red-200"
             >
-              🗑️ Limpiar
-            </button>
-            <button
-              onClick={handleAplicar}
-              className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold"
-            >
-              ✓ Aplicar
+              🗑️ Limpiar todos
             </button>
           </div>
           </div>
@@ -219,7 +203,7 @@ const TratamientoMenu = ({
 
         <div className="mt-4 pt-3 border-t-2 border-gray-200 flex gap-2">
           <button
-            onClick={handleLimpiar}
+            onClick={() => onSelect(null)}
             className="flex-1 px-4 py-2.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-semibold border-2 border-red-200"
           >
             🗑️ Limpiar

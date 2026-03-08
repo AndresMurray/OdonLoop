@@ -359,7 +359,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
           </div>
 
           <div>
-            <h4 className="font-semibold text-gray-700 mb-2">Estados de Pieza (Clic derecho / Mantener presionado en mobile):</h4>
+            <h4 className="font-semibold text-gray-700 mb-2">Estados de Pieza (Doble clic / Mantener presionado en mobile):</h4>
             <div className="grid grid-cols-2 gap-1 text-xs">
               <div><span className="text-red-600 font-bold">✕</span> Ausente</div>
               <div><span className="text-blue-600 font-bold">✕</span> Extracción</div>
@@ -393,7 +393,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
         </div>
 
         <div className="mt-3 text-xs text-gray-600 bg-white p-2 rounded">
-          <strong>Instrucciones:</strong> Click izquierdo en cara → Tratamiento | Clic derecho (o mantener presionado en mobile) en centro → Estado | Botones superiores → Marcar puente/prótesis entre piezas
+          <strong>Instrucciones:</strong> Click en cara → Tratamiento | Clic en centro → Tratamiento oclusal | Doble clic en centro → Estado de pieza (TC, corona…) | Botones superiores → Marcar puente/prótesis entre piezas
         </div>
       </div>}
 
@@ -601,7 +601,7 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
         <div data-no-pdf className="mt-8 text-center text-xs text-gray-500 bg-gray-50 p-3 rounded">
           <p className="font-semibold">Odontograma profesional con notación FDI - Total: 52 piezas dentales</p>
           <p className="mt-1">Sistema de 5 caras por pieza: Oclusal (centro), Vestibular (arriba), Lingual (abajo), Mesial (izq), Distal (der)</p>
-          <p className="mt-1 text-blue-600">Click en cara para tratamiento | Clic derecho / mantener presionado en centro para estado de pieza</p>
+          <p className="mt-1 text-blue-600">Click en cara para tratamiento | Clic en centro para tratamiento oclusal | Doble clic en centro para estado de pieza</p>
         </div>
       )}
 
