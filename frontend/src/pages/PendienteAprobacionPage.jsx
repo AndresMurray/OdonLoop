@@ -84,7 +84,7 @@ const PendienteAprobacionPage = () => {
 
       const items1 = [
         'Los primeros 30 dias son de prueba totalmente gratis.',
-        'Finalizado el periodo de prueba, el sistema tiene un valor de $50.000 mensuales.',
+        'Finalizado el periodo de prueba, el sistema tiene un valor de $40.000 mensuales.',
       ];
       items1.forEach((item) => {
         checkPage(8);
