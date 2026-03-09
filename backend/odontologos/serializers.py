@@ -13,7 +13,8 @@ class OdontologoSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'nombre_completo', 'matricula', 'especialidad',
             'anos_experiencia', 'horario_atencion', 'fecha_alta', 'activo',
-            'estado', 'estado_display', 'fecha_aprobacion', 'fecha_suspension', 'motivo_suspension'
+            'estado', 'estado_display', 'fecha_aprobacion', 'fecha_suspension', 'motivo_suspension',
+            'terms_accepted', 'terms_accepted_date'
         ]
         read_only_fields = ['id', 'fecha_alta']
 

@@ -105,9 +105,9 @@ export const authService = {
     }
   },
 
-  async verifyEmail(token) {
+  async verifyEmail(token, extraData = {}) {
     try {
-      const response = await apiClient.post(API_ENDPOINTS.users.verifyEmail, { token });
+      const response = await apiClient.post(API_ENDPOINTS.users.verifyEmail, { token, ...extraData });
       return response;
     } catch (error) {
       if (error.error) {

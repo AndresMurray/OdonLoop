@@ -11,7 +11,7 @@ class OdontologoAdmin(admin.ModelAdmin):
     ]
     list_filter = ['estado', 'activo', 'especialidad', 'fecha_alta']
     search_fields = ['user__first_name', 'user__last_name', 'matricula', 'especialidad']
-    readonly_fields = ['fecha_alta', 'fecha_aprobacion', 'fecha_suspension']
+    readonly_fields = ['fecha_alta', 'fecha_aprobacion', 'fecha_suspension', 'terms_accepted_date']
 
     fieldsets = (
         ('Información del Usuario', {
@@ -25,6 +25,9 @@ class OdontologoAdmin(admin.ModelAdmin):
         }),
         ('Estado', {
             'fields': ('estado', 'activo', 'fecha_alta', 'fecha_aprobacion')
+        }),
+        ('T\u00e9rminos y Condiciones', {
+            'fields': ('terms_accepted', 'terms_accepted_date'),
         }),
         ('Suspensión', {
             'fields': ('fecha_suspension', 'motivo_suspension'),

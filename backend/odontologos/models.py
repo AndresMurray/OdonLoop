@@ -29,6 +29,10 @@ class Odontologo(models.Model):
         help_text='Estado actual del odontólogo en el sistema'
     )
     
+    # Términos y condiciones
+    terms_accepted = models.BooleanField(default=False, verbose_name='T\u00e9rminos aceptados')
+    terms_accepted_date = models.DateTimeField(blank=True, null=True, verbose_name='Fecha de aceptaci\u00f3n de t\u00e9rminos')
+
     # Metadata
     fecha_alta = models.DateTimeField(default=timezone.now, verbose_name='Fecha de alta')
     fecha_aprobacion = models.DateTimeField(blank=True, null=True, verbose_name='Fecha de aprobación')

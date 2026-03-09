@@ -262,48 +262,11 @@ class UserRegistrationView(generics.CreateAPIView):
             from odontologos.models import Odontologo
             Odontologo.objects.create(user=user)
             
-            # Enviar email de verificación al odontólogo
+            # Enviar email de verificación
             if user.email:
                 self._send_verification_email(user, is_odontologo=True)
-            
-            # Notificar al admin del nuevo registro
-            self._notificar_admin_nuevo_odontologo(user)
         
         return user
-    
-    def _notificar_admin_nuevo_odontologo(self, user):
-        """Notifica al admin cuando un nuevo odontólogo se registra en el sistema."""
-        try:
-            from django.core.mail import EmailMessage as DjangoEmailMessage
-            admin_email = 'amurrayroppel@gmail.com'
-            nombre_completo = f'{user.first_name} {user.last_name}'.strip() or user.email
-            from django.utils import timezone as tz
-            fecha_registro = tz.localtime(tz.now()).strftime('%d/%m/%Y %H:%M')
-
-            logger.info(f'Notificando al admin sobre nuevo odontólogo: {user.email}')
-            email = DjangoEmailMessage(
-                subject=f'Nuevo odontólogo registrado: {nombre_completo}',
-                    body=(
-                        f'Hola Andrés,\n\n'
-                        f'Se ha registrado un nuevo odontólogo en OdonLoop y está pendiente de verificación:\n\n'
-                        f'Nombre: {nombre_completo}\n'
-                        f'Email: {user.email}\n'
-                        f'Fecha de registro: {fecha_registro}\n\n'
-                        f'Ingresá a OdonLoop para revisarlo y aprobarlo:\n'
-                        f'{getattr(settings, "FRONTEND_URL", "https://odonloop.com")}\n\n'
-                        f'Saludos,\n'
-                        f'OdonLoop\n\n'
-                        f'---\n'
-                        f'Este es un mensaje automático.'
-                    ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[admin_email],
-            )
-            email.send(fail_silently=True)
-            logger.info(f'Notificación al admin enviada exitosamente')
-        except Exception as e:
-            logger.error(f'Error al notificar al admin sobre nuevo odontólogo: {str(e)}')
-
     
     def _send_verification_email(self, user, is_odontologo=False):
         """Enviar email de verificación con token"""
@@ -316,7 +279,10 @@ class UserRegistrationView(generics.CreateAPIView):
             
             # URL de activación
             frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
-            activation_link = f"{frontend_url}/activar-cuenta?token={token.token}"
+            if is_odontologo:
+                activation_link = f"{frontend_url}/activar-cuenta?token={token.token}&tipo=odontologo"
+            else:
+                activation_link = f"{frontend_url}/activar-cuenta?token={token.token}"
             
             logger.info(f'Generando email de verificación para {user.email}...')
             logger.info(f'Token generado: {token.token}')
@@ -415,6 +381,16 @@ class VerifyEmailView(APIView):
             if user.tipo_usuario == 'odontologo':
                 # Odontólogos NO deben autenticarse hasta ser aprobados
                 response_data['message'] = 'Email verificado exitosamente. Tu cuenta está ahora en proceso de aprobación. Te notificaremos cuando sea aprobada.'
+                # Guardar aceptación de términos y condiciones
+                terms_accepted = request.data.get('terms_accepted', False)
+                if terms_accepted:
+                    try:
+                        odontologo = user.perfil_odontologo
+                        odontologo.terms_accepted = True
+                        odontologo.terms_accepted_date = timezone.now()
+                        odontologo.save(update_fields=['terms_accepted', 'terms_accepted_date'])
+                    except Exception:
+                        pass  # No bloquear la verificación si falla el guardado de términos
             else:
                 # Pacientes y otros usuarios pueden iniciar sesión inmediatamente
                 user.is_active = True
