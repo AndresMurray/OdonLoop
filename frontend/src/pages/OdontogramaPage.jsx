@@ -24,6 +24,7 @@ const OdontogramaPage = () => {
   
   const [odontogramaData, setOdontogramaData] = useState(null);
   const [odontogramaId, setOdontogramaId] = useState(null);
+  const odontogramaIdRef = useRef(null);
   const [totalOdontogramas, setTotalOdontogramas] = useState(0);
   // Descripción general editable
   const [descripcion, setDescripcion] = useState('');
@@ -54,6 +55,7 @@ const OdontogramaPage = () => {
       const data = await getOdontograma(pacienteId, odontogramaIdParam);
       setOdontogramaData(data);
       setOdontogramaId(data.odontograma_id);
+      odontogramaIdRef.current = data.odontograma_id;
       setTotalOdontogramas(data.total_odontogramas || 0);
       setDescripcion(data.descripcion_general || '');
     } catch (error) {
@@ -73,6 +75,7 @@ const OdontogramaPage = () => {
       const data = await crearOdontograma(pacienteId);
       setOdontogramaData(data);
       setOdontogramaId(data.odontograma_id);
+      odontogramaIdRef.current = data.odontograma_id;
       setTotalOdontogramas(data.total_odontogramas || 0);
       setDescripcion(data.descripcion_general || '');
       setAlert({
@@ -187,7 +190,7 @@ const OdontogramaPage = () => {
     
     try {
       setGuardando(true);
-      await guardarRegistroDental(parseInt(pacienteId), parseInt(numeroPieza), nuevoRegistro, odontogramaId);
+      await guardarRegistroDental(parseInt(pacienteId), parseInt(numeroPieza), nuevoRegistro, odontogramaIdRef.current);
       setAlert({
         type: 'success',
         message: 'Cambio guardado automáticamente'
@@ -202,7 +205,7 @@ const OdontogramaPage = () => {
     } finally {
       setGuardando(false);
     }
-  }, [pacienteId, odontogramaId]);
+  }, [pacienteId]);
 
   // Navegar a la página de nuevo seguimiento
   const handleNuevoSeguimiento = useCallback(() => {
