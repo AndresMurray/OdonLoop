@@ -12,6 +12,7 @@ import Pagination from '../components/Pagination';
 import ConfirmModal from '../components/ConfirmModal';
 import LoadingModal from '../components/LoadingModal';
 import TurnoCalendar from '../components/TurnoCalendar';
+import { getToday } from '../utils/dateUtils';
 
 // Normalizar texto: minúsculas + sin tildes
 const normalizar = (str) =>
