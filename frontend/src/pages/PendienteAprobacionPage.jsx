@@ -348,7 +348,7 @@ const PendienteAprobacionPage = () => {
                         </li>
                         <li className="flex items-start gap-2">
                           <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                          <span>Finalizado el período de prueba, el sistema tiene un valor de <strong>$50.000 mensuales</strong>.</span>
+                          <span>Finalizado el período de prueba, el sistema tiene un valor de <strong>$40.000 mensuales</strong>.</span>
                         </li>
                       </ul>
                     </CardContent>
