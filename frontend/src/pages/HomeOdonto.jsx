@@ -122,13 +122,9 @@ const HomeOdonto = () => {
 
       if (!cumpleEstado) return false;
 
-      const fechaTurno = new Date(t.fecha_hora);
-      const fechaFiltro = new Date(fechaSeleccionada + 'T00:00:00');
-
-      // Comparar solo la fecha (día/mes/año) en UTC
-      return fechaTurno.getUTCFullYear() === fechaFiltro.getUTCFullYear() &&
-        fechaTurno.getUTCMonth() === fechaFiltro.getUTCMonth() &&
-        fechaTurno.getUTCDate() === fechaFiltro.getUTCDate();
+      // Comparar directamente el string de fecha (el backend envía hora local sin timezone)
+      const fechaTurno = t.fecha_hora.split('T')[0];
+      return fechaTurno === fechaSeleccionada;
     });
   };
 
