@@ -32,9 +32,14 @@ const HomePaciente = () => {
     try {
       setLoading(true);
       const turnos = await getMisTurnos();
-      // Filtrar solo turnos reservados o confirmados y ordenar por fecha
+      const ahora = new Date();
+      // Filtrar solo turnos reservados o confirmados que aún no han pasado
       const turnosPendientes = turnos
-        .filter(t => t.estado === 'reservado' || t.estado === 'confirmado')
+        .filter(t => {
+          if (t.estado !== 'reservado' && t.estado !== 'confirmado') return false;
+          const fechaTurno = new Date(t.fecha_hora);
+          return fechaTurno > ahora;
+        })
         .sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora));
       
       if (turnosPendientes.length > 0) {

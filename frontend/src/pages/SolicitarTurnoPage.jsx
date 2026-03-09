@@ -242,17 +242,17 @@ const SolicitarTurnoPage = () => {
   };
 
   const getTurnosOrganizados = () => {
-    const hoy = getToday();
+    const ahora = new Date();
 
     if (filtroMisTurnos === 'futuros') {
       return misTurnos.filter(t => {
-        const [fechaStr] = t.fecha_hora.split('T');
-        return fechaStr >= hoy && (t.estado === 'reservado' || t.estado === 'confirmado');
+        const fechaTurno = new Date(t.fecha_hora);
+        return fechaTurno > ahora && (t.estado === 'reservado' || t.estado === 'confirmado');
       }).sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora));
     } else {
       return misTurnos.filter(t => {
-        const [fechaStr] = t.fecha_hora.split('T');
-        return fechaStr < hoy || t.estado === 'completado' || t.estado === 'cancelado';
+        const fechaTurno = new Date(t.fecha_hora);
+        return fechaTurno <= ahora || t.estado === 'completado' || t.estado === 'cancelado';
       }).sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
     }
   };
