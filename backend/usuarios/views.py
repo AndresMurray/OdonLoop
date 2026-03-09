@@ -262,6 +262,42 @@ class UserRegistrationView(generics.CreateAPIView):
             from odontologos.models import Odontologo
             Odontologo.objects.create(user=user)
             
+            # Notificar al admin sobre nuevo odontólogo registrado
+            try:
+                from django.core.mail import EmailMessage as DjangoEmailMessage
+                
+                admin_email = 'amurrayroppel@gmail.com'
+                nombre_completo = f'{user.first_name} {user.last_name}'.strip() or user.email
+                
+                from django.utils import timezone as tz
+                fecha_registro = tz.localtime(tz.now()).strftime('%d/%m/%Y %H:%M')
+                
+                logger.info(f'Notificando al admin sobre nuevo odontólogo: {user.email}')
+                
+                email = DjangoEmailMessage(
+                    subject=f'Nuevo odontólogo registrado: {nombre_completo}',
+                    body=(
+                        f'Hola Andrés,\n\n'
+                        f'Se ha registrado un nuevo odontólogo en OdonLoop y está pendiente de verificación:\n\n'
+                        f'Nombre: {nombre_completo}\n'
+                        f'Email: {user.email}\n'
+                        f'Fecha de registro: {fecha_registro}\n\n'
+                        f'Ingresá a OdonLoop para revisarlo y aprobarlo.\n\n'
+                        f'{getattr(settings, "FRONTEND_URL", "https://odonloop.com")}\n\n'
+                        f'Saludos,\n'
+                        f'OdonLoop\n\n'
+                        f'---\n'
+                        f'Este es un mensaje automático.'
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[admin_email],
+                )
+                email.send(fail_silently=True)
+                logger.info(f'Notificación al admin enviada exitosamente')
+                
+            except Exception as e:
+                logger.error(f'Error al notificar al admin sobre nuevo odontólogo: {str(e)}')
+            
             # Enviar email de verificación
             if user.email:
                 self._send_verification_email(user, is_odontologo=True)
