@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     PacienteViewSet, ObraSocialViewSet, 
     MisPacientesView, SeguimientoViewSet, MiPerfilPacienteView,
-    OdontogramaView, HistorialPiezaDentalView, RegistroDentalViewSet,
+    OdontogramaView, OdontogramaListView, HistorialPiezaDentalView, RegistroDentalViewSet,
     DescargarArchivoView, EditarPacienteView
 )
 
@@ -18,6 +18,8 @@ urlpatterns = [
     path('mis-pacientes/<int:paciente_id>/editar/', EditarPacienteView.as_view(), name='editar-paciente'),
     path('mi-perfil/', MiPerfilPacienteView.as_view(), name='mi-perfil-paciente'),
     path('odontograma/<int:paciente_id>/', OdontogramaView.as_view(), name='odontograma'),
+    path('odontograma/<int:paciente_id>/<int:odontograma_id>/', OdontogramaView.as_view(), name='odontograma-detalle'),
+    path('odontograma/<int:paciente_id>/lista/', OdontogramaListView.as_view(), name='odontograma-lista'),
     path('odontograma/<int:paciente_id>/pieza/<int:pieza>/', HistorialPiezaDentalView.as_view(), name='historial-pieza'),
     path('descargar-archivo/', DescargarArchivoView.as_view(), name='descargar-archivo'),
     path('', include(router.urls)),

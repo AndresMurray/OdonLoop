@@ -9,11 +9,12 @@ from django.http import HttpResponse
 import requests
 import mimetypes
 import os
-from .models import Paciente, ObraSocial, Seguimiento, RegistroDental
+from .models import Paciente, ObraSocial, Seguimiento, RegistroDental, Odontograma
 from .serializers import (
     PacienteSerializer, PacienteCreateSerializer, ObraSocialSerializer,
     SeguimientoSerializer, SeguimientoCreateSerializer, MisPacientesSerializer,
-    PacientePerfilSerializer, RegistroDentalSerializer, RegistroDentalCreateUpdateSerializer
+    PacientePerfilSerializer, RegistroDentalSerializer, RegistroDentalCreateUpdateSerializer,
+    OdontogramaSerializer, OdontogramaListSerializer
 )
 from turnos.models import Turno
 
@@ -390,120 +391,224 @@ class MiPerfilPacienteView(APIView):
 
 
 class OdontogramaView(APIView):
-    """Vista para obtener el odontograma completo de un paciente"""
+    """Vista para obtener/crear odontogramas de un paciente.
+    Soporta múltiples odontogramas por paciente."""
     permission_classes = [IsAuthenticated]
-    
-    def get(self, request, paciente_id):
-        """Obtener el resumen del odontograma (último registro por pieza)"""
+
+    def _get_paciente(self, paciente_id):
         try:
-            # Verificar que el usuario sea odontólogo
-            if not hasattr(request.user, 'perfil_odontologo'):
-                return Response(
-                    {'error': 'Solo odontólogos pueden acceder'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            
-            # Verificar que el paciente existe
+            return Paciente.objects.get(id=paciente_id)
+        except Paciente.DoesNotExist:
+            return None
+
+    def _build_odontograma_response(self, odontograma_obj, paciente):
+        """Construye la respuesta del odontograma con 52 piezas"""
+        piezas = [p[0] for p in RegistroDental.PIEZAS_DENTALES]
+        registros_map = {}
+        if odontograma_obj:
+            for reg in odontograma_obj.registros_dentales.all():
+                registros_map[reg.pieza_dental] = reg
+
+        odontograma_list = []
+        for pieza in piezas:
+            registro = registros_map.get(pieza)
+            pieza_data = {
+                'pieza_dental': pieza,
+                'pieza_nombre': dict(RegistroDental.PIEZAS_DENTALES).get(pieza, f'Pieza {pieza}'),
+                'tipo_denticion': 'temporal' if pieza in [51, 52, 53, 54, 55, 61, 62, 63, 64, 65, 71, 72, 73, 74, 75, 81, 82, 83, 84, 85] else 'permanente',
+                'registro': RegistroDentalSerializer(registro).data if registro else None
+            }
+            odontograma_list.append(pieza_data)
+
+        paciente_data = {
+            'id': paciente.id,
+            'nombre_completo': paciente.get_nombre_completo(),
+            'dni': paciente.dni
+        }
+
+        total_odontogramas = Odontograma.objects.filter(paciente=paciente).count()
+
+        return {
+            'paciente': paciente_data,
+            'odontograma_id': odontograma_obj.id if odontograma_obj else None,
+            'odontograma': odontograma_list,
+            'descripcion_general': odontograma_obj.descripcion_general or '' if odontograma_obj else '',
+            'fecha_creacion': odontograma_obj.fecha_creacion if odontograma_obj else None,
+            'total_odontogramas': total_odontogramas,
+        }
+
+    def get(self, request, paciente_id, odontograma_id=None):
+        """Obtener un odontograma. Si no se especifica ID, retorna el último."""
+        if not hasattr(request.user, 'perfil_odontologo'):
+            return Response(
+                {'error': 'Solo odontólogos pueden acceder'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        paciente = self._get_paciente(paciente_id)
+        if not paciente:
+            return Response(
+                {'error': 'Paciente no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if odontograma_id:
             try:
-                paciente = Paciente.objects.get(id=paciente_id)
-            except Paciente.DoesNotExist:
+                odontograma_obj = Odontograma.objects.get(id=odontograma_id, paciente=paciente)
+            except Odontograma.DoesNotExist:
                 return Response(
-                    {'error': 'Paciente no encontrado'},
+                    {'error': 'Odontograma no encontrado'},
                     status=status.HTTP_404_NOT_FOUND
                 )
-            
-            # Obtener todas las piezas dentales definidas
-            piezas = [p[0] for p in RegistroDental.PIEZAS_DENTALES]
-            
-            # Obtener descripción general del odontograma (del primer registro que la tenga)
-            descripcion_general = ''
-            primer_registro = RegistroDental.objects.filter(paciente=paciente).first()
-            if primer_registro and primer_registro.descripcion_general:
-                descripcion_general = primer_registro.descripcion_general
-            
-            # Construir el odontograma con el último registro de cada pieza
-            odontograma = []
-            for pieza in piezas:
-                ultimo_registro = RegistroDental.objects.filter(
+        else:
+            # Obtener el último odontograma (ordenado por -fecha_creacion)
+            odontograma_obj = Odontograma.objects.filter(paciente=paciente).first()
+            # Si no existe ninguno, crear uno automáticamente
+            if not odontograma_obj:
+                odontograma_obj = Odontograma.objects.create(
                     paciente=paciente,
-                    pieza_dental=pieza
-                ).first()  # Ya ordenado por -fecha_actualizacion
-                
-                # Crear objeto con estructura esperada por el frontend
-                pieza_data = {
-                    'pieza_dental': pieza,
-                    'pieza_nombre': dict(RegistroDental.PIEZAS_DENTALES).get(pieza, f'Pieza {pieza}'),
-                    'tipo_denticion': 'temporal' if pieza in [51, 52, 53, 54, 55, 61, 62, 63, 64, 65, 71, 72, 73, 74, 75, 81, 82, 83, 84, 85] else 'permanente',
-                    'registro': RegistroDentalSerializer(ultimo_registro).data if ultimo_registro else None
-                }
-                odontograma.append(pieza_data)
-            
-            # Obtener datos del paciente
-            paciente_data = {
+                    actualizado_por=request.user.perfil_odontologo,
+                )
+
+        return Response(
+            self._build_odontograma_response(odontograma_obj, paciente),
+            status=status.HTTP_200_OK
+        )
+
+    def post(self, request, paciente_id):
+        """Crear un nuevo odontograma vacío para el paciente"""
+        if not hasattr(request.user, 'perfil_odontologo'):
+            return Response(
+                {'error': 'Solo odontólogos pueden acceder'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        paciente = self._get_paciente(paciente_id)
+        if not paciente:
+            return Response(
+                {'error': 'Paciente no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        odontologo = request.user.perfil_odontologo
+        odontograma_obj = Odontograma.objects.create(
+            paciente=paciente,
+            actualizado_por=odontologo,
+        )
+
+        return Response(
+            self._build_odontograma_response(odontograma_obj, paciente),
+            status=status.HTTP_201_CREATED
+        )
+
+    def patch(self, request, paciente_id, odontograma_id=None):
+        """Actualizar la descripción general de un odontograma"""
+        if not hasattr(request.user, 'perfil_odontologo'):
+            return Response(
+                {'error': 'Solo odontólogos pueden acceder'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        paciente = self._get_paciente(paciente_id)
+        if not paciente:
+            return Response(
+                {'error': 'Paciente no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if odontograma_id:
+            try:
+                odontograma_obj = Odontograma.objects.get(id=odontograma_id, paciente=paciente)
+            except Odontograma.DoesNotExist:
+                return Response(
+                    {'error': 'Odontograma no encontrado'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        else:
+            odontograma_obj = Odontograma.objects.filter(paciente=paciente).first()
+
+        if not odontograma_obj:
+            # Crear uno si no existe
+            odontograma_obj = Odontograma.objects.create(
+                paciente=paciente,
+                actualizado_por=request.user.perfil_odontologo,
+            )
+
+        descripcion_general = request.data.get('descripcion_general', '')
+        odontograma_obj.descripcion_general = descripcion_general
+        odontograma_obj.save()
+
+        return Response({
+            'success': True,
+            'odontograma_id': odontograma_obj.id,
+            'descripcion_general': descripcion_general,
+        }, status=status.HTTP_200_OK)
+
+    def delete(self, request, paciente_id, odontograma_id=None):
+        """Eliminar un odontograma específico"""
+        if not hasattr(request.user, 'perfil_odontologo'):
+            return Response(
+                {'error': 'Solo odontólogos pueden acceder'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if not odontograma_id:
+            return Response(
+                {'error': 'Debe especificar el ID del odontograma a eliminar'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        paciente = self._get_paciente(paciente_id)
+        if not paciente:
+            return Response(
+                {'error': 'Paciente no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            odontograma_obj = Odontograma.objects.get(id=odontograma_id, paciente=paciente)
+        except Odontograma.DoesNotExist:
+            return Response(
+                {'error': 'Odontograma no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        odontograma_obj.delete()
+
+        return Response({
+            'success': True,
+            'message': 'Odontograma eliminado correctamente',
+        }, status=status.HTTP_200_OK)
+
+
+class OdontogramaListView(APIView):
+    """Vista para listar todos los odontogramas de un paciente"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, paciente_id):
+        if not hasattr(request.user, 'perfil_odontologo'):
+            return Response(
+                {'error': 'Solo odontólogos pueden acceder'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        try:
+            paciente = Paciente.objects.get(id=paciente_id)
+        except Paciente.DoesNotExist:
+            return Response(
+                {'error': 'Paciente no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        odontogramas = Odontograma.objects.filter(paciente=paciente)
+        serializer = OdontogramaListSerializer(odontogramas, many=True)
+        return Response({
+            'paciente': {
                 'id': paciente.id,
                 'nombre_completo': paciente.get_nombre_completo(),
-                'dni': paciente.dni
-            }
-            
-            return Response({
-                'paciente': paciente_data,
-                'odontograma': odontograma,
-                'descripcion_general': descripcion_general
-            }, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    def patch(self, request, paciente_id):
-        """Actualizar solo la descripción general del odontograma"""
-        try:
-            # Verificar que el usuario sea odontólogo
-            if not hasattr(request.user, 'perfil_odontologo'):
-                return Response(
-                    {'error': 'Solo odontólogos pueden acceder'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            
-            # Verificar que el paciente existe
-            try:
-                paciente = Paciente.objects.get(id=paciente_id)
-            except Paciente.DoesNotExist:
-                return Response(
-                    {'error': 'Paciente no encontrado'},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            descripcion_general = request.data.get('descripcion_general', '')
-            odontologo = request.user.perfil_odontologo
-            
-            # Actualizar la descripción en todos los registros existentes del paciente
-            registros_actualizados = RegistroDental.objects.filter(paciente=paciente).update(
-                descripcion_general=descripcion_general
-            )
-            
-            # Si no hay registros, crear uno dummy solo para guardar la descripción
-            if registros_actualizados == 0:
-                RegistroDental.objects.create(
-                    paciente=paciente,
-                    pieza_dental=11,  # Pieza por defecto
-                    descripcion_general=descripcion_general,
-                    actualizado_por=odontologo
-                )
-            
-            return Response({
-                'success': True,
-                'descripcion_general': descripcion_general,
-                'registros_actualizados': registros_actualizados
-            }, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            },
+            'odontogramas': serializer.data,
+        }, status=status.HTTP_200_OK)
 
 
 class HistorialPiezaDentalView(APIView):
@@ -536,7 +641,7 @@ class HistorialPiezaDentalView(APIView):
             registros = RegistroDental.objects.filter(
                 paciente=paciente,
                 pieza_dental=pieza
-            ).select_related('odontologo__user')
+            ).select_related('actualizado_por__user')
             
             serializer = RegistroDentalSerializer(registros, many=True)
             
@@ -575,24 +680,41 @@ class RegistroDentalViewSet(viewsets.ModelViewSet):
         return RegistroDentalSerializer
     
     def create(self, request, *args, **kwargs):
-        """Crear o actualizar registro dental (upsert behavior)"""
+        """Crear o actualizar registro dental (upsert por odontograma + pieza)"""
         paciente_id = request.data.get('paciente')
         pieza_dental = request.data.get('pieza_dental')
-        
-        # Verificar si ya existe un registro para esta pieza
+        odontograma_id = request.data.get('odontograma')
+
+        # Si no se envía odontograma_id, usar el último del paciente o crear uno
+        if not odontograma_id:
+            odontograma_obj = Odontograma.objects.filter(paciente_id=paciente_id).first()
+            if not odontograma_obj:
+                odontograma_obj = Odontograma.objects.create(
+                    paciente_id=paciente_id,
+                    actualizado_por=request.user.perfil_odontologo,
+                )
+            odontograma_id = odontograma_obj.id
+
+        # Verificar si ya existe un registro para esta pieza en este odontograma
         try:
             registro = RegistroDental.objects.get(
-                paciente_id=paciente_id,
+                odontograma_id=odontograma_id,
                 pieza_dental=pieza_dental
             )
-            # Si existe, hacer update
-            serializer = self.get_serializer(registro, data=request.data, partial=False)
+            # Merge request data with odontograma_id
+            data = request.data.copy()
+            data['odontograma'] = odontograma_id
+            serializer = self.get_serializer(registro, data=data, partial=False)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         except RegistroDental.DoesNotExist:
-            # Si no existe, crear nuevo
-            return super().create(request, *args, **kwargs)
+            data = request.data.copy()
+            data['odontograma'] = odontograma_id
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class DescargarArchivoView(APIView):

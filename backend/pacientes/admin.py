@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Paciente, ObraSocial, Seguimiento, SeguimientoArchivo, RegistroDental
+from .models import Paciente, ObraSocial, Seguimiento, SeguimientoArchivo, RegistroDental, Odontograma
 
 
 class SeguimientoArchivoInline(admin.TabularInline):
@@ -70,6 +70,14 @@ class PacienteAdmin(admin.ModelAdmin):
     def get_last_name(self, obj):
         return obj.user.last_name
     get_last_name.short_description = 'Apellido'
+
+
+@admin.register(Odontograma)
+class OdontogramaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'paciente', 'actualizado_por', 'fecha_creacion', 'fecha_actualizacion')
+    list_filter = ('fecha_creacion',)
+    search_fields = ('paciente__user__first_name', 'paciente__user__last_name')
+    readonly_fields = ('fecha_creacion', 'fecha_actualizacion')
 
 
 @admin.register(RegistroDental)

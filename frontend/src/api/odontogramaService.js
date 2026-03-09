@@ -4,11 +4,30 @@ import API_BASE_URL from './config';
 const apiClient = new ApiClient(API_BASE_URL);
 
 /**
- * Obtener el odontograma completo de un paciente (52 piezas)
- * Devuelve todas las piezas con sus registros
+ * Obtener un odontograma de un paciente.
+ * Si se pasa odontogramaId, obtiene ese específico; si no, el último.
  */
-export const getOdontograma = async (pacienteId) => {
-  const response = await apiClient.get(`/api/pacientes/odontograma/${pacienteId}/`);
+export const getOdontograma = async (pacienteId, odontogramaId = null) => {
+  const url = odontogramaId
+    ? `/api/pacientes/odontograma/${pacienteId}/${odontogramaId}/`
+    : `/api/pacientes/odontograma/${pacienteId}/`;
+  const response = await apiClient.get(url);
+  return response;
+};
+
+/**
+ * Crear un nuevo odontograma vacío para el paciente
+ */
+export const crearOdontograma = async (pacienteId) => {
+  const response = await apiClient.post(`/api/pacientes/odontograma/${pacienteId}/`);
+  return response;
+};
+
+/**
+ * Listar todos los odontogramas de un paciente
+ */
+export const listarOdontogramas = async (pacienteId) => {
+  const response = await apiClient.get(`/api/pacientes/odontograma/${pacienteId}/lista/`);
   return response;
 };
 
@@ -28,22 +47,22 @@ export const getRegistroPieza = async (pacienteId, pieza) => {
 /**
  * Crear o actualizar un registro dental
  */
-export const guardarRegistroDental = async (pacienteId, piezaDental, registro) => {
+export const guardarRegistroDental = async (pacienteId, piezaDental, registro, odontogramaId = null) => {
   try {
     const data = {
       paciente: pacienteId,
+      odontograma: odontogramaId,
       pieza_dental: piezaDental,
       cara_vestibular: registro.cara_vestibular || null,
       cara_lingual: registro.cara_lingual || null,
       cara_mesial: registro.cara_mesial || null,
       cara_distal: registro.cara_distal || null,
       cara_oclusal: registro.cara_oclusal || null,
-      estado_pieza: registro.estado_pieza || [],  // Array de estados
-      puente: registro.puente || null,  // Info de puente
+      estado_pieza: registro.estado_pieza || [],
+      puente: registro.puente || null,
       observaciones: registro.observaciones || ''
     };
     
-    // Si existe un registro, actualizamos; si no, creamos
     if (registro.id) {
       const response = await apiClient.patch(`/api/pacientes/registros-dentales/${registro.id}/`, data);
       return response;
@@ -71,11 +90,14 @@ export const getRegistrosDentales = async (pacienteId) => {
 };
 
 /**
- * Guardar la descripción general del odontograma del paciente
+ * Guardar la descripción general de un odontograma
  */
-export const guardarDescripcionGeneral = async (pacienteId, descripcion) => {
+export const guardarDescripcionGeneral = async (pacienteId, descripcion, odontogramaId = null) => {
   try {
-    const response = await apiClient.patch(`/api/pacientes/odontograma/${pacienteId}/`, {
+    const url = odontogramaId
+      ? `/api/pacientes/odontograma/${pacienteId}/${odontogramaId}/`
+      : `/api/pacientes/odontograma/${pacienteId}/`;
+    const response = await apiClient.patch(url, {
       descripcion_general: descripcion
     });
     return response;
@@ -85,8 +107,19 @@ export const guardarDescripcionGeneral = async (pacienteId, descripcion) => {
   }
 };
 
+/**
+ * Eliminar un odontograma
+ */
+export const eliminarOdontograma = async (pacienteId, odontogramaId) => {
+  const response = await apiClient.delete(`/api/pacientes/odontograma/${pacienteId}/${odontogramaId}/`);
+  return response;
+};
+
 export default {
   getOdontograma,
+  crearOdontograma,
+  listarOdontogramas,
+  eliminarOdontograma,
   getRegistroPieza,
   guardarRegistroDental,
   getRegistrosDentales,

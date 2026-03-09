@@ -170,6 +170,44 @@ class SeguimientoArchivo(models.Model):
         return f"{self.get_tipo_display()} - {self.nombre_original or 'Sin nombre'}"
 
 
+class Odontograma(models.Model):
+    """Modelo que agrupa un conjunto de registros dentales (un odontograma completo)"""
+    paciente = models.ForeignKey(
+        'Paciente',
+        on_delete=models.CASCADE,
+        related_name='odontogramas',
+        verbose_name='Paciente'
+    )
+    descripcion_general = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name='Descripción general del odontograma'
+    )
+    actualizado_por = models.ForeignKey(
+        'odontologos.Odontologo',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='odontogramas_actualizados',
+        verbose_name='Actualizado por'
+    )
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Fecha de Creación'
+    )
+    fecha_actualizacion = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Última Actualización'
+    )
+
+    class Meta:
+        verbose_name = 'Odontograma'
+        verbose_name_plural = 'Odontogramas'
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"Odontograma #{self.id} - {self.paciente.get_nombre_completo()} ({self.fecha_creacion.strftime('%d/%m/%Y') if self.fecha_creacion else 'Sin fecha'})"
+
+
 class RegistroDental(models.Model):
     """Modelo para el registro de cada pieza dental del paciente (Odontograma Profesional)"""
     
@@ -275,6 +313,14 @@ class RegistroDental(models.Model):
         related_name='registros_dentales',
         verbose_name='Paciente'
     )
+    odontograma = models.ForeignKey(
+        Odontograma,
+        on_delete=models.CASCADE,
+        related_name='registros_dentales',
+        verbose_name='Odontograma',
+        null=True,
+        blank=True,
+    )
     pieza_dental = models.IntegerField(
         choices=PIEZAS_DENTALES,
         verbose_name='Pieza Dental'
@@ -339,12 +385,6 @@ class RegistroDental(models.Model):
         verbose_name='Actualizado por'
     )
 
-    # Descripción general del odontograma del paciente (nota global editable)
-    descripcion_general = models.TextField(
-        null=True,
-        blank=True,
-        verbose_name='Descripción general del odontograma'
-    )
     fecha_actualizacion = models.DateTimeField(
         auto_now=True,
         verbose_name='Última Actualización'
@@ -354,7 +394,7 @@ class RegistroDental(models.Model):
         verbose_name = 'Registro Dental'
         verbose_name_plural = 'Registros Dentales'
         ordering = ['pieza_dental']
-        unique_together = [['paciente', 'pieza_dental']]
+        unique_together = [['odontograma', 'pieza_dental']]
     
     def __str__(self):
         return f"Pieza {self.pieza_dental} - {self.paciente.get_nombre_completo()}"

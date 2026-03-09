@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Paciente, ObraSocial, Seguimiento, SeguimientoArchivo, RegistroDental
+from .models import Paciente, ObraSocial, Seguimiento, SeguimientoArchivo, RegistroDental, Odontograma
 from django.contrib.auth import get_user_model
 from usuarios.serializers import UserSerializer
 
@@ -169,11 +169,11 @@ class RegistroDentalSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistroDental
         fields = [
-            'id', 'paciente', 'actualizado_por', 'odontologo_nombre',
+            'id', 'paciente', 'odontograma', 'actualizado_por', 'odontologo_nombre',
             'pieza_dental', 'pieza_nombre',
             'cara_vestibular', 'cara_lingual', 'cara_mesial', 'cara_distal', 'cara_oclusal',
             'estado_pieza', 'puente',
-            'observaciones', 'fecha_actualizacion', 'descripcion_general'
+            'observaciones', 'fecha_actualizacion'
         ]
         read_only_fields = ['id', 'actualizado_por', 'fecha_actualizacion']
 
@@ -187,17 +187,16 @@ class RegistroDentalCreateUpdateSerializer(serializers.ModelSerializer):
     cara_mesial = serializers.JSONField(required=False, allow_null=True)
     cara_distal = serializers.JSONField(required=False, allow_null=True)
     cara_oclusal = serializers.JSONField(required=False, allow_null=True)
-    estado_pieza = serializers.JSONField(required=False, allow_null=True)  # Ahora es array
-    puente = serializers.JSONField(required=False, allow_null=True)  # Info de puente
+    estado_pieza = serializers.JSONField(required=False, allow_null=True)
+    puente = serializers.JSONField(required=False, allow_null=True)
     observaciones = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    descripcion_general = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     
     class Meta:
         model = RegistroDental
         fields = [
-            'paciente', 'pieza_dental',
+            'paciente', 'odontograma', 'pieza_dental',
             'cara_vestibular', 'cara_lingual', 'cara_mesial', 'cara_distal', 'cara_oclusal',
-            'estado_pieza', 'puente', 'observaciones', 'descripcion_general'
+            'estado_pieza', 'puente', 'observaciones'
         ]
     
     def create(self, validated_data):
@@ -221,4 +220,36 @@ class OdontogramaResumenSerializer(serializers.Serializer):
     """Serializer para el resumen del odontograma (último registro por pieza)"""
     pieza_dental = serializers.IntegerField()
     ultimo_registro = RegistroDentalSerializer(allow_null=True)
+
+
+class OdontogramaSerializer(serializers.ModelSerializer):
+    """Serializer completo para un Odontograma"""
+    registros = RegistroDentalSerializer(source='registros_dentales', many=True, read_only=True)
+    odontologo_nombre = serializers.CharField(source='actualizado_por.user.get_full_name', read_only=True, default='')
+
+    class Meta:
+        model = Odontograma
+        fields = [
+            'id', 'paciente', 'descripcion_general',
+            'actualizado_por', 'odontologo_nombre',
+            'fecha_creacion', 'fecha_actualizacion', 'registros'
+        ]
+        read_only_fields = ['id', 'actualizado_por', 'fecha_creacion', 'fecha_actualizacion']
+
+
+class OdontogramaListSerializer(serializers.ModelSerializer):
+    """Serializer ligero para listar odontogramas"""
+    odontologo_nombre = serializers.CharField(source='actualizado_por.user.get_full_name', read_only=True, default='')
+    total_registros = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Odontograma
+        fields = [
+            'id', 'paciente', 'descripcion_general',
+            'odontologo_nombre', 'fecha_creacion', 'fecha_actualizacion',
+            'total_registros'
+        ]
+
+    def get_total_registros(self, obj):
+        return obj.registros_dentales.count()
 
