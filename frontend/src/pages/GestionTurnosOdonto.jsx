@@ -11,6 +11,7 @@ import Pagination from '../components/Pagination';
 import ConfirmModal from '../components/ConfirmModal';
 import ModalAsignarPaciente from '../components/ModalAsignarPaciente';
 import TurnoCalendar from '../components/TurnoCalendar';
+import { getToday } from '../utils/dateUtils';
 
 const GestionTurnosOdonto = () => {
   const navigate = useNavigate();
@@ -23,8 +24,7 @@ const GestionTurnosOdonto = () => {
   const [turnoEditando, setTurnoEditando] = useState(null);
   const [fechaFiltro, setFechaFiltro] = useState(() => {
     // Por defecto mostrar la fecha de hoy
-    const hoy = new Date();
-    return hoy.toISOString().split('T')[0];
+    return getToday();
   }); // Filtro para turnos disponibles
 
   // Estados de paginación
@@ -515,7 +515,7 @@ const GestionTurnosOdonto = () => {
 
   // Contadores globales (solo turnos futuros)
   const contadoresGlobales = useMemo(() => {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = getToday();
     const totalReservados = turnos.filter(t => t.estado === 'reservado' && t.fecha_hora.split('T')[0] >= hoy).length;
     const totalDisponibles = turnos.filter(t => t.estado === 'disponible' && t.fecha_hora.split('T')[0] >= hoy).length;
     return { reservados: totalReservados, disponibles: totalDisponibles };
@@ -542,7 +542,7 @@ const GestionTurnosOdonto = () => {
 
   // Mapas de turnos por día para el calendario (solo hoy y futuro)
   const turnosDisponiblesPorDia = useMemo(() => {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = getToday();
     const mapa = {};
     turnos.filter(t => t.estado === 'disponible').forEach(t => {
       const [fechaStr] = t.fecha_hora.split('T');
@@ -554,7 +554,7 @@ const GestionTurnosOdonto = () => {
   }, [turnos]);
 
   const turnosReservadosPorDia = useMemo(() => {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = getToday();
     const mapa = {};
     turnos.filter(t => t.estado === 'reservado').forEach(t => {
       const [fechaStr] = t.fecha_hora.split('T');
@@ -592,8 +592,7 @@ const GestionTurnosOdonto = () => {
   };
 
   const irHoy = () => {
-    const hoy = new Date();
-    cambiarFecha(hoy.toISOString().split('T')[0]);
+    cambiarFecha(getToday());
   };
 
   return (
@@ -733,7 +732,7 @@ const GestionTurnosOdonto = () => {
                           cargarTurnosDia(e.target.value);
                         }}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        min={new Date().toISOString().split('T')[0]}
+                        min={getToday()}
                       />
                     </div>
                     <div>
@@ -844,7 +843,7 @@ const GestionTurnosOdonto = () => {
                           value={loteForm.fecha_inicio}
                           onChange={(e) => setLoteForm({ ...loteForm, fecha_inicio: e.target.value })}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          min={new Date().toISOString().split('T')[0]}
+                          min={getToday()}
                         />
                       </div>
                       <div>
@@ -857,7 +856,7 @@ const GestionTurnosOdonto = () => {
                           value={loteForm.fecha_fin}
                           onChange={(e) => setLoteForm({ ...loteForm, fecha_fin: e.target.value })}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          min={loteForm.fecha_inicio || new Date().toISOString().split('T')[0]}
+                          min={loteForm.fecha_inicio || getToday()}
                         />
                       </div>
                     </div>

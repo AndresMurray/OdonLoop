@@ -9,6 +9,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
 import TurnoCalendar from '../components/TurnoCalendar';
+import { getToday } from '../utils/dateUtils';
 
 const HomeOdonto = () => {
   const navigate = useNavigate();
@@ -16,8 +17,7 @@ const HomeOdonto = () => {
   const [turnos, setTurnos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fechaSeleccionada, setFechaSeleccionada] = useState(() => {
-    const hoy = new Date();
-    return hoy.toISOString().split('T')[0];
+    return getToday();
   });
 
   // Estados de paginación
@@ -28,7 +28,7 @@ const HomeOdonto = () => {
   // Calcular turnos activos (disponibles, reservados, confirmados) de hoy en adelante
   const turnosActivosPorDia = useMemo(() => {
     const mapa = {};
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = getToday();
     turnos.forEach(t => {
       if (['disponible', 'reservado', 'confirmado'].includes(t.estado)) {
         const [fechaStr] = t.fecha_hora.split('T');
@@ -109,8 +109,7 @@ const HomeOdonto = () => {
   };
 
   const irHoy = () => {
-    const hoy = new Date();
-    setFechaSeleccionada(hoy.toISOString().split('T')[0]);
+    setFechaSeleccionada(getToday());
     setPaginaReservados(1);
     setPaginaDisponibles(1);
   };

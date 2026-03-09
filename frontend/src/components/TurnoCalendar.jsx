@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { getToday } from '../utils/dateUtils';
 
 const TurnoCalendar = ({
     turnosPorDia = {},
@@ -112,10 +113,7 @@ const TurnoCalendar = ({
         setIsOpen(false);
     };
 
-    const hoyStr = (() => {
-        const h = new Date();
-        return `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`;
-    })();
+    const hoyStr = getToday();
 
     const nombreMes = mesActual.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
 

@@ -35,8 +35,7 @@ const SolicitarTurnoPage = () => {
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
   const [fechaFiltro, setFechaFiltro] = useState(() => {
     // Por defecto mostrar la fecha de hoy
-    const hoy = new Date();
-    return hoy.toISOString().split('T')[0];
+    return getToday();
   });
   const [paginaActual, setPaginaActual] = useState(1);
   const [paginaActualDisponibles, setPaginaActualDisponibles] = useState(1);
@@ -120,7 +119,7 @@ const SolicitarTurnoPage = () => {
   // Verificar si el paciente ya tiene un turno activo con el odontólogo seleccionado
   const turnoExistenteConOdontologo = useMemo(() => {
     if (!odontologoSeleccionado) return null;
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = getToday();
     return misTurnos.find(t => {
       if (t.estado !== 'reservado' && t.estado !== 'confirmado') return false;
       const [fechaStr] = t.fecha_hora.split('T');
@@ -206,8 +205,7 @@ const SolicitarTurnoPage = () => {
   };
 
   const irHoy = () => {
-    const hoy = new Date();
-    setFechaFiltro(hoy.toISOString().split('T')[0]);
+    setFechaFiltro(getToday());
   };
 
   const getTurnosFiltrados = () => {
@@ -243,7 +241,7 @@ const SolicitarTurnoPage = () => {
   };
 
   const getTurnosOrganizados = () => {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = getToday();
 
     if (filtroMisTurnos === 'futuros') {
       return misTurnos.filter(t => {
@@ -269,7 +267,7 @@ const SolicitarTurnoPage = () => {
 
   // Mapa de turnos disponibles por día para el calendario (solo hoy y futuro)
   const turnosDisponiblesPorDia = useMemo(() => {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = getToday();
     const mapa = {};
     turnosDisponibles.forEach(t => {
       const fechaTurno = new Date(t.fecha_hora);
@@ -317,7 +315,7 @@ const SolicitarTurnoPage = () => {
             >
               Mis Turnos ({misTurnos.filter(t => {
                 const [fechaStr] = t.fecha_hora.split('T');
-                const hoy = new Date().toISOString().split('T')[0];
+                const hoy = getToday();
                 return fechaStr >= hoy && (t.estado === 'reservado' || t.estado === 'confirmado');
               }).length})
             </button>
@@ -657,7 +655,7 @@ const SolicitarTurnoPage = () => {
                   <>
                     <div className="space-y-4 mb-4">
                       {getTurnosPaginados().map((turno) => {
-                        const hoy = new Date().toISOString().split('T')[0];
+                        const hoy = getToday();
                         const [fechaTurnoStr] = turno.fecha_hora.split('T');
                         const esPasado = fechaTurnoStr < hoy;
 

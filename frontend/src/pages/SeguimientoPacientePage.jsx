@@ -15,6 +15,7 @@ import { getSeguimientosPorPaciente, crearSeguimiento, actualizarSeguimiento, el
 import { getPacienteById } from '../api/userService';
 import { getOdontograma } from '../api/odontogramaService';
 import { exportarHistorialPacientePDF } from '../utils/exportarPDF';
+import { getToday } from '../utils/dateUtils';
 
 const SeguimientoPacientePage = () => {
   const navigate = useNavigate();
@@ -69,7 +70,7 @@ const SeguimientoPacientePage = () => {
   // Form state
   const [formData, setFormData] = useState({
     descripcion: '',
-    fecha_atencion: new Date().toISOString().split('T')[0],
+    fecha_atencion: getToday(),
     imagen_url: ''
   });
   const [archivosSeleccionados, setArchivosSeleccionados] = useState([]);
@@ -227,7 +228,7 @@ const SeguimientoPacientePage = () => {
       // Reset form
       setFormData({
         descripcion: '',
-        fecha_atencion: new Date().toISOString().split('T')[0],
+        fecha_atencion: getToday(),
         imagen_url: ''
       });
       setArchivosSeleccionados([]);
@@ -758,7 +759,7 @@ const SeguimientoPacientePage = () => {
                         setMostrarFormulario(false);
                         setFormData({
                           descripcion: '',
-                          fecha_atencion: new Date().toISOString().split('T')[0],
+                          fecha_atencion: getToday(),
                           imagen_url: ''
                         });
                         setArchivosSeleccionados([]);
