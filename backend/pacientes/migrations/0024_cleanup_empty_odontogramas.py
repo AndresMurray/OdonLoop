@@ -10,13 +10,10 @@ def cleanup_empty_odontogramas(apps, schema_editor):
     """
     Odontograma = apps.get_model('pacientes', 'Odontograma')
 
-    # Find odontogramas with no registros dentales AND no description
+    # Find odontogramas with no registros dentales
     empty_odontogramas = Odontograma.objects.annotate(
         num_registros=Count('registros_dentales')
-    ).filter(num_registros=0).exclude(
-        descripcion_general__isnull=False,
-        descripcion_general__gt=''
-    )
+    ).filter(num_registros=0)
 
     # For each patient, ensure at least one odontograma remains
     pacientes_con_datos = set(
