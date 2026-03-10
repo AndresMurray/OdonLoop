@@ -46,3 +46,23 @@ export const actualizarMiPerfil = async (data) => {
     throw error;
   }
 };
+
+// Obtener info de almacenamiento del odontólogo logueado
+export const getMiStorage = async () => {
+  try {
+    const response = await apiClient.get('/api/odontologos/mi-storage/');
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Verificar si hay espacio suficiente antes de subir un archivo
+export const verificarStorage = async (fileSize) => {
+  try {
+    const response = await apiClient.post('/api/odontologos/mi-storage/', { file_size: fileSize });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};

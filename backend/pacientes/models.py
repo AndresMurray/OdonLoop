@@ -156,6 +156,11 @@ class SeguimientoArchivo(models.Model):
         null=True,
         verbose_name='Public ID de Cloudinary'
     )
+    tamano = models.BigIntegerField(
+        default=0,
+        verbose_name='Tamaño del archivo (bytes)',
+        help_text='Tamaño del archivo en bytes para control de cuota'
+    )
     fecha_subida = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Fecha de subida'

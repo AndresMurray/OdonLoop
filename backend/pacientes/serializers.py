@@ -66,7 +66,7 @@ class SeguimientoArchivoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SeguimientoArchivo
-        fields = ['id', 'tipo', 'url', 'nombre_original', 'public_id', 'fecha_subida']
+        fields = ['id', 'tipo', 'url', 'nombre_original', 'public_id', 'tamano', 'fecha_subida']
         read_only_fields = ['fecha_subida']
 
 
@@ -100,11 +100,27 @@ class SeguimientoCreateSerializer(serializers.ModelSerializer):
         archivos_data = validated_data.pop('archivos', [])
         odontologo = self.context['request'].user.perfil_odontologo
         validated_data['odontologo'] = odontologo
+        
+        # Calcular tamaño total de archivos nuevos y validar cuota
+        total_nuevos = sum(a.get('tamano', 0) for a in archivos_data)
+        if total_nuevos > 0 and (odontologo.storage_used + total_nuevos > odontologo.storage_limit):
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError({
+                'storage': 'No tenés espacio suficiente. '
+                           f'Usado: {odontologo.storage_used} bytes, '
+                           f'Límite: {odontologo.storage_limit} bytes, '
+                           f'Intentando subir: {total_nuevos} bytes.'
+            })
+        
         seguimiento = super().create(validated_data)
         
-        # Crear archivos asociados
+        # Crear archivos asociados y actualizar storage
         for archivo_data in archivos_data:
             SeguimientoArchivo.objects.create(seguimiento=seguimiento, **archivo_data)
+        
+        if total_nuevos > 0:
+            odontologo.storage_used = max(0, odontologo.storage_used + total_nuevos)
+            odontologo.save(update_fields=['storage_used'])
         
         return seguimiento
 
@@ -114,10 +130,13 @@ class SeguimientoCreateSerializer(serializers.ModelSerializer):
         instance = super().update(instance, validated_data)
 
         if archivos_data is not None:
+            odontologo = instance.odontologo
+            
             # IDs de archivos que vienen en el payload (los que ya existían y se conservan)
             ids_recibidos = [a.get('id') for a in archivos_data if a.get('id')]
             # Obtener archivos que serán eliminados y borrarlos de Cloudinary
             archivos_a_eliminar = instance.archivos.exclude(id__in=ids_recibidos)
+            tamano_eliminado = sum(a.tamano for a in archivos_a_eliminar)
             for archivo in archivos_a_eliminar:
                 if archivo.public_id:
                     try:
@@ -126,11 +145,27 @@ class SeguimientoCreateSerializer(serializers.ModelSerializer):
                     except Exception:
                         pass  # Si falla la eliminación en Cloudinary, continuar
             archivos_a_eliminar.delete()
+            
+            # Calcular tamaño de archivos nuevos
+            archivos_nuevos_data = [a for a in archivos_data if not a.get('id')]
+            tamano_nuevos = sum(a.get('tamano', 0) for a in archivos_nuevos_data)
+            
+            # Validar cuota para los archivos nuevos (descontando los eliminados)
+            nuevo_storage = odontologo.storage_used - tamano_eliminado + tamano_nuevos
+            if tamano_nuevos > 0 and nuevo_storage > odontologo.storage_limit:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError({
+                    'storage': 'No tenés espacio suficiente para los archivos nuevos.'
+                })
+            
             # Crear archivos nuevos (los que no tienen id)
-            for archivo_data in archivos_data:
-                if not archivo_data.get('id'):
-                    archivo_data.pop('id', None)
-                    SeguimientoArchivo.objects.create(seguimiento=instance, **archivo_data)
+            for archivo_data in archivos_nuevos_data:
+                archivo_data.pop('id', None)
+                SeguimientoArchivo.objects.create(seguimiento=instance, **archivo_data)
+            
+            # Actualizar storage del odontólogo
+            odontologo.storage_used = max(0, nuevo_storage)
+            odontologo.save(update_fields=['storage_used'])
 
         return instance
 

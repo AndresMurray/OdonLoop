@@ -11,8 +11,10 @@ import Pagination from '../components/Pagination';
 import Odontograma from '../components/Odontograma';
 import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter, Smile, Download, FileDown, Pencil, Trash2 } from 'lucide-react';
 import ModalEditarPaciente from '../components/ModalEditarPaciente';
+import ModalStorageError from '../components/ModalStorageError';
 import { getSeguimientosPorPaciente, crearSeguimiento, actualizarSeguimiento, eliminarSeguimiento } from '../api/seguimientoService';
 import { getPacienteById } from '../api/userService';
+import { getMiStorage } from '../api/odontologoService';
 import { getOdontograma } from '../api/odontogramaService';
 import { exportarHistorialPacientePDF } from '../utils/exportarPDF';
 import { getToday } from '../utils/dateUtils';
@@ -58,6 +60,9 @@ const SeguimientoPacientePage = () => {
   // Eliminar seguimiento
   const [confirmandoEliminar, setConfirmandoEliminar] = useState(null);
   const [eliminando, setEliminando] = useState(false);
+
+  // Modal de error de almacenamiento
+  const [errorStorage, setErrorStorage] = useState(null);
 
   // PDF Export
   const [exportando, setExportando] = useState(false);
@@ -148,6 +153,24 @@ const SeguimientoPacientePage = () => {
       return;
     }
 
+    // Verificar cuota de almacenamiento antes de subir
+    const totalSize = files.reduce((acc, f) => acc + f.size, 0);
+    try {
+      const storageData = await getMiStorage();
+      if (totalSize > storageData.storage_available) {
+        setErrorStorage({
+          intentando: totalSize,
+          disponible: storageData.storage_available,
+          limite: storageData.storage_limit,
+          usado: storageData.storage_used
+        });
+        e.target.value = '';
+        return;
+      }
+    } catch {
+      // Si falla la verificación, continuamos para no bloquear la UX
+    }
+
     setSubiendoArchivo(true);
 
     for (const file of files) {
@@ -178,7 +201,8 @@ const SeguimientoPacientePage = () => {
           tipo: esImagen ? 'imagen' : 'documento',
           url: data.secure_url,
           nombre_original: file.name,
-          public_id: data.public_id
+          public_id: data.public_id,
+          tamano: data.bytes || file.size
         };
 
         setArchivosSeleccionados(prev => [...prev, nuevoArchivo]);
@@ -310,6 +334,24 @@ const SeguimientoPacientePage = () => {
       return;
     }
 
+    // Verificar cuota de almacenamiento antes de subir
+    const totalSize = files.reduce((acc, f) => acc + f.size, 0);
+    try {
+      const storageData = await getMiStorage();
+      if (totalSize > storageData.storage_available) {
+        setErrorStorage({
+          intentando: totalSize,
+          disponible: storageData.storage_available,
+          limite: storageData.storage_limit,
+          usado: storageData.storage_used
+        });
+        e.target.value = '';
+        return;
+      }
+    } catch {
+      // Si falla la verificación, continuamos
+    }
+
     setSubiendoArchivoEdit(true);
 
     for (const file of files) {
@@ -338,7 +380,8 @@ const SeguimientoPacientePage = () => {
           tipo: esImagen ? 'imagen' : 'documento',
           url: data.secure_url,
           nombre_original: file.name,
-          public_id: data.public_id
+          public_id: data.public_id,
+          tamano: data.bytes || file.size
         }]);
         setAlert({ type: 'success', message: `Archivo cargado: ${file.name}` });
       } catch (err) {
@@ -1323,6 +1366,13 @@ const SeguimientoPacientePage = () => {
           </div>
         </div>
       )}
+
+      {/* Modal de error de almacenamiento */}
+      <ModalStorageError
+        isOpen={!!errorStorage}
+        storageData={errorStorage}
+        onClose={() => setErrorStorage(null)}
+      />
 
       {/* Modal odontograma para screenshot PDF */}
       {showOdontogramaModal && odontogramaParaCaptura && ReactDOM.createPortal(

@@ -17,6 +17,49 @@ from .serializers import OdontologoSerializer, OdontologoPerfilSerializer
 User = get_user_model()
 
 
+class MiStorageView(APIView):
+    """Vista para consultar y verificar el almacenamiento del odontólogo"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        """Obtener info de almacenamiento del odontólogo logueado"""
+        if not hasattr(request.user, 'perfil_odontologo'):
+            return Response(
+                {'error': 'Solo odontólogos tienen cuota de almacenamiento'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        odontologo = request.user.perfil_odontologo
+        return Response({
+            'storage_used': odontologo.storage_used,
+            'storage_limit': odontologo.storage_limit,
+            'storage_available': max(0, odontologo.storage_limit - odontologo.storage_used),
+        })
+    
+    def post(self, request):
+        """Verificar si hay espacio suficiente antes de subir archivos"""
+        if not hasattr(request.user, 'perfil_odontologo'):
+            return Response(
+                {'error': 'Solo odontólogos tienen cuota de almacenamiento'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        odontologo = request.user.perfil_odontologo
+        file_size = request.data.get('file_size', 0)
+        try:
+            file_size = int(file_size)
+        except (ValueError, TypeError):
+            return Response({'error': 'file_size debe ser un número entero'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        disponible = max(0, odontologo.storage_limit - odontologo.storage_used)
+        puede_subir = file_size <= disponible
+        return Response({
+            'puede_subir': puede_subir,
+            'storage_used': odontologo.storage_used,
+            'storage_limit': odontologo.storage_limit,
+            'storage_available': disponible,
+            'file_size': file_size,
+        })
+
+
 class OdontologoListView(generics.ListAPIView):
     """Lista solo odontólogos activos (disponibles para pacientes)"""
     queryset = Odontologo.objects.filter(estado='activo')

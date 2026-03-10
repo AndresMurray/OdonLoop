@@ -8,7 +8,8 @@ from .views import (
     activar_odontologo,
     crear_paciente_rapido,
     asignar_paciente_existente,
-    MiPerfilOdontologoView
+    MiPerfilOdontologoView,
+    MiStorageView
 )
 
 app_name = 'odontologos'
@@ -20,6 +21,9 @@ urlpatterns = [
     
     # Mi perfil (odontólogo logueado)
     path('mi-perfil/', MiPerfilOdontologoView.as_view(), name='mi-perfil'),
+    
+    # Almacenamiento (cuota Cloudinary)
+    path('mi-storage/', MiStorageView.as_view(), name='mi-storage'),
     
     # Endpoint para crear paciente rápido (solo odontólogos)
     path('crear-paciente-rapido/', crear_paciente_rapido, name='crear-paciente-rapido'),

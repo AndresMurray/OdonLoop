@@ -229,16 +229,22 @@ class SeguimientoViewSet(viewsets.ModelViewSet):
         return SeguimientoSerializer
 
     def perform_destroy(self, instance):
-        """Al eliminar un seguimiento, borrar también sus archivos de Cloudinary"""
+        """Al eliminar un seguimiento, borrar también sus archivos de Cloudinary y actualizar storage"""
         import cloudinary.uploader
+        tamano_total = 0
         for archivo in instance.archivos.all():
+            tamano_total += archivo.tamano
             if archivo.public_id:
                 try:
                     resource_type = 'image' if archivo.tipo == 'imagen' else 'raw'
                     cloudinary.uploader.destroy(archivo.public_id, resource_type=resource_type)
                 except Exception:
                     pass
+        odontologo = instance.odontologo
         instance.delete()
+        if tamano_total > 0:
+            odontologo.storage_used = max(0, odontologo.storage_used - tamano_total)
+            odontologo.save(update_fields=['storage_used'])
     
     @action(detail=False, methods=['get'], url_path='paciente/(?P<paciente_id>[^/.]+)')
     def por_paciente(self, request, paciente_id=None):

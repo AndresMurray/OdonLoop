@@ -39,6 +39,18 @@ class Odontologo(models.Model):
     fecha_suspension = models.DateTimeField(blank=True, null=True, verbose_name='Fecha de suspensión')
     motivo_suspension = models.TextField(blank=True, null=True, verbose_name='Motivo de suspensión')
     
+    # Almacenamiento (Cloudinary)
+    storage_used = models.BigIntegerField(
+        default=0,
+        verbose_name='Almacenamiento usado (bytes)',
+        help_text='Bytes de archivos subidos a Cloudinary por este odontólogo'
+    )
+    storage_limit = models.BigIntegerField(
+        default=1073741824,  # 1 GB en bytes
+        verbose_name='Límite de almacenamiento (bytes)',
+        help_text='Límite máximo de almacenamiento en bytes (default: 1 GB)'
+    )
+
     # Campo legacy - mantener por compatibilidad pero deprecado
     activo = models.BooleanField(default=True, verbose_name='Activo (deprecado)')
     

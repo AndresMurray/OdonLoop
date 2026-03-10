@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
 import Button from '../components/Button';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, HardDrive } from 'lucide-react';
 import { authService } from '../api/authService';
 import { getMisTurnos } from '../api/turnoService';
+import { getMiStorage } from '../api/odontologoService';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
@@ -24,6 +25,9 @@ const HomeOdonto = () => {
   const [paginaReservados, setPaginaReservados] = useState(1);
   const [paginaDisponibles, setPaginaDisponibles] = useState(1);
   const ITEMS_POR_PAGINA = 3;
+
+  // Storage
+  const [storageInfo, setStorageInfo] = useState(null);
 
   // Calcular turnos activos (disponibles, reservados, confirmados) de hoy en adelante
   const turnosActivosPorDia = useMemo(() => {
@@ -53,6 +57,7 @@ const HomeOdonto = () => {
 
   useEffect(() => {
     cargarTurnos();
+    cargarStorage();
   }, []);
 
   const cargarTurnos = async () => {
@@ -64,6 +69,23 @@ const HomeOdonto = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const cargarStorage = async () => {
+    try {
+      const data = await getMiStorage();
+      setStorageInfo(data);
+    } catch (err) {
+      // Silencioso - no es crítico
+    }
+  };
+
+  const formatBytes = (bytes) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
   const formatearFecha = (fechaHora) => {
@@ -225,6 +247,34 @@ const HomeOdonto = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Barra de almacenamiento */}
+          {storageInfo && (
+            <div className="mb-8">
+              <Card className="p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <HardDrive className="w-5 h-5 text-gray-600" />
+                  <h3 className="text-lg font-semibold text-gray-800">Almacenamiento</h3>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                  <div
+                    className={`h-4 rounded-full transition-all duration-500 ${
+                      (storageInfo.storage_used / storageInfo.storage_limit) > 0.9
+                        ? 'bg-red-500'
+                        : (storageInfo.storage_used / storageInfo.storage_limit) > 0.7
+                          ? 'bg-yellow-500'
+                          : 'bg-blue-500'
+                    }`}
+                    style={{ width: `${Math.min(100, (storageInfo.storage_used / storageInfo.storage_limit) * 100)}%` }}
+                  />
+                </div>
+                <div className="flex justify-between mt-2 text-sm text-gray-600">
+                  <span>{formatBytes(storageInfo.storage_used)} usado</span>
+                  <span>{formatBytes(storageInfo.storage_available)} disponible de {formatBytes(storageInfo.storage_limit)}</span>
+                </div>
+              </Card>
+            </div>
+          )}
 
           {/* Selector de Fecha */}
           <div className="mb-6">
