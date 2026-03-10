@@ -6,11 +6,14 @@ from .models import CustomUser, EmailVerificationToken, PasswordResetToken
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
     list_display = [
-        'username', 'email', 'first_name', 'last_name',
+        'id', 'username', 'email', 'first_name', 'last_name',
         'tipo_usuario', 'tipo_registro', 'cuenta_completa',
-        'is_staff', 'is_active', 'email_verified',
+        'email_verified', 'telefono', 'fecha_nacimiento',
+        'is_staff', 'is_active', 'is_superuser',
+        'date_joined', 'last_login',
     ]
-    list_filter = ['tipo_usuario', 'tipo_registro', 'cuenta_completa', 'is_staff', 'is_active', 'email_verified']
+    list_filter = ['tipo_usuario', 'tipo_registro', 'cuenta_completa', 'email_verified', 'is_staff', 'is_active', 'is_superuser']
+    search_fields = ['username', 'email', 'first_name', 'last_name', 'telefono']
     fieldsets = UserAdmin.fieldsets + (
         ('Información adicional', {
             'fields': ('bio', 'telefono', 'fecha_nacimiento', 'tipo_usuario', 'email_verified')

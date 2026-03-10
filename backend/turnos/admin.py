@@ -6,13 +6,17 @@ from .models import Turno
 class TurnoAdmin(admin.ModelAdmin):
     list_display = [
         'id', 'get_odontologo', 'get_paciente', 'fecha_hora',
-        'duracion_minutos', 'estado', 'visible', 'esta_disponible',
+        'duracion_minutos', 'estado', 'visible', 'motivo',
+        'nombre_paciente_manual', 'apellido_paciente_manual',
+        'telefono_paciente_manual',
+        'fecha_creacion', 'fecha_actualizacion', 'esta_disponible',
     ]
     list_filter = ['estado', 'visible', 'fecha_hora', 'odontologo']
     search_fields = [
         'odontologo__user__first_name', 'odontologo__user__last_name',
         'paciente__user__first_name', 'paciente__user__last_name',
         'nombre_paciente_manual', 'apellido_paciente_manual',
+        'motivo',
     ]
     readonly_fields = ['fecha_creacion', 'fecha_actualizacion', 'esta_disponible']
     date_hierarchy = 'fecha_hora'
@@ -23,7 +27,6 @@ class TurnoAdmin(admin.ModelAdmin):
         }),
         ('Paciente Manual (sin usuario)', {
             'fields': ('nombre_paciente_manual', 'apellido_paciente_manual', 'telefono_paciente_manual'),
-            'classes': ('collapse',),
         }),
         ('Estado y Observaciones', {
             'fields': ('estado', 'visible', 'motivo')

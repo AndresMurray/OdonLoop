@@ -5,11 +5,12 @@ from .models import Odontologo
 @admin.register(Odontologo)
 class OdontologoAdmin(admin.ModelAdmin):
     list_display = [
-        'get_nombre_completo', 'matricula', 'especialidad',
-        'anos_experiencia', 'estado', 'activo', 'fecha_alta',
-        'fecha_aprobacion',
+        'id', 'get_nombre_completo', 'matricula', 'especialidad',
+        'anos_experiencia', 'estado', 'activo', 'terms_accepted',
+        'storage_used', 'storage_limit',
+        'fecha_alta', 'fecha_aprobacion', 'fecha_suspension',
     ]
-    list_filter = ['estado', 'activo', 'especialidad', 'fecha_alta']
+    list_filter = ['estado', 'activo', 'especialidad', 'terms_accepted', 'fecha_alta']
     search_fields = ['user__first_name', 'user__last_name', 'matricula', 'especialidad']
     readonly_fields = ['fecha_alta', 'fecha_aprobacion', 'fecha_suspension', 'terms_accepted_date']
 
@@ -26,8 +27,11 @@ class OdontologoAdmin(admin.ModelAdmin):
         ('Estado', {
             'fields': ('estado', 'activo', 'fecha_alta', 'fecha_aprobacion')
         }),
-        ('T\u00e9rminos y Condiciones', {
+        ('Términos y Condiciones', {
             'fields': ('terms_accepted', 'terms_accepted_date'),
+        }),
+        ('Almacenamiento (Cloudinary)', {
+            'fields': ('storage_used', 'storage_limit'),
         }),
         ('Suspensión', {
             'fields': ('fecha_suspension', 'motivo_suspension'),
