@@ -191,10 +191,6 @@ const OdontogramaPage = () => {
     try {
       setGuardando(true);
       await guardarRegistroDental(parseInt(pacienteId), parseInt(numeroPieza), nuevoRegistro, odontogramaIdRef.current);
-      setAlert({
-        type: 'success',
-        message: 'Cambio guardado automáticamente'
-      });
       setTimeout(() => setAlert({ type: '', message: '' }), 2000);
     } catch (error) {
       console.error(`Error al guardar pieza ${numeroPieza}:`, error);
