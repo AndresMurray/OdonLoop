@@ -32,9 +32,13 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
     last_name: '',
     dni: '',
     telefono: '',
+    fecha_nacimiento: '',
+    direccion: '',
     obra_social: '',
     numero_afiliado: '',
-    plan: ''
+    plan: '',
+    alergias: '',
+    antecedentes_medicos: ''
   });
 
   // Filtrado client-side: case + accent insensitive, en tiempo real
@@ -176,9 +180,13 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
       last_name: '',
       dni: '',
       telefono: '',
+      fecha_nacimiento: '',
+      direccion: '',
       obra_social: '',
       numero_afiliado: '',
-      plan: ''
+      plan: '',
+      alergias: '',
+      antecedentes_medicos: ''
     });
     setAlert({ type: '', message: '', detail: '' });
     setPacienteExistente(null);
@@ -422,6 +430,23 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                     />
                   </div>
 
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      label="Fecha de Nacimiento"
+                      type="date"
+                      name="fecha_nacimiento"
+                      value={nuevoPaciente.fecha_nacimiento}
+                      onChange={handleInputChange}
+                    />
+                    <Input
+                      label="Dirección"
+                      name="direccion"
+                      value={nuevoPaciente.direccion}
+                      onChange={handleInputChange}
+                      placeholder="Dirección"
+                    />
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Obra Social
@@ -455,6 +480,34 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                       value={nuevoPaciente.plan}
                       onChange={handleInputChange}
                       placeholder="Plan de la obra social"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Alergias
+                    </label>
+                    <textarea
+                      name="alergias"
+                      value={nuevoPaciente.alergias}
+                      onChange={handleInputChange}
+                      placeholder="Alergias conocidas..."
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Antecedentes Médicos
+                    </label>
+                    <textarea
+                      name="antecedentes_medicos"
+                      value={nuevoPaciente.antecedentes_medicos}
+                      onChange={handleInputChange}
+                      placeholder="Antecedentes médicos relevantes..."
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
                     />
                   </div>
 

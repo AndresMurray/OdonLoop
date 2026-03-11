@@ -283,9 +283,13 @@ def crear_paciente_rapido(request):
     last_name = request.data.get('last_name', '').strip()
     dni = request.data.get('dni', '').strip()
     telefono = request.data.get('telefono', '').strip()
+    fecha_nacimiento = request.data.get('fecha_nacimiento')
+    direccion = request.data.get('direccion', '').strip()
     obra_social_id = request.data.get('obra_social')
     numero_afiliado = request.data.get('numero_afiliado', '').strip()
     plan = request.data.get('plan', '').strip()
+    alergias = request.data.get('alergias', '').strip()
+    antecedentes_medicos = request.data.get('antecedentes_medicos', '').strip()
     
     if not all([first_name, last_name, dni]):
         return Response(
@@ -320,6 +324,7 @@ def crear_paciente_rapido(request):
             first_name=first_name,
             last_name=last_name,
             telefono=telefono,
+            fecha_nacimiento=fecha_nacimiento if fecha_nacimiento else None,
             tipo_usuario='paciente',
             tipo_registro='odontologo',
             cuenta_completa=False,
@@ -331,9 +336,12 @@ def crear_paciente_rapido(request):
         paciente = Paciente.objects.create(
             user=user,
             dni=dni,
+            direccion=direccion or None,
             obra_social_id=obra_social_id if obra_social_id else None,
             numero_afiliado=numero_afiliado or None,
             plan=plan or None,
+            alergias=alergias or None,
+            antecedentes_medicos=antecedentes_medicos or None,
             creado_por_odontologo=odontologo
         )
         # También agregar la relación M2M
