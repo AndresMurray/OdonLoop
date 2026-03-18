@@ -10,10 +10,13 @@ jobs:
   send-reminders:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
       - name: Send appointment reminders
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway run python manage.py enviar_recordatorios_turnos
+        run: railway run --service Desarrollo python manage.py enviar_recordatorios_turnos
