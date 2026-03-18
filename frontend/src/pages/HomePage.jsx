@@ -31,7 +31,7 @@ const HomePage = () => {
               <div className="flex flex-col items-center bg-white/10 rounded-xl p-5 hover:bg-white/20 transition-colors duration-300">
                 <ClipboardList className="w-9 h-9 text-emerald-400 mb-2" />
                 <h3 className="text-white font-bold text-sm mb-1">Seguimiento de pacientes</h3>
-                <p className="text-slate-300 text-xs">Historial clínico y notas de cada visita.</p>
+                <p className="text-slate-300 text-xs">Historial clínico con notas, imágenes y archivos de cada visita.</p>
               </div>
               <div className="flex flex-col items-center bg-white/10 rounded-xl p-5 hover:bg-white/20 transition-colors duration-300">
                 <SmilePlus className="w-9 h-9 text-amber-400 mb-2" />
