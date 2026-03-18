@@ -289,3 +289,7 @@ EMAIL_PORT = env_config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = env_config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = env_config('EMAIL_HOST_USER', default='')  # Tu email de Brevo
 EMAIL_HOST_PASSWORD = env_config('EMAIL_HOST_PASSWORD', default='')  # Tu SMTP key de Brevo
+
+# ===== API KEY INTERNA PARA RECORDATORIOS =====
+# Usada por GitHub Actions para disparar recordatorios vía HTTP
+REMINDERS_API_KEY = env_config('REMINDERS_API_KEY', default='')

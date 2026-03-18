@@ -17,6 +17,32 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+from django.core.management import call_command
+import json
+
+@csrf_exempt
+def enviar_recordatorios_view(request):
+    """Endpoint interno protegido por API key para disparar recordatorios de turnos."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    # Verificar la API key
+    api_key = request.headers.get('X-API-Key', '')
+    expected_key = getattr(settings, 'REMINDERS_API_KEY', '')
+    
+    if not expected_key or api_key != expected_key:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        from io import StringIO
+        out = StringIO()
+        call_command('enviar_recordatorios_turnos', stdout=out)
+        return JsonResponse({'status': 'ok', 'output': out.getvalue()})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 
 def api_root(request):
     return JsonResponse({
@@ -38,4 +64,5 @@ urlpatterns = [
     path('api/pacientes/', include('pacientes.urls')),
     path('api/odontologos/', include('odontologos.urls')),
     path('api/turnos/', include('turnos.urls')),
+    path('api/internal/enviar-recordatorios/', enviar_recordatorios_view, name='enviar-recordatorios'),
 ]

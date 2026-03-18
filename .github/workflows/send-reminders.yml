@@ -10,14 +10,9 @@ jobs:
   send-reminders:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
       - name: Send appointment reminders
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-        run: railway run --project $RAILWAY_PROJECT_ID --environment production --service Desarrollo python manage.py enviar_recordatorios_turnos
+        run: |
+          curl -f -X POST \
+            -H "X-API-Key: ${{ secrets.REMINDERS_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.BACKEND_URL }}/api/internal/enviar-recordatorios/"
