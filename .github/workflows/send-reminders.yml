@@ -19,4 +19,4 @@ jobs:
       - name: Send appointment reminders
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway run --service Desarrollo python manage.py enviar_recordatorios_turnos
+        run: railway run --project clever-upliftment --service Desarrollo python manage.py enviar_recordatorios_turnos
