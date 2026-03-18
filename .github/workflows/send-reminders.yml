@@ -12,7 +12,8 @@ jobs:
     steps:
       - name: Send appointment reminders
         run: |
-          curl -f -X POST \
+          echo "Calling: ${{ secrets.BACKEND_URL }}/api/internal/enviar-recordatorios/"
+          curl -v -f -X POST \
             -H "X-API-Key: ${{ secrets.REMINDERS_API_KEY }}" \
             -H "Content-Type: application/json" \
             "${{ secrets.BACKEND_URL }}/api/internal/enviar-recordatorios/"
