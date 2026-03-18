@@ -49,10 +49,10 @@ const HomePage = () => {
             </div>
 
             {/* Contact + Demo + Instagram row */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap w-full">
               <a
                 href="mailto:sistemagestionodontologico@gmail.com"
-                className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white font-semibold rounded-lg px-5 py-3 transition-colors duration-300 text-sm"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 border border-cyan-400/50 text-white font-semibold rounded-lg px-5 py-3 transition-colors duration-300 text-sm shadow-md"
               >
                 <Mail className="w-5 h-5 text-cyan-300" />
                 Contactate
