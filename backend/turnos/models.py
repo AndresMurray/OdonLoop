@@ -45,6 +45,11 @@ class Turno(models.Model):
         verbose_name='Visible para pacientes',
         help_text='Si está desactivado, el turno solo es visible para el odontólogo (modo agenda privado)'
     )
+    recordatorio_enviado = models.BooleanField(
+        default=False,
+        verbose_name='Recordatorio enviado',
+        help_text='Indica si ya se envió el recordatorio por email para este turno'
+    )
     fecha_creacion = models.DateTimeField(default=timezone.now, verbose_name='Fecha de creación')
     fecha_actualizacion = models.DateTimeField(auto_now=True, verbose_name='Fecha de actualización')
 

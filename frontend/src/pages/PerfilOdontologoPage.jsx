@@ -33,7 +33,8 @@ const PerfilOdontologoPage = () => {
     first_name: '',
     last_name: '',
     telefono: '',
-    fecha_nacimiento: ''
+    fecha_nacimiento: '',
+    consultorio: ''
   });
 
   useEffect(() => {
@@ -52,7 +53,8 @@ const PerfilOdontologoPage = () => {
         first_name: perfilData.first_name || '',
         last_name: perfilData.last_name || '',
         telefono: perfilData.telefono || '',
-        fecha_nacimiento: perfilData.fecha_nacimiento || ''
+        fecha_nacimiento: perfilData.fecha_nacimiento || '',
+        consultorio: perfilData.consultorio || ''
       });
       
     } catch {
@@ -102,7 +104,8 @@ const PerfilOdontologoPage = () => {
         first_name: perfil.first_name || '',
         last_name: perfil.last_name || '',
         telefono: perfil.telefono || '',
-        fecha_nacimiento: perfil.fecha_nacimiento || ''
+        fecha_nacimiento: perfil.fecha_nacimiento || '',
+        consultorio: perfil.consultorio || ''
       });
     }
     setEditando(false);
@@ -322,6 +325,18 @@ const PerfilOdontologoPage = () => {
                         onChange={handleInputChange}
                       />
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Dirección del consultorio</label>
+                      <textarea
+                        name="consultorio"
+                        value={formData.consultorio}
+                        onChange={handleInputChange}
+                        rows="2"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Ej: Av. Corrientes 1234, Piso 3, CABA"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Se incluirá en los recordatorios de turnos</p>
+                    </div>
                   </>
                 ) : (
                   <>
@@ -337,9 +352,13 @@ const PerfilOdontologoPage = () => {
                       <span className="text-gray-600">Teléfono</span>
                       <span className="font-medium">{perfil?.telefono || '-'}</span>
                     </div>
-                    <div className="flex justify-between py-2">
+                    <div className="flex justify-between py-2 border-b">
                       <span className="text-gray-600">Fecha de Nacimiento</span>
                       <span className="font-medium">{formatearFecha(perfil?.fecha_nacimiento)}</span>
+                    </div>
+                    <div className="flex justify-between py-2">
+                      <span className="text-gray-600">Consultorio</span>
+                      <span className="font-medium text-right max-w-[60%]">{perfil?.consultorio || '-'}</span>
                     </div>
                   </>
                 )}

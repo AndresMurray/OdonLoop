@@ -20,6 +20,9 @@ class Odontologo(models.Model):
     # Disponibilidad
     horario_atencion = models.TextField(blank=True, null=True, verbose_name='Horario de atención')
     
+    # Dirección del consultorio (para recordatorios de turnos)
+    consultorio = models.TextField(blank=True, null=True, default='', verbose_name='Dirección del consultorio')
+    
     # Estado y gestión
     estado = models.CharField(
         max_length=20, 

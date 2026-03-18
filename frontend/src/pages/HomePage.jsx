@@ -3,7 +3,7 @@ import { Card, CardContent } from '../components/Card';
 import Button from '../components/Button';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Users, Stethoscope, LogIn, CalendarCheck, ClipboardList, SmilePlus, Gift, Mail, Play } from 'lucide-react';
+import { Users, Stethoscope, LogIn, CalendarCheck, ClipboardList, SmilePlus, Gift, Mail, Play, Instagram } from 'lucide-react';
 
 const HomePage = () => {
   return (
@@ -48,8 +48,8 @@ const HomePage = () => {
               </span>
             </div>
 
-            {/* Contact + Demo row */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            {/* Contact + Demo + Instagram row */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap">
               <a
                 href="mailto:sistemagestionodontologico@gmail.com"
                 className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white font-semibold rounded-lg px-5 py-3 transition-colors duration-300 text-sm"
@@ -65,6 +65,15 @@ const HomePage = () => {
               >
                 <Play className="w-5 h-5" />
                 Ver demo del sistema
+              </a>
+              <a
+                href="https://www.instagram.com/odonloop/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-orange-400 hover:from-pink-600 hover:to-orange-500 border border-pink-400/50 text-white font-semibold rounded-lg px-5 py-3 transition-colors duration-300 text-sm"
+              >
+                <Instagram className="w-5 h-5" />
+                Seguinos en Instagram
               </a>
             </div>
 

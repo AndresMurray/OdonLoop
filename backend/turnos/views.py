@@ -186,6 +186,10 @@ class TurnoViewSet(viewsets.ModelViewSet):
                     logger.info(f'Intentando enviar email de confirmación de turno a {paciente_email}...')
                     
                     # Usar EmailMessage para soportar reply_to
+                    # Incluir dirección del consultorio si está cargada
+                    consultorio = getattr(turno.odontologo, 'consultorio', None)
+                    linea_consultorio = f'Dirección: {consultorio.strip()}\n' if consultorio and consultorio.strip() else ''
+                    
                     email = EmailMessage(
                         subject=f'Tu turno del {fecha_formateada} está confirmado',
                         body=f'Hola {nombre_completo},\n\n'
@@ -194,6 +198,7 @@ class TurnoViewSet(viewsets.ModelViewSet):
                              f'Profesional: Dr./Dra. {nombre_odontologo}\n'
                              f'Fecha: {fecha_formateada}\n'
                              f'Hora: {hora_formateada}\n'
+                             f'{linea_consultorio}'
                              f'{f"Motivo: {turno.motivo}" if turno.motivo else ""}\n\n'
                              f'Te recomendamos llegar unos 10 minutos antes para completar cualquier trámite administrativo si fuera necesario.\n\n'
                              f'Saludos,\n'

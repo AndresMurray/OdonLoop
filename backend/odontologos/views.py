@@ -443,7 +443,7 @@ class MiPerfilOdontologoView(APIView):
             user.save()
             
             # Datos del odontólogo (matricula, especialidad, anos_experiencia, horario_atencion)
-            odontologo_fields = ['matricula', 'especialidad', 'anos_experiencia', 'horario_atencion']
+            odontologo_fields = ['matricula', 'especialidad', 'anos_experiencia', 'horario_atencion', 'consultorio']
             odontologo_data = {k: v for k, v in request.data.items() if k in odontologo_fields}
             
             # Actualizar campos del odontólogo

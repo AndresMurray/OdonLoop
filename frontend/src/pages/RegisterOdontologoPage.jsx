@@ -44,6 +44,7 @@ const RegisterOdontologoPage = () => {
       telefono: '',
       fecha_nacimiento: '',
       bio: '',
+      consultorio: '',
       tipo_usuario: 'odontologo',
     },
     validationRules
@@ -185,6 +186,22 @@ const RegisterOdontologoPage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Cuéntanos sobre tu experiencia y especialidades..."
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Dirección del consultorio (opcional)
+                  </label>
+                  <textarea
+                    name="consultorio"
+                    value={values.consultorio}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    rows="2"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Ej: Av. Corrientes 1234, Piso 3, CABA"
+                  />
+                  <p className="text-xs text-gray-500">Se incluirá en los recordatorios de turnos de tus pacientes</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
