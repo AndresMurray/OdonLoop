@@ -606,11 +606,10 @@ const SeguimientoPacientePage = () => {
                       {paciente.email && <span>📧 {paciente.email}</span>}
                       {paciente.telefono && <span>📱 {paciente.telefono}</span>}
                       {paciente.fecha_nacimiento && (
-                        <span>Nac: {new Date(paciente.fecha_nacimiento).toLocaleDateString('es-AR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric'
-                        })}</span>
+                        <span>Nac: {(() => {
+                          const [a, m, d] = paciente.fecha_nacimiento.split('-').map(Number);
+                          return new Date(a, m - 1, d).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        })()}</span>
                       )}
                     </div>
 

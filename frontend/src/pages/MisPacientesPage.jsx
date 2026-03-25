@@ -71,6 +71,18 @@ const MisPacientesPage = () => {
   const formatearFecha = (fecha) => {
     if (!fecha) return 'Sin seguimientos';
 
+    // Si la fecha viene como "YYYY-MM-DD", parsearla con partes locales
+    // para evitar que JS la interprete como UTC y reste un día en UTC-3
+    if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      const [anio, mes, dia] = fecha.split('-').map(Number);
+      const date = new Date(anio, mes - 1, dia);
+      return date.toLocaleDateString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+
     const date = new Date(fecha);
     return date.toLocaleDateString('es-AR', {
       day: '2-digit',

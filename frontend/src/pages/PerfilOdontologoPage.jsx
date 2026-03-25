@@ -182,7 +182,8 @@ const PerfilOdontologoPage = () => {
 
   const formatearFecha = (fecha) => {
     if (!fecha) return 'No especificada';
-    return new Date(fecha + 'T00:00:00').toLocaleDateString('es-AR', {
+    const [anio, mes, dia] = fecha.split('-').map(Number);
+    return new Date(anio, mes - 1, dia).toLocaleDateString('es-AR', {
       day: 'numeric',
       month: 'long',
       year: 'numeric'

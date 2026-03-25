@@ -275,9 +275,10 @@ export const exportarHistorialPacientePDF = async (pacienteId, pacienteNombre, o
     if (paciente.email) datosPaciente.push({ label: 'Email', value: paciente.email });
     if (paciente.telefono) datosPaciente.push({ label: 'Teléfono', value: paciente.telefono });
     if (paciente.fecha_nacimiento) {
+      const [fnAnio, fnMes, fnDia] = paciente.fecha_nacimiento.split('-').map(Number);
       datosPaciente.push({
         label: 'Fecha de Nacimiento',
-        value: new Date(paciente.fecha_nacimiento).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        value: new Date(fnAnio, fnMes - 1, fnDia).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
       });
     }
     if (paciente.direccion) datosPaciente.push({ label: 'Dirección', value: paciente.direccion });
