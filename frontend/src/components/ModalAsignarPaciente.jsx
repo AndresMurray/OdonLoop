@@ -35,6 +35,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
     fecha_nacimiento: '',
     direccion: '',
     obra_social: '',
+    obra_social_otra: '',
     numero_afiliado: '',
     plan: '',
     alergias: '',
@@ -140,7 +141,14 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
     setPacienteExistente(null);
     try {
       const dataToSend = { ...nuevoPaciente };
-      if (!dataToSend.obra_social) delete dataToSend.obra_social;
+      if (dataToSend.obra_social === 'otra') {
+        dataToSend.obra_social = null;
+      } else if (!dataToSend.obra_social) {
+        delete dataToSend.obra_social;
+        dataToSend.obra_social_otra = '';
+      } else {
+        dataToSend.obra_social_otra = '';
+      }
       const response = await crearPacienteRapido(dataToSend);
       setAlert({
         type: 'success',
@@ -183,6 +191,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
       fecha_nacimiento: '',
       direccion: '',
       obra_social: '',
+      obra_social_otra: '',
       numero_afiliado: '',
       plan: '',
       alergias: '',
@@ -463,8 +472,21 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                           {os.nombre}
                         </option>
                       ))}
+                      <option value="otra">Otra (especificar)</option>
                     </select>
                   </div>
+
+                  {nuevoPaciente.obra_social === 'otra' && (
+                    <div>
+                      <Input
+                        label="Especificar Obra Social"
+                        name="obra_social_otra"
+                        value={nuevoPaciente.obra_social_otra}
+                        onChange={handleInputChange}
+                        placeholder="Nombre de otra obra social"
+                      />
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-4">
                     <Input

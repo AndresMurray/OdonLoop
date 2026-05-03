@@ -286,6 +286,7 @@ def crear_paciente_rapido(request):
     fecha_nacimiento = request.data.get('fecha_nacimiento')
     direccion = request.data.get('direccion', '').strip()
     obra_social_id = request.data.get('obra_social')
+    obra_social_otra = request.data.get('obra_social_otra', '').strip()
     numero_afiliado = request.data.get('numero_afiliado', '').strip()
     plan = request.data.get('plan', '').strip()
     alergias = request.data.get('alergias', '').strip()
@@ -338,6 +339,7 @@ def crear_paciente_rapido(request):
             dni=dni,
             direccion=direccion or None,
             obra_social_id=obra_social_id if obra_social_id else None,
+            obra_social_otra=obra_social_otra or None,
             numero_afiliado=numero_afiliado or None,
             plan=plan or None,
             alergias=alergias or None,
