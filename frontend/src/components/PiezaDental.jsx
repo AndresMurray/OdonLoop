@@ -172,6 +172,9 @@ const PiezaDental = memo(({ numero, registro, onChange, tipo = 'permanente', onM
         {tieneEstado('implante') && (
           <span className="text-green-600 text-[10px] font-bold px-1 py-0.5 bg-green-100 rounded border border-green-300">I</span>
         )}
+        {tieneEstado('movilidad') && (
+          <span className="text-purple-600 text-[10px] font-bold px-1 py-0.5 bg-purple-100 rounded border border-purple-300">MOV</span>
+        )}
         {registro?.puente && (
           <span className="text-red-600 text-[10px] font-bold px-1 py-0.5 bg-red-100 rounded border border-red-300">
             {registro.puente.tipo === 'protesis' ? 'PR' : 'P'}

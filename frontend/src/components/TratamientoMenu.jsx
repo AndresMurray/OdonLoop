@@ -39,6 +39,7 @@ const TratamientoMenu = ({
     { value: 'corona_pendiente', label: 'Corona Pendiente (◯)', color: 'text-blue-600', description: 'Corona a colocar' },
     { value: 'implante', label: 'Implante (I)', color: 'text-green-600', description: 'Implante dental' },
     { value: 'restauracion_total', label: 'Restauración Total', color: 'text-red-600', description: 'Diente completamente restaurado' },
+    { value: 'movilidad', label: 'Movilidad (MOV)', color: 'text-purple-600', description: 'Movilidad dentaria' },
   ];
 
   const handleEstadoSelect = (estado) => {

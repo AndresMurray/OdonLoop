@@ -308,6 +308,7 @@ class RegistroDental(models.Model):
         ('corona_pendiente', 'Corona Pendiente (Círculo Azul)'),
         ('implante', 'Implante (I)'),
         ('restauracion_total', 'Restauración Total'),
+        ('movilidad', 'Movilidad (MOV)'),
         # NOTA: absceso ahora se marca en caras individuales, no en pieza completa
         ('absceso', 'Absceso/Fístula - OBSOLETO (usar en caras)'),
     ]
