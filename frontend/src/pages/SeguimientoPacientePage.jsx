@@ -9,7 +9,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
 import Odontograma from '../components/Odontograma';
-import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter, Smile, Download, FileDown, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter, Smile, Download, FileDown, Pencil, Trash2, AlertTriangle } from 'lucide-react';
 import ModalEditarPaciente from '../components/ModalEditarPaciente';
 import ModalStorageError from '../components/ModalStorageError';
 import { getSeguimientosPorPaciente, crearSeguimiento, actualizarSeguimiento, eliminarSeguimiento } from '../api/seguimientoService';
@@ -18,6 +18,15 @@ import { getMiStorage } from '../api/odontologoService';
 import { getOdontograma } from '../api/odontogramaService';
 import { exportarHistorialPacientePDF } from '../utils/exportarPDF';
 import { getToday } from '../utils/dateUtils';
+
+// Límite máximo de tamaño por archivo impuesto por Cloudinary (plan gratuito)
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB en bytes
+
+const formatBytes = (bytes) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 const SeguimientoPacientePage = () => {
   const navigate = useNavigate();
@@ -82,6 +91,10 @@ const SeguimientoPacientePage = () => {
   const [subiendoArchivo, setSubiendoArchivo] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Error local de tamaño de archivo (se muestra junto al botón de carga)
+  const [errorArchivoTamano, setErrorArchivoTamano] = useState(null);
+  const [errorArchivoTamanoEdit, setErrorArchivoTamanoEdit] = useState(null);
+
   useEffect(() => {
     cargarPaciente();
   }, [pacienteId]);
@@ -144,6 +157,16 @@ const SeguimientoPacientePage = () => {
   const handleFilesSelected = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
+
+    // --- Validación de tamaño por archivo (límite Cloudinary: 10 MB) ---
+    const archivosExcedidos = files.filter(f => f.size > MAX_FILE_SIZE);
+    if (archivosExcedidos.length > 0) {
+      const detalle = archivosExcedidos.map(f => `• ${f.name} (${formatBytes(f.size)})`).join('\n');
+      setErrorArchivoTamano(detalle);
+      e.target.value = '';
+      return;
+    }
+    setErrorArchivoTamano(null);
 
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
     const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
@@ -325,6 +348,16 @@ const SeguimientoPacientePage = () => {
   const handleEditFilesSelected = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
+
+    // --- Validación de tamaño por archivo (límite Cloudinary: 10 MB) ---
+    const archivosExcedidos = files.filter(f => f.size > MAX_FILE_SIZE);
+    if (archivosExcedidos.length > 0) {
+      const detalle = archivosExcedidos.map(f => `• ${f.name} (${formatBytes(f.size)})`).join('\n');
+      setErrorArchivoTamanoEdit(detalle);
+      e.target.value = '';
+      return;
+    }
+    setErrorArchivoTamanoEdit(null);
 
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
     const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
@@ -738,9 +771,47 @@ const SeguimientoPacientePage = () => {
                             <Plus className="w-6 h-6" />
                             <span className="text-sm font-medium">Agregar Archivos o Imágenes</span>
                             <span className="text-xs text-gray-400">JPG, PNG, PDF, DOC, DOCX, TXT</span>
+                            <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3" />
+                              Máximo 10 MB por archivo
+                            </span>
                           </>
                         )}
                       </button>
+
+                      {/* Error de tamaño inline - formulario nuevo seguimiento */}
+                      {errorArchivoTamano && (
+                        <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+                          <p className="font-semibold mb-1 flex items-center gap-1">
+                            <AlertTriangle className="w-4 h-4 shrink-0" />
+                            {errorArchivoTamano.split('\n').length === 1
+                              ? 'El siguiente archivo supera el límite de 10 MB:'
+                              : 'Los siguientes archivos superan el límite de 10 MB:'}
+                          </p>
+                          <p className="whitespace-pre-wrap mb-2">{errorArchivoTamano}</p>
+                          <p className="font-semibold mt-2">💡 ¿Qué podés hacer?</p>
+                          <ul className="list-none mt-1 space-y-1">
+                            <li>• Comprimí el PDF en{' '}
+                              <a href="https://www.ilovepdf.com/es/comprimir_pdf" target="_blank" rel="noopener noreferrer" className="underline font-medium text-red-800 hover:text-red-900">
+                                ilovepdf.com → “Comprimir PDF”
+                              </a>
+                            </li>
+                            <li>• O dividílo en partes de menos de 10 MB usando{' '}
+                              <a href="https://www.ilovepdf.com/es/dividir_pdf" target="_blank" rel="noopener noreferrer" className="underline font-medium text-red-800 hover:text-red-900">
+                                ilovepdf.com → “Dividir PDF”
+                              </a>
+                              {' '}y subí cada parte por separado.
+                            </li>
+                          </ul>
+                          <button
+                            type="button"
+                            onClick={() => setErrorArchivoTamano(null)}
+                            className="mt-2 text-xs underline text-red-600 hover:text-red-800"
+                          >
+                            Cerrar aviso
+                          </button>
+                        </div>
+                      )}
 
                       {archivosSeleccionados.length > 0 && (
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -1297,16 +1368,56 @@ const SeguimientoPacientePage = () => {
                   onChange={handleEditFilesSelected}
                   className="hidden"
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleEditFileUpload}
-                  disabled={subiendoArchivoEdit}
-                  className="w-full"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {subiendoArchivoEdit ? 'Subiendo...' : 'Agregar Archivos'}
-                </Button>
+                <div className="space-y-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleEditFileUpload}
+                    disabled={subiendoArchivoEdit}
+                    className="w-full"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    {subiendoArchivoEdit ? 'Subiendo...' : 'Agregar Archivos'}
+                  </Button>
+                  <p className="text-xs text-amber-600 font-medium flex items-center gap-1 justify-center">
+                    <AlertTriangle className="w-3 h-3" />
+                    Máximo 10 MB por archivo
+                  </p>
+
+                  {/* Error de tamaño inline - modal edición */}
+                  {errorArchivoTamanoEdit && (
+                    <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+                      <p className="font-semibold mb-1 flex items-center gap-1">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        {errorArchivoTamanoEdit.split('\n').length === 1
+                          ? 'El siguiente archivo supera el límite de 10 MB:'
+                          : 'Los siguientes archivos superan el límite de 10 MB:'}
+                      </p>
+                      <p className="whitespace-pre-wrap mb-2">{errorArchivoTamanoEdit}</p>
+                      <p className="font-semibold mt-2">💡 ¿Qué podés hacer?</p>
+                      <ul className="list-none mt-1 space-y-1">
+                        <li>• Comprimí el PDF en{' '}
+                          <a href="https://www.ilovepdf.com/es/comprimir_pdf" target="_blank" rel="noopener noreferrer" className="underline font-medium text-red-800 hover:text-red-900">
+                            ilovepdf.com → "Comprimir PDF"
+                          </a>
+                        </li>
+                        <li>• O dividílo en partes de menos de 10 MB usando{' '}
+                          <a href="https://www.ilovepdf.com/es/dividir_pdf" target="_blank" rel="noopener noreferrer" className="underline font-medium text-red-800 hover:text-red-900">
+                            ilovepdf.com → "Dividir PDF"
+                          </a>
+                          {' '}y subí cada parte por separado.
+                        </li>
+                      </ul>
+                      <button
+                        type="button"
+                        onClick={() => setErrorArchivoTamanoEdit(null)}
+                        className="mt-2 text-xs underline text-red-600 hover:text-red-800"
+                      >
+                        Cerrar aviso
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t">

@@ -12,7 +12,7 @@ const Alert = ({ type = 'info', message, detail, onClose }) => {
     <div className={`border-l-4 p-4 mb-4 ${types[type]} relative`} role="alert">
       <p className="font-medium">{message}</p>
       {detail && (
-        <p className="mt-2 text-sm">{detail}</p>
+        <p className="mt-2 text-sm whitespace-pre-wrap">{detail}</p>
       )}
       {onClose && (
         <button
