@@ -226,10 +226,10 @@ const PerfilPacientePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+      <div className="min-h-screen bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col relative overflow-hidden text-white">
         <Navbar />
-        <div className="flex-grow flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        <div className="flex-grow flex items-center justify-center relative z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
         </div>
         <Footer />
       </div>
@@ -237,10 +237,14 @@ const PerfilPacientePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+    <div className="min-h-screen bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col relative overflow-hidden text-white">
+      {/* Background decorations / Glowing blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] left-[15%] w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none z-0"></div>
+
       <Navbar />
 
-      <div className="flex-grow p-6">
+      <div className="flex-grow p-6 relative z-10">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="mb-6 space-y-3">
@@ -254,7 +258,7 @@ const PerfilPacientePage = () => {
                   <ArrowLeft className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Volver</span>
                 </Button>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white">Mi Perfil</h1>
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400">Mi Perfil</h1>
               </div>
 
               {!editando ? (

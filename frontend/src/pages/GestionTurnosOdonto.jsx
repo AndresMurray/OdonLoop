@@ -596,15 +596,19 @@ const GestionTurnosOdonto = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+    <div className="min-h-screen bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col relative overflow-hidden text-white">
+      {/* Background decorations / Glowing blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] left-[15%] w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none z-0"></div>
+      
       <Navbar />
-      <div className="flex-grow bg-white/5 backdrop-blur-sm p-6">
+      <div className="flex-grow p-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">Gestión de Turnos</h1>
-              <p className="text-slate-200 mt-2">Dr. {userData.nombre} {userData.apellido}</p>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400">Gestión de Turnos</h1>
+              <p className="text-slate-400 font-semibold text-sm mt-1">Dr. {userData.nombre} {userData.apellido}</p>
             </div>
             <Button onClick={() => navigate('/home-odontologo')} variant="secondary" className="w-full sm:w-auto">
               Volver al Inicio
@@ -688,7 +692,7 @@ const GestionTurnosOdonto = () => {
           {tabActiva === 'crear' && showForm && (
             <Card className="mb-8 p-6 sm:p-8">
               <div className="mb-6">
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">Crear Turno</h2>
+                <h2 className="text-2xl font-bold mb-4 text-white">Crear Turno</h2>
 
                 {/* Selector de Modo */}
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6">
@@ -697,7 +701,7 @@ const GestionTurnosOdonto = () => {
                     onClick={() => setModoCreacion('individual')}
                     className={`px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${modoCreacion === 'individual'
                       ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-slate-900 border border-slate-800 text-slate-350 hover:bg-slate-850 hover:text-white'
                       }`}
                   >
                     Turno Individual
@@ -707,7 +711,7 @@ const GestionTurnosOdonto = () => {
                     onClick={() => setModoCreacion('lote')}
                     className={`px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${modoCreacion === 'lote'
                       ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-slate-900 border border-slate-800 text-slate-350 hover:bg-slate-850 hover:text-white'
                       }`}
                   >
                     Turnos en Lote
@@ -828,13 +832,13 @@ const GestionTurnosOdonto = () => {
               ) : (
                 /* Formulario en Lote */
                 <form onSubmit={handleCrearTurnosLote} className="space-y-6">
-                  <p className="text-gray-600 mb-4">Crea múltiples turnos de manera rápida seleccionando un rango de fechas, horas y días de la semana.</p>
+                  <p className="text-slate-400 mb-4 font-semibold text-sm">Crea múltiples turnos de manera rápida seleccionando un rango de fechas, horas y días de la semana.</p>
                   {/* Rango de Fechas */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Rango de Fechas</h3>
+                    <h3 className="text-lg font-bold text-white mb-3">Rango de Fechas</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-semibold text-slate-300 mb-2">
                           Fecha Inicio
                         </label>
                         <input
@@ -842,12 +846,12 @@ const GestionTurnosOdonto = () => {
                           required
                           value={loteForm.fecha_inicio}
                           onChange={(e) => setLoteForm({ ...loteForm, fecha_inicio: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-4 py-2 bg-slate-950 border border-slate-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           min={getToday()}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-semibold text-slate-300 mb-2">
                           Fecha Fin
                         </label>
                         <input
@@ -855,7 +859,7 @@ const GestionTurnosOdonto = () => {
                           required
                           value={loteForm.fecha_fin}
                           onChange={(e) => setLoteForm({ ...loteForm, fecha_fin: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-4 py-2 bg-slate-950 border border-slate-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           min={loteForm.fecha_inicio || getToday()}
                         />
                       </div>
@@ -864,7 +868,7 @@ const GestionTurnosOdonto = () => {
 
                   {/* Días de la Semana */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Días de la Semana</h3>
+                    <h3 className="text-lg font-bold text-white mb-3">Días de la Semana</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {diasSemanaOptions.map(dia => (
                         <label key={dia.value} className="flex items-center space-x-2 cursor-pointer">
@@ -872,9 +876,9 @@ const GestionTurnosOdonto = () => {
                             type="checkbox"
                             checked={loteForm.dias_semana.includes(dia.value)}
                             onChange={() => handleDiasSemanaChange(dia.value)}
-                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-blue-600 rounded bg-slate-950 border-slate-800 focus:ring-blue-500"
                           />
-                          <span className="text-sm text-gray-700">{dia.label}</span>
+                          <span className="text-sm text-slate-300 font-semibold">{dia.label}</span>
                         </label>
                       ))}
                     </div>
@@ -882,10 +886,10 @@ const GestionTurnosOdonto = () => {
 
                   {/* Rango de Horas */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Rango de Horas</h3>
+                    <h3 className="text-lg font-bold text-white mb-3">Rango de Horas</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-semibold text-slate-300 mb-2">
                           Hora Inicio
                         </label>
                         <input
@@ -893,11 +897,11 @@ const GestionTurnosOdonto = () => {
                           required
                           value={loteForm.hora_inicio}
                           onChange={(e) => setLoteForm({ ...loteForm, hora_inicio: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-4 py-2 bg-slate-950 border border-slate-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-semibold text-slate-300 mb-2">
                           Hora Fin
                         </label>
                         <input
@@ -905,7 +909,7 @@ const GestionTurnosOdonto = () => {
                           required
                           value={loteForm.hora_fin}
                           onChange={(e) => setLoteForm({ ...loteForm, hora_fin: e.target.value })}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full px-4 py-2 bg-slate-950 border border-slate-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
                     </div>
@@ -913,7 +917,7 @@ const GestionTurnosOdonto = () => {
 
                   {/* Duración */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-slate-300 mb-2">
                       Duración de cada turno (minutos)
                     </label>
                     <input
@@ -921,12 +925,12 @@ const GestionTurnosOdonto = () => {
                       required
                       value={loteForm.duracion_minutos}
                       onChange={(e) => setLoteForm({ ...loteForm, duracion_minutos: parseInt(e.target.value) })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 bg-slate-950 border border-slate-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       min="10"
                       max="180"
                       step="5"
                     />
-                    <p className="text-sm text-gray-500 mt-1">Por defecto: 20 minutos</p>
+                    <p className="text-sm text-slate-400 font-medium mt-1">Por defecto: 20 minutos</p>
                   </div>
 
                   {/* Toggle visibilidad */}
@@ -1126,16 +1130,16 @@ const GestionTurnosOdonto = () => {
                               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <p className="font-semibold text-gray-800">{formatearFecha(turno.fecha_hora)}</p>
+                                    <p className="font-semibold text-white">{formatearFecha(turno.fecha_hora)}</p>
                                     {!turno.visible && (
-                                      <span className="text-xs bg-yellow-100 text-yellow-800 border border-yellow-300 px-2 py-0.5 rounded-full font-medium">
+                                      <span className="text-xs bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2 py-0.5 rounded-full font-medium">
                                         🚫 Oculto para pacientes
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-sm text-gray-600">{turno.duracion_minutos} minutos</p>
+                                  <p className="text-sm text-slate-400">{turno.duracion_minutos} minutos</p>
                                   {turno.motivo && (
-                                    <p className="text-sm text-gray-500 mt-1">{turno.motivo}</p>
+                                    <p className="text-sm text-slate-400 mt-1">{turno.motivo}</p>
                                   )}
                                 </div>
                                 <div className="flex flex-wrap gap-2 items-center">
@@ -1248,32 +1252,32 @@ const GestionTurnosOdonto = () => {
                   </div>
 
                   {turnosReservados.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">No hay turnos reservados para esta fecha</p>
+                    <p className="text-slate-400 text-center py-8">No hay turnos reservados para esta fecha</p>
                   ) : (
                     <>
                       <div className="space-y-3">
                         {turnosReservadosPaginados.map((turno) => (
                           <div
                             key={turno.id}
-                            className="flex justify-between items-center p-4 bg-blue-50 rounded-lg"
+                            className="flex justify-between items-center p-4 bg-slate-900/60 border border-slate-800 rounded-lg"
                           >
                             <div>
-                              <p className="font-semibold text-gray-800">{formatearFecha(turno.fecha_hora)}</p>
+                              <p className="font-semibold text-white">{formatearFecha(turno.fecha_hora)}</p>
                               {turno.paciente ? (
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-slate-300">
                                   Paciente: {turno.paciente.nombre_completo}
                                 </p>
                               ) : turno.nombre_paciente_manual && turno.apellido_paciente_manual ? (
-                                <div className="text-sm text-gray-600">
-                                  <p>Paciente: {turno.nombre_paciente_manual} {turno.apellido_paciente_manual} <span className="text-xs text-blue-600">(reserva manual)</span></p>
+                                <div className="text-sm text-slate-300">
+                                  <p>Paciente: {turno.nombre_paciente_manual} {turno.apellido_paciente_manual} <span className="text-xs text-blue-400">(reserva manual)</span></p>
                                   {turno.telefono_paciente_manual && (
-                                    <p className="text-xs text-gray-500 mt-0.5">📞 {turno.telefono_paciente_manual}</p>
+                                    <p className="text-xs text-slate-400 mt-0.5">📞 {turno.telefono_paciente_manual}</p>
                                   )}
                                 </div>
                               ) : null}
-                              <p className="text-sm text-gray-600">{turno.duracion_minutos} minutos</p>
+                              <p className="text-sm text-slate-300">{turno.duracion_minutos} minutos</p>
                               {turno.motivo && (
-                                <p className="text-sm text-gray-500 mt-1">{turno.motivo}</p>
+                                <p className="text-sm text-slate-400 mt-1">{turno.motivo}</p>
                               )}
                             </div>
                             <div className="flex gap-2">

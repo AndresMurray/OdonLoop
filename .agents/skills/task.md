@@ -1,0 +1,29 @@
+# Rediseño Estético Global de OdonLoop
+
+- [x] Rediseñar componentes globales centralizados
+  - [x] `Card.jsx`
+  - [x] `Button.jsx`
+  - [x] `Input.jsx`
+  - [x] Dropdown de `Navbar.jsx`
+- [x] Rediseñar páginas de Autenticación
+  - [x] `LoginPage.jsx`
+  - [x] `RegisterPage.jsx`
+  - [x] `RegisterOdontologoPage.jsx`
+  - [x] `RegisterPacientePage.jsx`
+  - [x] `ForgotPasswordPage.jsx`
+  - [x] `PendienteAprobacionPage.jsx`
+- [x] Rediseñar páginas del Odontólogo
+  - [x] `HomeOdonto.jsx`
+  - [x] `MisPacientesPage.jsx`
+  - [x] `SeguimientoPacientePage.jsx`
+  - [x] `GestionTurnosOdonto.jsx`
+  - [x] `PerfilOdontologoPage.jsx`
+- [x] Rediseñar páginas del Paciente
+  - [x] `HomePaciente.jsx`
+  - [x] `PerfilPacientePage.jsx`
+  - [x] `TurnosPage.jsx`
+  - [x] `SolicitarTurnoPage.jsx`
+- [x] Rediseñar páginas del Administrador
+  - [x] `HomeAdmin.jsx`
+  - [x] `PanelAdministracion.jsx`
+- [x] Verificación final

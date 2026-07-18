@@ -119,11 +119,15 @@ const MisPacientesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+    <div className="min-h-screen bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col relative overflow-hidden text-white">
+      {/* Background decorations / Glowing blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] left-[15%] w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none z-0"></div>
+      
       <Navbar />
 
       {/* Header */}
-      <header className="bg-white/95 shadow-md backdrop-blur-sm">
+      <header className="bg-slate-900/40 border-b border-white/5 backdrop-blur-md sticky top-16 z-40 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -136,10 +140,10 @@ const MisPacientesPage = () => {
                 Volver
               </Button>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400">
                   Mis Pacientes
                 </h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-slate-400 mt-1 text-sm font-semibold">
                   Gestiona el seguimiento de tus pacientes
                 </p>
               </div>
@@ -158,7 +162,7 @@ const MisPacientesPage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow bg-white/5 backdrop-blur-sm">
+      <main className="flex-grow relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
           <Alert
@@ -174,7 +178,7 @@ const MisPacientesPage = () => {
               <div className="flex items-center gap-4">
                 <div className="flex-grow">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-5 h-5" />
                     <Input
                       type="text"
                       placeholder="Buscar por nombre o DNI..."
@@ -187,7 +191,7 @@ const MisPacientesPage = () => {
               </div>
 
               {searchTerm && (
-                <p className="text-sm text-gray-600 mt-2">
+                <p className="text-sm text-slate-400 mt-2">
                   {pacientesFiltrados.length} resultado(s) encontrado(s)
                 </p>
               )}
@@ -198,18 +202,18 @@ const MisPacientesPage = () => {
           {loading ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Cargando pacientes...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto"></div>
+                <p className="mt-4 text-slate-400">Cargando pacientes...</p>
               </CardContent>
             </Card>
           ) : pacientesFiltrados.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-xl text-gray-600">
+                <User className="w-16 h-16 text-slate-500 mx-auto mb-4" />
+                <p className="text-xl font-bold text-white">
                   {searchTerm ? 'No se encontraron pacientes' : 'No tienes pacientes registrados'}
                 </p>
-                <p className="text-gray-500 mt-2">
+                <p className="text-slate-400 mt-2">
                   {searchTerm
                     ? 'Intenta con otros términos de búsqueda'
                     : 'Creá tu primer paciente con el botón "Nuevo Paciente" o los pacientes aparecerán aquí cuando soliciten turnos contigo'
@@ -223,22 +227,22 @@ const MisPacientesPage = () => {
               {pacientesPaginados.map((paciente) => (
                 <Card
                   key={paciente.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
+                  className="hover:shadow-lg transition-shadow cursor-pointer border border-slate-800 bg-slate-900/60 backdrop-blur-md"
                   onClick={() => handleVerSeguimiento(paciente.id)}
                 >
                   <CardContent className="p-6">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                       <div className="flex items-start gap-4 flex-grow">
-                        <div className="bg-emerald-100 p-3 rounded-full">
-                          <User className="w-8 h-8 text-emerald-600" />
+                        <div className="bg-emerald-500/10 p-3 rounded-full">
+                          <User className="w-8 h-8 text-emerald-400" />
                         </div>
                         <div className="flex-grow">
-                          <h3 className="text-xl font-semibold text-gray-900">
+                          <h3 className="text-xl font-bold text-white">
                             {paciente.nombre_completo}
                           </h3>
 
                           {/* Datos de contacto */}
-                          <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
+                          <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-slate-400">
                             {paciente.dni && (
                               <span>DNI: {paciente.dni}</span>
                             )}
@@ -255,15 +259,15 @@ const MisPacientesPage = () => {
 
                           {/* Dirección */}
                           {paciente.direccion && (
-                            <div className="mt-2 text-sm text-gray-600">
-                              <span className="font-medium">Dirección:</span> {paciente.direccion}
+                            <div className="mt-2 text-sm text-slate-400">
+                              <span className="font-semibold text-slate-300">Dirección:</span> {paciente.direccion}
                             </div>
                           )}
 
                           {/* Obra Social */}
                           {(paciente.obra_social_detalle || paciente.obra_social_otra) && (
-                            <div className="mt-2 text-sm text-gray-600">
-                              <span className="font-medium">Obra Social:</span>{' '}
+                            <div className="mt-2 text-sm text-slate-400">
+                              <span className="font-semibold text-slate-300">Obra Social:</span>{' '}
                               {paciente.obra_social_otra
                                 ? paciente.obra_social_otra
                                 : paciente.obra_social_detalle?.sigla
@@ -275,37 +279,37 @@ const MisPacientesPage = () => {
 
                           {/* Nro Afiliado y Plan */}
                           {(paciente.numero_afiliado || paciente.plan) && (
-                            <div className="mt-1 text-sm text-gray-600 flex gap-4">
+                            <div className="mt-1 text-sm text-slate-400 flex gap-4">
                               {paciente.numero_afiliado && (
-                                <span><span className="font-medium">Nro Afiliado:</span> {paciente.numero_afiliado}</span>
+                                <span><span className="font-semibold text-slate-300">Nro Afiliado:</span> {paciente.numero_afiliado}</span>
                               )}
                               {paciente.plan && (
-                                <span><span className="font-medium">Plan:</span> {paciente.plan}</span>
+                                <span><span className="font-semibold text-slate-300">Plan:</span> {paciente.plan}</span>
                               )}
                             </div>
                           )}
 
                           {/* Información médica */}
                           {(paciente.antecedentes_medicos || paciente.alergias) && (
-                            <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm">
+                            <div className="mt-3 p-3 bg-slate-950/50 border border-slate-800 rounded-lg text-sm">
                               {paciente.antecedentes_medicos && (
                                 <div className="mb-2">
-                                  <span className="font-medium text-gray-700">Antecedentes:</span>{' '}
-                                  <span className="text-gray-600">{paciente.antecedentes_medicos}</span>
+                                  <span className="font-semibold text-slate-300">Antecedentes:</span>{' '}
+                                  <span className="text-slate-400">{paciente.antecedentes_medicos}</span>
                                 </div>
                               )}
                               {paciente.alergias && (
                                 <div>
-                                  <span className="font-medium text-red-700">Alergias:</span>{' '}
-                                  <span className="text-red-600">{paciente.alergias}</span>
+                                  <span className="font-semibold text-red-400">Alergias:</span>{' '}
+                                  <span className="text-red-300">{paciente.alergias}</span>
                                 </div>
                               )}
                             </div>
                           )}
 
                           <div className="mt-2 text-sm">
-                            <span className="text-gray-500">Último seguimiento: </span>
-                            <span className="font-medium text-gray-700">
+                            <span className="text-slate-500">Último seguimiento: </span>
+                            <span className="font-semibold text-slate-300">
                               {formatearFecha(paciente.ultimo_seguimiento)}
                             </span>
                           </div>
@@ -320,7 +324,7 @@ const MisPacientesPage = () => {
                             e.stopPropagation();
                             setPacienteEditar(paciente);
                           }}
-                          className="flex-1 sm:flex-none text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+                          className="flex-1 sm:flex-none text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10"
                         >
                           <Pencil className="w-4 h-4 mr-2" />
                           Editar
@@ -372,7 +376,7 @@ const MisPacientesPage = () => {
               <Card className="mt-6">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-slate-400">
                       Página {paginaActual} de {totalPaginas} • Mostrando {indiceInicio + 1}-{Math.min(indiceFin, pacientesFiltrados.length)} de {pacientesFiltrados.length} paciente{pacientesFiltrados.length !== 1 ? 's' : ''}
                     </div>
                     <div className="flex gap-2">

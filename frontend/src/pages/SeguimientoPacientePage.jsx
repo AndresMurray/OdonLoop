@@ -549,11 +549,15 @@ const SeguimientoPacientePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+    <div className="min-h-screen bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col relative overflow-hidden text-white text-white">
+      {/* Background decorations / Glowing blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] left-[15%] w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none z-0"></div>
+
       <Navbar />
 
       {/* Header */}
-      <header className="bg-white/95 shadow-md backdrop-blur-sm">
+      <header className="bg-slate-900/40 border-b border-white/5 backdrop-blur-md sticky top-16 z-40 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -567,10 +571,10 @@ const SeguimientoPacientePage = () => {
                 Volver
               </Button>
               <div className="min-w-0">
-                <h1 className="text-xl sm:text-3xl font-bold text-gray-900 leading-tight">
+                <h1 className="text-xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400 leading-tight">
                   {loadingPaciente ? 'Cargando...' : `Seguimiento de ${paciente?.nombre_completo}`}
                 </h1>
-                <p className="text-gray-600 mt-0.5 text-sm sm:text-base">
+                <p className="text-slate-400 mt-0.5 text-sm sm:text-base font-semibold">
                   Historial y nuevo registro de seguimiento
                 </p>
               </div>
@@ -636,7 +640,7 @@ const SeguimientoPacientePage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow bg-white/5 backdrop-blur-sm">
+      <main className="flex-grow relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
           <Alert
@@ -651,14 +655,14 @@ const SeguimientoPacientePage = () => {
             <Card className="mb-6">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="bg-emerald-100 p-4 rounded-full">
-                    <User className="w-10 h-10 text-emerald-600" />
+                  <div className="bg-emerald-500/10 p-4 rounded-full">
+                    <User className="w-10 h-10 text-emerald-400" />
                   </div>
                   <div className="flex-grow">
-                    <h2 className="text-2xl font-bold text-gray-900">{paciente.nombre_completo}</h2>
+                    <h2 className="text-2xl font-black text-white">{paciente.nombre_completo}</h2>
                     
                     {/* Datos de contacto */}
-                    <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
+                    <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-slate-400">
                       {paciente.dni && <span>DNI: {paciente.dni}</span>}
                       {paciente.email && <span>📧 {paciente.email}</span>}
                       {paciente.telefono && <span>📱 {paciente.telefono}</span>}
@@ -672,15 +676,15 @@ const SeguimientoPacientePage = () => {
 
                     {/* Dirección */}
                     {paciente.direccion && (
-                      <div className="mt-2 text-sm text-gray-600">
-                        <span className="font-medium">Dirección:</span> {paciente.direccion}
+                      <div className="mt-2 text-sm text-slate-400">
+                        <span className="font-semibold text-slate-350">Dirección:</span> {paciente.direccion}
                       </div>
                     )}
 
                     {/* Obra Social */}
                     {(paciente.obra_social_detalle || paciente.obra_social_otra) && (
-                      <div className="mt-2 text-sm text-gray-600">
-                        <span className="font-medium">Obra Social:</span>{' '}
+                      <div className="mt-2 text-sm text-slate-400">
+                        <span className="font-semibold text-slate-350">Obra Social:</span>{' '}
                         {paciente.obra_social_otra
                           ? paciente.obra_social_otra
                           : paciente.obra_social_detalle?.sigla
@@ -692,29 +696,29 @@ const SeguimientoPacientePage = () => {
 
                     {/* Nro Afiliado y Plan */}
                     {(paciente.numero_afiliado || paciente.plan) && (
-                      <div className="mt-1 text-sm text-gray-600 flex gap-4">
+                      <div className="mt-1 text-sm text-slate-400 flex gap-4">
                         {paciente.numero_afiliado && (
-                          <span><span className="font-medium">Nro Afiliado:</span> {paciente.numero_afiliado}</span>
+                          <span><span className="font-semibold text-slate-350">Nro Afiliado:</span> {paciente.numero_afiliado}</span>
                         )}
                         {paciente.plan && (
-                          <span><span className="font-medium">Plan:</span> {paciente.plan}</span>
+                          <span><span className="font-semibold text-slate-350">Plan:</span> {paciente.plan}</span>
                         )}
                       </div>
                     )}
 
                     {/* Información médica */}
                     {(paciente.antecedentes_medicos || paciente.alergias) && (
-                      <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm">
+                      <div className="mt-3 p-3 bg-slate-950/50 border border-slate-800 rounded-lg text-sm">
                         {paciente.antecedentes_medicos && (
                           <div className="mb-2">
-                            <span className="font-medium text-gray-700">Antecedentes:</span>{' '}
-                            <span className="text-gray-600">{paciente.antecedentes_medicos}</span>
+                            <span className="font-semibold text-slate-350">Antecedentes:</span>{' '}
+                            <span className="text-slate-400">{paciente.antecedentes_medicos}</span>
                           </div>
                         )}
                         {paciente.alergias && (
                           <div>
-                            <span className="font-medium text-red-700">Alergias:</span>{' '}
-                            <span className="text-red-600">{paciente.alergias}</span>
+                            <span className="font-semibold text-red-400">Alergias:</span>{' '}
+                            <span className="text-red-300">{paciente.alergias}</span>
                           </div>
                         )}
                       </div>
@@ -724,7 +728,7 @@ const SeguimientoPacientePage = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => setMostrarEditarPaciente(true)}
-                    className="text-emerald-600 border-emerald-300 hover:bg-emerald-50 shrink-0"
+                    className="text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10 shrink-0"
                   >
                     <Pencil className="w-4 h-4 mr-2" />
                     Editar
@@ -1003,17 +1007,17 @@ const SeguimientoPacientePage = () => {
                     {seguimientos.map((seguimiento) => (
                       <div
                         key={seguimiento.id}
-                        className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
+                        className="border border-slate-800 rounded-lg p-4 bg-slate-900/60 hover:shadow-md transition-shadow"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
-                              <Calendar className="w-5 h-5 text-emerald-600" />
-                              <span className="font-semibold text-lg text-gray-900">
+                              <Calendar className="w-5 h-5 text-emerald-400" />
+                              <span className="font-bold text-lg text-white">
                                 {formatearFecha(seguimiento.fecha_atencion)}
                               </span>
                               {(seguimiento.archivos?.length > 0 || seguimiento.imagen_url) && (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs rounded-full">
                                   <ImageIcon className="w-3 h-3" />
                                   {seguimiento.archivos?.length || 1} archivo(s)
                                 </span>
@@ -1078,14 +1082,14 @@ const SeguimientoPacientePage = () => {
       {/* Modal de detalles del seguimiento */}
       {mostrarDetalles && seguimientoSeleccionado && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h3 className="text-2xl font-bold text-gray-900">
+          <div className="bg-slate-900 border border-slate-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto text-white">
+            <div className="sticky top-0 bg-slate-900 border-b border-slate-850 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-2xl font-bold text-white">
                 Detalles del Seguimiento
               </h3>
               <button
                 onClick={cerrarDetalles}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-slate-400 hover:text-white transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -1094,16 +1098,16 @@ const SeguimientoPacientePage = () => {
             <div className="p-6">
               {/* Fecha */}
               <div className="flex items-center gap-2 mb-4">
-                <Calendar className="w-6 h-6 text-emerald-600" />
-                <span className="font-semibold text-xl text-gray-900">
+                <Calendar className="w-6 h-6 text-emerald-400" />
+                <span className="font-semibold text-xl text-white">
                   {formatearFecha(seguimientoSeleccionado.fecha_atencion)}
                 </span>
               </div>
 
               {/* Descripción */}
-              <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                <h4 className="font-medium text-gray-700 mb-2">Descripción:</h4>
-                <p className="text-gray-800 whitespace-pre-wrap">
+              <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-lg mb-4">
+                <h4 className="font-semibold text-slate-300 mb-2">Descripción:</h4>
+                <p className="text-slate-200 whitespace-pre-wrap">
                   {seguimientoSeleccionado.descripcion}
                 </p>
               </div>
@@ -1111,8 +1115,8 @@ const SeguimientoPacientePage = () => {
               {/* Archivos e imágenes */}
               {seguimientoSeleccionado.archivos && seguimientoSeleccionado.archivos.length > 0 && (
                 <div className="mb-4">
-                  <h4 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-emerald-600" />
+                  <h4 className="font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-emerald-400" />
                     Archivos adjuntos ({seguimientoSeleccionado.archivos.length})
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -1279,15 +1283,15 @@ const SeguimientoPacientePage = () => {
       {/* Modal de edición de seguimiento */}
       {editandoSeguimiento && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Pencil className="w-5 h-5 text-blue-600" />
+          <div className="bg-slate-900 border border-slate-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto text-white">
+            <div className="sticky top-0 bg-slate-900 border-b border-slate-850 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Pencil className="w-5 h-5 text-blue-400" />
                 Editar Seguimiento
               </h3>
               <button
                 onClick={cerrarEdicion}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-slate-400 hover:text-white transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>

@@ -19,10 +19,10 @@ const Button = ({
   };
   
   const variants = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-2 focus:ring-gray-400',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500',
-    outline: 'border-2 border-gray-300 text-gray-700 hover:bg-gray-100 focus:ring-2 focus:ring-gray-400',
+    primary: 'bg-blue-600 text-white hover:bg-blue-500 active:scale-95 transition-all duration-150 focus:ring-2 focus:ring-blue-500 shadow-md shadow-blue-500/10',
+    secondary: 'bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white active:scale-95 transition-all duration-150 focus:ring-2 focus:ring-slate-500',
+    danger: 'bg-red-600 text-white hover:bg-red-500 active:scale-95 transition-all duration-150 focus:ring-2 focus:ring-red-500',
+    outline: 'border border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white active:scale-95 transition-all duration-150 focus:ring-2 focus:ring-slate-500',
   };
 
   return (

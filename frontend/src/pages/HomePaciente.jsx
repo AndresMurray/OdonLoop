@@ -72,18 +72,22 @@ const HomePaciente = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+    <div className="min-h-screen bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col relative overflow-hidden text-white">
+      {/* Background decorations / Glowing blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] left-[15%] w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none z-0"></div>
+      
       <Navbar />
       
       {/* Header with User Info */}
-      <header className="bg-white/95 shadow-md backdrop-blur-sm">
+      <header className="bg-slate-900/40 border-b border-white/5 backdrop-blur-md sticky top-16 z-40 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400">
                 Panel de Paciente
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-slate-400 mt-1 text-sm font-semibold">
                 Bienvenido, {userData.first_name} {userData.last_name}
               </p>
             </div>
@@ -92,7 +96,7 @@ const HomePaciente = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow bg-white/5 backdrop-blur-sm">
+      <main className="flex-grow relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Botón destacado de Solicitar Turno */}
         <div className="mb-8">
@@ -123,31 +127,31 @@ const HomePaciente = () => {
           <Card className="hover:shadow-lg transition-shadow duration-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <CalendarIcon className="w-8 h-8 text-blue-600" />
+                <div className="p-3 bg-blue-500/10 rounded-lg">
+                  <CalendarIcon className="w-8 h-8 text-blue-400" />
                 </div>
               </div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">Próximo Turno</h3>
+              <h3 className="text-sm font-semibold text-slate-300 mb-1">Próximo Turno</h3>
               {loading ? (
                 <>
-                  <p className="text-3xl font-bold text-gray-900 mb-1">-</p>
-                  <p className="text-sm text-gray-500">Cargando...</p>
+                  <p className="text-3xl font-black text-white mb-1">-</p>
+                  <p className="text-sm text-slate-400">Cargando...</p>
                 </>
               ) : proximoTurno ? (
                 <>
-                  <p className="text-xl font-bold text-gray-900 mb-1">
+                  <p className="text-xl font-bold text-white mb-1">
                     {formatearFecha(proximoTurno.fecha_hora)}
                   </p>
                   {proximoTurno.odontologo && (
-                    <p className="text-sm text-gray-600 mb-1">
+                    <p className="text-sm text-slate-300 mb-1">
                       Dr. {proximoTurno.odontologo.nombre_completo}
                     </p>
                   )}
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-slate-400">
                     Duración: {proximoTurno.duracion_minutos} minutos
                   </p>
                   {proximoTurno.motivo && (
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-sm text-slate-400 mt-2">
                       Motivo: {proximoTurno.motivo}
                     </p>
                   )}
@@ -162,8 +166,8 @@ const HomePaciente = () => {
                 </>
               ) : (
                 <>
-                  <p className="text-3xl font-bold text-gray-900 mb-1">-</p>
-                  <p className="text-sm text-gray-500">No tienes turnos programados</p>
+                  <p className="text-3xl font-black text-white mb-1">-</p>
+                  <p className="text-sm text-slate-400">No tienes turnos programados</p>
                   <div className="mt-4">
                     <Button 
                       size="sm"

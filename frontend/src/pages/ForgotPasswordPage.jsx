@@ -111,20 +111,24 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+    <div className="min-h-screen bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col relative overflow-hidden text-white">
+      {/* Background decorations / Glowing blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] left-[15%] w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none z-0"></div>
+      
       <Navbar />
 
-      <main className="flex-grow flex items-center justify-center px-4 py-8">
+      <main className="flex-grow flex items-center justify-center px-4 py-8 relative z-10">
         <div className="w-full max-w-md">
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3 mb-2">
-                <Link to="/login" className="text-gray-500 hover:text-gray-700">
+                <Link to="/login" className="text-slate-400 hover:text-white transition-colors">
                   <ArrowLeft className="w-5 h-5" />
                 </Link>
-                <CardTitle className="text-2xl">Recuperar Contraseña</CardTitle>
+                <CardTitle className="text-2xl font-black text-white tracking-tight">Recuperar Contraseña</CardTitle>
               </div>
-              <p className="text-gray-600 text-sm">
+              <p className="text-slate-400 text-sm font-semibold">
                 {step === 1 && 'Ingresa tu email para recibir un código de verificación'}
                 {step === 2 && 'Ingresa el código que enviamos a tu email'}
                 {step === 3 && 'Ingresa tu nueva contraseña'}

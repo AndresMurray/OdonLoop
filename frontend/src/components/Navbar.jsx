@@ -69,17 +69,17 @@ const Navbar = () => {
                       onClick={() => setMenuAbierto(false)}
                     />
                     
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50">
+                    <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-xl py-1 z-50 text-white animate-fadeIn">
                       {/* Info del usuario */}
-                      <div className="px-4 py-2 border-b border-gray-100">
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="px-4 py-2 border-b border-slate-800">
+                        <p className="text-sm font-semibold text-white">
                           {userData.first_name} {userData.last_name}
                         </p>
-                        <p className="text-xs text-gray-500 truncate mb-1">
+                        <p className="text-xs text-slate-400 truncate mb-1.5">
                           {userData.email}
                         </p>
                         {userData.tipo_usuario === 'odontologo' && userData.plan && (
-                          <span className="inline-block bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                          <span className="inline-block bg-blue-500/10 text-blue-400 border border-blue-500/25 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
                             Plan {userData.plan.nombre}
                           </span>
                         )}
@@ -92,9 +92,9 @@ const Navbar = () => {
                             setMenuAbierto(false);
                             navigate(getPerfilUrl());
                           }}
-                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-2 transition-colors duration-150"
                         >
-                          <User className="w-4 h-4" />
+                          <User className="w-4 h-4 text-blue-400" />
                           Mi Perfil
                         </button>
                       )}
@@ -102,7 +102,7 @@ const Navbar = () => {
                       {/* Cerrar Sesión */}
                       <button
                         onClick={handleLogout}
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-950/30 hover:text-red-300 flex items-center gap-2 transition-colors duration-150"
                       >
                         <LogOut className="w-4 h-4" />
                         Cerrar Sesión

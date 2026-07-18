@@ -281,15 +281,19 @@ const SolicitarTurnoPage = () => {
   }, [turnosDisponibles]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+    <div className="min-h-screen bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col relative overflow-hidden text-white">
+      {/* Background decorations / Glowing blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] left-[15%] w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none z-0"></div>
+      
       <Navbar />
-      <div className="flex-grow bg-white/5 backdrop-blur-sm p-6">
+      <div className="flex-grow p-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">Solicitar Turno</h1>
-              <p className="text-slate-200 mt-2">{userData.nombre} {userData.apellido}</p>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400">Solicitar Turno</h1>
+              <p className="text-slate-400 font-semibold text-sm mt-1">{userData.nombre} {userData.apellido}</p>
             </div>
             <Button onClick={() => navigate('/home-paciente')} variant="secondary" className="w-full sm:w-auto">
               Volver al Inicio
@@ -301,8 +305,8 @@ const SolicitarTurnoPage = () => {
             <button
               onClick={() => setVistaActual('buscar')}
               className={`px-4 sm:px-6 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${vistaActual === 'buscar'
-                ? 'bg-blue-700 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-blue-600 text-white'
+                : 'bg-slate-900 border border-slate-800 text-slate-350 hover:bg-slate-850 hover:text-white'
                 }`}
             >
               Buscar Turnos
@@ -310,8 +314,8 @@ const SolicitarTurnoPage = () => {
             <button
               onClick={() => setVistaActual('misTurnos')}
               className={`px-4 sm:px-6 py-3 rounded-lg font-medium transition-colors text-sm sm:text-base ${vistaActual === 'misTurnos'
-                ? 'bg-blue-700 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+                ? 'bg-blue-600 text-white'
+                : 'bg-slate-900 border border-slate-800 text-slate-350 hover:bg-slate-850 hover:text-white'
                 }`}
             >
               Mis Turnos ({misTurnos.filter(t => {
@@ -324,12 +328,12 @@ const SolicitarTurnoPage = () => {
 
           {/* Mensajes */}
           {error && (
-            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg">
               {error}
             </div>
           )}
           {success && (
-            <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+            <div className="mb-4 p-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-lg">
               {success}
             </div>
           )}
@@ -339,12 +343,12 @@ const SolicitarTurnoPage = () => {
             <div className="space-y-6">
               {/* Seleccionar Odontólogo */}
               <Card className="p-6 sm:p-8">
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">Buscar Odontólogo</h2>
+                <h2 className="text-2xl font-bold mb-4 text-white">Buscar Odontólogo</h2>
                 
                 {!odontologoSeleccionado ? (
                   <div className="space-y-4">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                       <input
                         type="text"
                         placeholder="Empezá a escribir el nombre del odontólogo..."
@@ -355,32 +359,32 @@ const SolicitarTurnoPage = () => {
                         }}
                         onFocus={() => setMostrarResultados(true)}
                         autoFocus
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-base"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base placeholder-slate-500"
                       />
                     </div>
 
                     {/* Resultados de búsqueda */}
                     {mostrarResultados && searchOdontologo.trim() && (
-                      <div className="border border-gray-200 rounded-lg shadow-sm max-h-80 overflow-y-auto">
+                      <div className="border border-slate-800 bg-slate-950/60 rounded-lg shadow-sm max-h-80 overflow-y-auto">
                         {odontologosFiltrados.length === 0 ? (
-                          <div className="p-6 text-center text-gray-500">
-                            <UserRound className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                          <div className="p-6 text-center text-slate-400">
+                            <UserRound className="w-12 h-12 text-slate-650 mx-auto mb-2" />
                             <p>No se encontró ningún odontólogo</p>
                           </div>
                         ) : (
-                          <div className="divide-y divide-gray-200">
+                          <div className="divide-y divide-slate-800">
                             {odontologosFiltrados.map((odontologo) => (
                               <button
                                 key={odontologo.id}
                                 onClick={() => handleSeleccionarOdontologo(odontologo)}
-                                className="w-full p-4 text-left hover:bg-teal-50 transition-colors flex items-center gap-3"
+                                className="w-full p-4 text-left hover:bg-slate-900/80 hover:text-white transition-colors flex items-center gap-3 bg-transparent"
                               >
-                                <UserRound className="w-8 h-8 text-teal-600 shrink-0" />
+                                <UserRound className="w-8 h-8 text-blue-400 shrink-0" />
                                 <div>
-                                  <p className="font-semibold text-gray-800">
+                                  <p className="font-bold text-white">
                                     Dr. {odontologo.user.first_name} {odontologo.user.last_name}
                                   </p>
-                                  <p className="text-sm text-gray-600">{odontologo.especialidad}</p>
+                                  <p className="text-sm text-slate-400">{odontologo.especialidad}</p>
                                 </div>
                               </button>
                             ))}
@@ -391,14 +395,14 @@ const SolicitarTurnoPage = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                       <div className="flex items-center gap-3">
-                        <UserRound className="w-8 h-8 text-teal-600 shrink-0" />
+                        <UserRound className="w-8 h-8 text-blue-400 shrink-0" />
                         <div className="flex-1">
-                          <p className="font-semibold text-gray-800">
+                          <p className="font-bold text-white">
                             Dr. {odontologoSeleccionado.user.first_name} {odontologoSeleccionado.user.last_name}
                           </p>
-                          <p className="text-sm text-gray-600">{odontologoSeleccionado.especialidad}</p>
+                          <p className="text-sm text-slate-300">{odontologoSeleccionado.especialidad}</p>
                         </div>
                         <Button
                           size="sm"
@@ -416,8 +420,8 @@ const SolicitarTurnoPage = () => {
                     </div>
                     {loading && (
                       <div className="text-center py-4">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto"></div>
-                        <p className="mt-2 text-gray-600 text-sm">Cargando turnos disponibles...</p>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto"></div>
+                        <p className="mt-2 text-slate-400 text-sm font-semibold">Cargando turnos disponibles...</p>
                       </div>
                     )}
                   </div>
@@ -428,7 +432,7 @@ const SolicitarTurnoPage = () => {
               {turnosDisponibles.length > 0 && (
                 <Card className="p-6 sm:p-8">
                   <div className="mb-4">
-                    <h2 className="text-2xl font-bold mb-4 text-gray-800">
+                    <h2 className="text-2xl font-bold mb-4 text-white">
                       Turnos Disponibles
                     </h2>
 
@@ -443,14 +447,14 @@ const SolicitarTurnoPage = () => {
                     />
 
                     {/* Separador */}
-                    <div className="h-px bg-gray-200 mt-2 mb-4"></div>
+                    <div className="h-px bg-slate-800 mt-2 mb-4"></div>
 
                     {/* Navegación por día */}
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-2">
                       {/* Mobile: Layout vertical */}
                       <div className="md:hidden w-full space-y-3">
                         <div className="flex gap-2">
-                          <div className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-center font-medium text-gray-700 shadow-sm flex items-center justify-center">
+                          <div className="flex-1 px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-center font-semibold text-white shadow-sm flex items-center justify-center">
                             {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                           </div>
                           <Button
@@ -466,7 +470,7 @@ const SolicitarTurnoPage = () => {
                             size="sm"
                             variant="secondary"
                             onClick={retrocederDia}
-                            className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
+                            className="flex-1 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-white shadow-sm"
                           >
                             ← Anterior
                           </Button>
@@ -474,7 +478,7 @@ const SolicitarTurnoPage = () => {
                             size="sm"
                             variant="secondary"
                             onClick={avanzarDia}
-                            className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
+                            className="flex-1 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-white shadow-sm"
                           >
                             Siguiente →
                           </Button>
@@ -486,13 +490,13 @@ const SolicitarTurnoPage = () => {
                         size="sm"
                         variant="secondary"
                         onClick={retrocederDia}
-                        className="hidden md:block shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
+                        className="hidden md:block shrink-0 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-white shadow-sm"
                       >
                         ← Día Anterior
                       </Button>
 
                       <div className="hidden md:flex items-center gap-3">
-                        <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-center font-medium text-gray-700 shadow-sm flex items-center justify-center min-w-[120px]">
+                        <div className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg text-center font-semibold text-white shadow-sm flex items-center justify-center min-w-[120px]">
                           {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                         </div>
                         <Button
@@ -509,52 +513,53 @@ const SolicitarTurnoPage = () => {
                         size="sm"
                         variant="secondary"
                         onClick={avanzarDia}
-                        className="hidden md:block shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
+                        className="hidden md:block shrink-0 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-white shadow-sm"
                       >
                         Día Siguiente →
                       </Button>
                     </div>
 
-                    <p className="text-sm text-gray-600 mt-3 text-center">
+                    <p className="text-sm text-slate-350 mt-3 text-center">
                       Mostrando <span className="font-semibold">{getTurnosFiltrados().length}</span> turnos disponibles para el {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                   </div>
+                </Card>
 
-                  {getTurnosFiltrados().length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">No hay turnos disponibles para esta fecha</p>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {getTurnosDisponiblesPaginados().map((turno) => (
-                          <div
-                            key={turno.id}
-                            className="p-4 bg-gray-50 rounded-lg border-2 border-transparent hover:border-teal-500 transition-colors"
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <div>
-                                <p className="font-semibold text-gray-800">
-                                  {formatearFecha(turno.fecha_hora)}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  Duración: {turno.duracion_minutos} minutos
-                                </p>
-                                {turno.motivo && (
-                                  <p className="text-sm text-gray-500 mt-1">{turno.motivo}</p>
-                                )}
-                              </div>
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(turno.estado)}`}>
-                                {turno.estado}
-                              </span>
+                {getTurnosFiltrados().length === 0 ? (
+                  <p className="text-slate-400 text-center py-8">No hay turnos disponibles para esta fecha</p>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {getTurnosDisponiblesPaginados().map((turno) => (
+                        <div
+                          key={turno.id}
+                          className="p-4 bg-slate-950/60 rounded-lg border border-slate-800 hover:border-blue-500 transition-colors animate-fadeIn"
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <p className="font-bold text-white">
+                                {formatearFecha(turno.fecha_hora)}
+                              </p>
+                              <p className="text-sm text-slate-400">
+                                Duración: {turno.duracion_minutos} minutos
+                              </p>
+                              {turno.motivo && (
+                                <p className="text-sm text-slate-400 mt-1">{turno.motivo}</p>
+                              )}
                             </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(turno.estado)}`}>
+                              {turno.estado}
+                            </span>
+                          </div>
 
                             {turnoSeleccionado === turno.id ? (
                               <div className="space-y-3 mt-4">
                                 {turnoExistenteConOdontologo && (
-                                  <div className="p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
-                                    <p className="text-sm text-yellow-800 font-medium">
+                                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                                    <p className="text-sm text-yellow-400 font-semibold">
                                       ⚠️ Ya tenés un turno {turnoExistenteConOdontologo.estado} con {turnoExistenteConOdontologo.odontologo.nombre_completo} para el {formatearFecha(turnoExistenteConOdontologo.fecha_hora)}.
                                     </p>
-                                    <p className="text-xs text-yellow-700 mt-1">
+                                    <p className="text-xs text-yellow-350 mt-1">
                                       Estás por sacar un turno adicional con el mismo odontólogo.
                                     </p>
                                   </div>
@@ -563,7 +568,7 @@ const SolicitarTurnoPage = () => {
                                   value={motivo}
                                   onChange={(e) => setMotivo(e.target.value)}
                                   placeholder="Motivo de la consulta (opcional)"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-slate-500"
                                   rows="2"
                                 />
                                 <div className="flex gap-2">
@@ -622,7 +627,7 @@ const SolicitarTurnoPage = () => {
           {vistaActual === 'misTurnos' && (
             <div className="space-y-6">
               <Card className="p-6 sm:p-8">
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">Mis Turnos</h2>
+                <h2 className="text-2xl font-bold mb-4 text-white">Mis Turnos</h2>
 
                 {/* Filtro Futuros / Pasados */}
                 <div className="flex gap-2 mb-4">
@@ -630,7 +635,7 @@ const SolicitarTurnoPage = () => {
                     onClick={() => { setFiltroMisTurnos('futuros'); setPaginaActual(1); }}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filtroMisTurnos === 'futuros'
                       ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-slate-900 border border-slate-800 text-slate-350 hover:bg-slate-850 hover:text-white'
                       }`}
                   >
                     Próximos
@@ -638,8 +643,8 @@ const SolicitarTurnoPage = () => {
                   <button
                     onClick={() => { setFiltroMisTurnos('pasados'); setPaginaActual(1); }}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filtroMisTurnos === 'pasados'
-                      ? 'bg-gray-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-900 border border-slate-800 text-slate-350 hover:bg-slate-850 hover:text-white'
                       }`}
                   >
                     Pasados
@@ -647,7 +652,7 @@ const SolicitarTurnoPage = () => {
                 </div>
                 {misTurnos.length === 0 ? (
                   <div className="text-center py-12">
-                    <p className="text-gray-500 mb-4">No tienes turnos programados</p>
+                    <p className="text-slate-400 mb-4">No tienes turnos programados</p>
                     <Button onClick={() => setVistaActual('buscar')}>
                       Buscar Turnos Disponibles
                     </Button>
@@ -663,33 +668,33 @@ const SolicitarTurnoPage = () => {
                         return (
                           <div
                             key={turno.id}
-                            className={`p-4 rounded-lg ${esPasado ? 'bg-gray-100 opacity-60' : 'bg-gray-50'}`}
+                            className={`p-4 rounded-lg ${esPasado ? 'bg-slate-950/40 border border-slate-850 opacity-50' : 'bg-slate-900/60 border border-slate-800'}`}
                           >
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
                                 <div className="flex items-center gap-3 mb-2 flex-wrap">
-                                  <p className={`font-semibold ${esPasado ? 'text-gray-400' : 'text-gray-800'}`}>
+                                  <p className={`font-bold ${esPasado ? 'text-slate-500' : 'text-white'}`}>
                                     {formatearFecha(turno.fecha_hora)}
                                   </p>
                                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(turno.estado)}`}>
                                     {turno.estado}
                                   </span>
                                   {esPasado && (
-                                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-500">
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-950 border border-slate-800 text-slate-500">
                                       Pasado
                                     </span>
                                   )}
                                 </div>
                                 {turno.odontologo && (
-                                  <p className={`text-sm ${esPasado ? 'text-gray-400' : 'text-gray-600'}`}>
+                                  <p className={`text-sm ${esPasado ? 'text-slate-500' : 'text-slate-300'}`}>
                                     Odontólogo: {turno.odontologo.nombre_completo}
                                   </p>
                                 )}
-                                <p className={`text-sm ${esPasado ? 'text-gray-400' : 'text-gray-600'}`}>
+                                <p className={`text-sm ${esPasado ? 'text-slate-500' : 'text-slate-300'}`}>
                                   Duración: {turno.duracion_minutos} minutos
                                 </p>
                                 {turno.motivo && (
-                                  <p className={`text-sm mt-1 ${esPasado ? 'text-gray-400' : 'text-gray-500'}`}>Motivo: {turno.motivo}</p>
+                                  <p className={`text-sm mt-1 ${esPasado ? 'text-slate-600' : 'text-slate-400'}`}>Motivo: {turno.motivo}</p>
                                 )}
                               </div>
                               {!esPasado && (turno.estado === 'reservado' || turno.estado === 'confirmado') && (

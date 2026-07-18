@@ -30,18 +30,22 @@ const HomeAdmin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+    <div className="min-h-screen bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col relative overflow-hidden text-white">
+      {/* Background decorations / Glowing blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] left-[15%] w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none z-0"></div>
+      
       <Navbar />
       
       {/* Header with User Info */}
-      <header className="bg-white/95 shadow-md backdrop-blur-sm">
+      <header className="bg-slate-900/40 border-b border-white/5 backdrop-blur-md sticky top-16 z-40 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400">
                 Panel de Administración
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-slate-400 mt-1 text-sm font-semibold">
                 Bienvenido, {userData.first_name} {userData.last_name}
               </p>
             </div>
@@ -50,7 +54,7 @@ const HomeAdmin = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow bg-white/5 backdrop-blur-sm">
+      <main className="flex-grow relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           
           {/* Menú principal */}

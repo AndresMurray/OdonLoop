@@ -32,7 +32,7 @@ const HomeOdonto = () => {
   // Storage
   const [storageInfo, setStorageInfo] = useState(null);
 
-  // Calcular turnos activos (disponibles, reservados, confirmados) de hoy en adelante
+  // Calcular turnos activos de hoy en adelante
   const turnosActivosPorDia = useMemo(() => {
     const mapa = {};
     const hoy = getToday();
@@ -79,6 +79,7 @@ const HomeOdonto = () => {
       const data = await getMisTurnos();
       setTurnos(data);
     } catch (err) {
+      console.error('Error al cargar turnos:', err);
     } finally {
       setLoading(false);
     }
@@ -98,46 +99,20 @@ const HomeOdonto = () => {
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const formatearFecha = (fechaHora) => {
-    // El backend ya envía la fecha en hora local de Argentina (sin timezone)
-    // Solo necesitamos parsearla y formatearla directamente
-    const fecha = new Date(fechaHora);
-
-    const horaStr = String(fecha.getHours()).padStart(2, '0');
-    const minStr = String(fecha.getMinutes()).padStart(2, '0');
-    const diaStr = String(fecha.getDate()).padStart(2, '0');
-    const mesStr = String(fecha.getMonth() + 1).padStart(2, '0');
-    const año = fecha.getFullYear();
-
-    return `${horaStr}:${minStr} - ${diaStr}/${mesStr}/${año}`;
-  };
-
-  const formatearFechaLarga = (fechaISO) => {
-    const fecha = new Date(fechaISO + 'T00:00:00');
-    const opciones = {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      timeZone: 'UTC'
-    };
-    return fecha.toLocaleDateString('es-AR', opciones);
-  };
-
-  const avanzarDia = () => {
-    const fecha = new Date(fechaSeleccionada);
-    fecha.setDate(fecha.getDate() + 1);
+  const retrocederDia = () => {
+    const fecha = new Date(fechaSeleccionada + 'T00:00:00');
+    fecha.setDate(fecha.getDate() - 1);
     setFechaSeleccionada(fecha.toISOString().split('T')[0]);
     setPaginaReservados(1);
     setPaginaDisponibles(1);
   };
 
-  const retrocederDia = () => {
-    const fecha = new Date(fechaSeleccionada);
-    fecha.setDate(fecha.getDate() - 1);
+  const avanzarDia = () => {
+    const fecha = new Date(fechaSeleccionada + 'T00:00:00');
+    fecha.setDate(fecha.getDate() + 1);
     setFechaSeleccionada(fecha.toISOString().split('T')[0]);
     setPaginaReservados(1);
     setPaginaDisponibles(1);
@@ -149,6 +124,22 @@ const HomeOdonto = () => {
     setPaginaDisponibles(1);
   };
 
+  const formatearFechaLarga = (fechaStr) => {
+    const fecha = new Date(fechaStr + 'T00:00:00');
+    return fecha.toLocaleDateString('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    });
+  };
+
+  const formatearFecha = (fechaHoraStr) => {
+    // fechaHoraStr viene como "YYYY-MM-DDTHH:MM:SS"
+    const [, horaPart] = fechaHoraStr.split('T');
+    const [hh, mm] = horaPart.split(':');
+    return `${hh}:${mm} hs`;
+  };
+
   const getTurnosPorFechaYEstado = (estado) => {
     return turnos.filter(t => {
       const cumpleEstado = estado === 'reservados'
@@ -157,7 +148,6 @@ const HomeOdonto = () => {
 
       if (!cumpleEstado) return false;
 
-      // Comparar directamente el string de fecha (el backend envía hora local sin timezone)
       const fechaTurno = t.fecha_hora.split('T')[0];
       return fechaTurno === fechaSeleccionada;
     });
@@ -177,13 +167,13 @@ const HomeOdonto = () => {
 
   const getEstadoColor = (estado) => {
     const colores = {
-      disponible: 'bg-green-100 text-green-800',
-      reservado: 'bg-blue-100 text-blue-800',
-      confirmado: 'bg-purple-100 text-purple-800',
-      completado: 'bg-gray-100 text-gray-800',
-      cancelado: 'bg-red-100 text-red-800'
+      disponible: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+      reservado: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+      confirmado: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
+      completado: 'bg-slate-800 text-slate-400 border border-slate-700',
+      cancelado: 'bg-red-500/10 text-red-400 border border-red-500/20'
     };
-    return colores[estado] || 'bg-gray-100 text-gray-800';
+    return colores[estado] || 'bg-slate-800 text-slate-400 border border-slate-700';
   };
 
   if (!userData) {
@@ -191,18 +181,22 @@ const HomeOdonto = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+    <div className="min-h-screen bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col relative overflow-hidden text-white">
+      {/* Background decorations / Glowing blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] left-[15%] w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none z-0"></div>
+      
       <Navbar />
 
       {/* Header with User Info */}
-      <header className="bg-white/95 shadow-md backdrop-blur-sm">
+      <header className="bg-slate-900/40 border-b border-white/5 backdrop-blur-md sticky top-16 z-40 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400">
                 Panel de Odontólogo
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-slate-400 mt-1 text-sm font-semibold">
                 Bienvenido, Dr. {userData.first_name} {userData.last_name}
               </p>
             </div>
@@ -211,32 +205,32 @@ const HomeOdonto = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow bg-white/5 backdrop-blur-sm">
+      <main className="flex-grow relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Botón destacado de Gestión de Turnos */}
-          <div className="mb-8">
-            <Card className="bg-gradient-to-r from-blue-600 to-indigo-600 border-none">
+          <div className="mb-8 animate-fadeIn">
+            <Card className="bg-gradient-to-r from-blue-900/80 to-indigo-950/80 border border-blue-500/30">
               <CardContent className="p-6 sm:p-8">
                 <div className="flex flex-col md:flex-row items-center justify-between text-white gap-4">
                   <div className="text-center md:text-left">
                     <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
                       <h2 className="text-xl sm:text-2xl font-bold">Gestión de Turnos</h2>
                       {!userData?.plan?.tiene_turnos && (
-                        <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
                           <Lock className="w-3 h-3" />
                           Plan Medio / Premium
                         </span>
                       )}
                     </div>
-                    <p className="text-blue-100 text-sm sm:text-base">
+                    <p className="text-blue-200 text-sm sm:text-base">
                       {userData?.plan?.tiene_turnos 
                         ? 'Administra, crea y visualiza todos tus turnos de manera eficiente'
                         : 'Agenda de turnos y recordatorios automáticos por email. Disponible en Plan Medio y Premium.'}
                     </p>
                   </div>
                   <Button
-                    variant="secondary"
-                    className="bg-white text-blue-600 hover:bg-gray-100 px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg whitespace-nowrap w-full md:w-auto flex items-center justify-center gap-2"
+                    variant="primary"
+                    className="px-6 sm:px-8 py-2.5 sm:py-3 text-sm font-bold whitespace-nowrap w-full md:w-auto flex items-center justify-center gap-2"
                     onClick={() => {
                       if (userData?.plan?.tiene_turnos) {
                         navigate('/gestion-turnos');
@@ -247,7 +241,7 @@ const HomeOdonto = () => {
                   >
                     {userData?.plan?.tiene_turnos ? (
                       <>
-                        <CalendarIcon className="w-5 h-5" />
+                        <CalendarIcon className="w-4 h-4" />
                         Ir a Gestión
                       </>
                     ) : (
@@ -264,21 +258,21 @@ const HomeOdonto = () => {
 
           {/* Botón destacado de Mis Pacientes */}
           <div className="mb-8">
-            <Card className="bg-gradient-to-r from-emerald-600 to-teal-600 border-none">
+            <Card className="bg-gradient-to-r from-emerald-950/80 to-teal-950/80 border border-emerald-500/30">
               <CardContent className="p-6 sm:p-8">
                 <div className="flex flex-col md:flex-row items-center justify-between text-white gap-4">
                   <div className="text-center md:text-left">
                     <h2 className="text-xl sm:text-2xl font-bold mb-2">Mis Pacientes</h2>
-                    <p className="text-emerald-100 text-sm sm:text-base">
+                    <p className="text-emerald-200 text-sm sm:text-base">
                       Accede al seguimiento de tus pacientes y su historial clínico
                     </p>
                   </div>
                   <Button
-                    variant="secondary"
-                    className="bg-white text-emerald-600 hover:bg-gray-100 px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg whitespace-nowrap w-full md:w-auto"
+                    variant="primary"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white border-none px-6 sm:px-8 py-2.5 sm:py-3 text-sm font-bold whitespace-nowrap w-full md:w-auto flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/10"
                     onClick={() => navigate('/mis-pacientes')}
                   >
-                    <Users className="w-5 h-5 mr-2 inline" />
+                    <Users className="w-4 h-4" />
                     Ver Pacientes
                   </Button>
                 </div>
@@ -289,12 +283,12 @@ const HomeOdonto = () => {
           {/* Barra de almacenamiento */}
           {storageInfo && (
             <div className="mb-8">
-              <Card className="p-6">
+              <Card className="p-6 bg-slate-900/60 backdrop-blur-xl border border-slate-800">
                 <div className="flex items-center gap-3 mb-3">
-                  <HardDrive className="w-5 h-5 text-gray-600" />
-                  <h3 className="text-lg font-semibold text-gray-800">Almacenamiento</h3>
+                  <HardDrive className="w-5 h-5 text-blue-400" />
+                  <h3 className="text-base font-bold text-white">Almacenamiento</h3>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div className="w-full bg-slate-950/80 rounded-full h-4 overflow-hidden border border-slate-800">
                   <div
                     className={`h-4 rounded-full transition-all duration-500 ${
                       (storageInfo.storage_used / storageInfo.storage_limit) > 0.9
@@ -306,7 +300,7 @@ const HomeOdonto = () => {
                     style={{ width: `${Math.min(100, (storageInfo.storage_used / storageInfo.storage_limit) * 100)}%` }}
                   />
                 </div>
-                <div className="flex justify-between mt-2 text-sm text-gray-600">
+                <div className="flex justify-between mt-2 text-xs text-slate-400">
                   <span>{formatBytes(storageInfo.storage_used)} usado</span>
                   <span>{formatBytes(storageInfo.storage_available)} disponible de {formatBytes(storageInfo.storage_limit)}</span>
                 </div>
@@ -320,7 +314,7 @@ const HomeOdonto = () => {
               <div className="mb-6">
                 <Card className="p-6 sm:p-8">
                   <div className="mb-4">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">
+                    <h3 className="text-xl font-bold text-white mb-4">
                       Seleccionar Fecha
                     </h3>
 
@@ -367,7 +361,7 @@ const HomeOdonto = () => {
                         <ChevronRight className="w-4 h-4 ml-1" />
                       </Button>
                     </div>
-                    <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-md">
+                    <span className="text-sm font-semibold text-slate-350 bg-slate-950/80 border border-slate-800 px-3 py-1 rounded-md">
                       {formatearFechaLarga(fechaSeleccionada)}
                     </span>
                   </div>
@@ -379,9 +373,9 @@ const HomeOdonto = () => {
                 {/* Reservados y Confirmados */}
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg font-bold text-gray-800 flex items-center justify-between">
+                    <CardTitle className="text-lg font-bold text-white flex items-center justify-between">
                       <span>Turnos Agendados</span>
-                      <span className="text-sm bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium">
+                      <span className="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/25 px-2 py-0.5 rounded-full font-bold">
                         {getTurnosPorFechaYEstado('reservados').length}
                       </span>
                     </CardTitle>
@@ -389,7 +383,7 @@ const HomeOdonto = () => {
                   </CardHeader>
                   <CardContent>
                     {getTurnosPorFechaYEstado('reservados').length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="text-center py-8 text-slate-500">
                         No hay turnos agendados para este día.
                       </div>
                     ) : (
@@ -398,26 +392,26 @@ const HomeOdonto = () => {
                           {getTurnosPaginados('reservados', paginaReservados).map((turno) => (
                             <div
                               key={turno.id}
-                              className="border border-gray-100 rounded-lg p-4 hover:border-gray-200 transition-colors"
+                              className="border border-slate-850 bg-slate-950/40 rounded-lg p-4 hover:border-slate-800 transition-colors"
                             >
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <h4 className="font-semibold text-gray-900">
+                                  <h4 className="font-bold text-white">
                                     {turno.paciente_nombre || 'Paciente no registrado'}
                                   </h4>
-                                  <p className="text-sm text-gray-500 mt-1">
+                                  <p className="text-sm text-slate-400 mt-1">
                                     🕒 {formatearFecha(turno.fecha_hora)}
                                   </p>
-                                  <p className="text-sm text-gray-500">
+                                  <p className="text-xs text-slate-500">
                                     Duración: {turno.duracion_minutos} min
                                   </p>
                                   {turno.motivo && (
-                                    <p className="text-sm text-gray-600 mt-2 bg-gray-50 p-2 rounded italic">
+                                    <p className="text-xs text-slate-350 mt-2 bg-slate-900 border border-slate-800 p-2 rounded italic">
                                       "{turno.motivo}"
                                     </p>
                                   )}
                                 </div>
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(turno.estado)}`}>
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getEstadoColor(turno.estado)}`}>
                                   {turno.estado}
                                 </span>
                               </div>
@@ -442,9 +436,9 @@ const HomeOdonto = () => {
                 {/* Disponibles */}
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg font-bold text-gray-800 flex items-center justify-between">
+                    <CardTitle className="text-lg font-bold text-white flex items-center justify-between">
                       <span>Turnos Disponibles</span>
-                      <span className="text-sm bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
+                      <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 px-2 py-0.5 rounded-full font-bold">
                         {getTurnosPorFechaYEstado('disponibles').length}
                       </span>
                     </CardTitle>
@@ -452,7 +446,7 @@ const HomeOdonto = () => {
                   </CardHeader>
                   <CardContent>
                     {getTurnosPorFechaYEstado('disponibles').length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="text-center py-8 text-slate-500">
                         No hay horarios disponibles creados para este día.
                       </div>
                     ) : (
@@ -461,25 +455,25 @@ const HomeOdonto = () => {
                           {getTurnosPaginados('disponibles', paginaDisponibles).map((turno) => (
                             <div
                               key={turno.id}
-                              className="border border-gray-100 rounded-lg p-4 hover:border-gray-200 transition-colors"
+                              className="border border-slate-850 bg-slate-950/40 rounded-lg p-4 hover:border-slate-800 transition-colors"
                             >
                               <div className="flex justify-between items-center">
                                 <div>
-                                  <p className="font-semibold text-gray-900">
+                                  <p className="font-bold text-white">
                                     🕒 {formatearFecha(turno.fecha_hora)}
                                   </p>
                                   <div className="flex gap-2 items-center mt-1">
                                     {!turno.visible && (
-                                      <span className="text-xs bg-yellow-100 text-yellow-800 border border-yellow-300 px-2 py-0.5 rounded-full font-medium">
+                                      <span className="text-[10px] bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2 py-0.5 rounded-full font-bold">
                                         🚫 Oculto
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-sm text-gray-500">
+                                  <p className="text-xs text-slate-500 mt-1">
                                     Duración: {turno.duracion_minutos} min
                                   </p>
                                 </div>
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(turno.estado)}`}>
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getEstadoColor(turno.estado)}`}>
                                   {turno.estado}
                                 </span>
                               </div>
@@ -517,7 +511,7 @@ const HomeOdonto = () => {
               </p>
               <Button
                 onClick={() => setPlanesModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 border-none text-white px-6 py-2.5 font-bold rounded-xl"
+                className="bg-blue-600 hover:bg-blue-505 border-none text-white px-6 py-2.5 font-bold rounded-xl active:scale-95 transition-all shadow-md shadow-blue-500/15"
               >
                 Conocé los planes de suscripción
               </Button>

@@ -77,9 +77,13 @@ const RegisterOdontologoPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+    <div className="min-h-screen bg-slate-950 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex flex-col relative overflow-hidden text-white">
+      {/* Background decorations / Glowing blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] left-[15%] w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none z-0"></div>
+      
       <Navbar />
-      <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
       <div className="max-w-2xl mx-auto w-full">
         <Link
           to="/"
@@ -93,14 +97,14 @@ const RegisterOdontologoPage = () => {
           <CardContent className="p-8">
             <div className="text-center mb-8">
               <div className="flex justify-center mb-4">
-                <div className="p-4 bg-slate-100 rounded-full">
-                  <Stethoscope className="w-12 h-12 text-slate-700" />
+                <div className="p-4 bg-blue-500/10 rounded-full">
+                  <Stethoscope className="w-12 h-12 text-blue-400" />
                 </div>
               </div>
-              <h2 className="text-3xl font-bold text-gray-900">
+              <h2 className="text-3xl font-black text-white tracking-tight">
                 Registro de Odontólogo
               </h2>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-slate-400">
                 Completa el formulario para crear tu cuenta profesional
               </p>
             </div>
