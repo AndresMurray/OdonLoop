@@ -9,3 +9,5 @@ export { Card, CardHeader, CardTitle, CardDescription, CardContent } from './Car
 export { Calendar } from './Calendar';
 export { default as PiezaDental } from './PiezaDental';
 export { default as Odontograma } from './Odontograma';
+export { default as PlanModal } from './PlanModal';
+

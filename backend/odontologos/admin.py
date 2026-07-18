@@ -1,22 +1,35 @@
 from django.contrib import admin
-from .models import Odontologo
+from .models import Odontologo, PlanConfig
+
+
+@admin.register(PlanConfig)
+class PlanConfigAdmin(admin.ModelAdmin):
+    list_display = [
+        'plan_key', 'nombre', 'precio', 'limite_almacenamiento_gb',
+        'tiene_turnos', 'tiene_recordatorios_email', 'tiene_odontograma', 'tiene_exportacion_pdf'
+    ]
+    list_filter = ['tiene_turnos', 'tiene_recordatorios_email', 'tiene_odontograma', 'tiene_exportacion_pdf']
+    search_fields = ['nombre', 'plan_key']
 
 
 @admin.register(Odontologo)
 class OdontologoAdmin(admin.ModelAdmin):
     list_display = [
-        'id', 'get_nombre_completo', 'matricula', 'especialidad',
+        'id', 'get_nombre_completo', 'plan', 'matricula', 'especialidad',
         'anos_experiencia', 'estado', 'activo', 'terms_accepted',
         'storage_used', 'storage_limit',
         'fecha_alta', 'fecha_aprobacion', 'fecha_suspension',
     ]
-    list_filter = ['estado', 'activo', 'especialidad', 'terms_accepted', 'fecha_alta']
+    list_filter = ['plan', 'estado', 'activo', 'especialidad', 'terms_accepted', 'fecha_alta']
     search_fields = ['user__first_name', 'user__last_name', 'matricula', 'especialidad']
     readonly_fields = ['fecha_alta', 'fecha_aprobacion', 'fecha_suspension', 'terms_accepted_date']
 
     fieldsets = (
         ('Información del Usuario', {
             'fields': ('user',)
+        }),
+        ('Plan de Suscripción', {
+            'fields': ('plan',)
         }),
         ('Información Profesional', {
             'fields': ('matricula', 'especialidad', 'anos_experiencia')

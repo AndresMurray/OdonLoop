@@ -2,19 +2,22 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
 import Button from '../components/Button';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, HardDrive } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, HardDrive, Lock } from 'lucide-react';
 import { authService } from '../api/authService';
+import { userService } from '../api/userService';
 import { getMisTurnos } from '../api/turnoService';
 import { getMiStorage } from '../api/odontologoService';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
 import TurnoCalendar from '../components/TurnoCalendar';
+import { PlanModal } from '../components';
 import { getToday } from '../utils/dateUtils';
 
 const HomeOdonto = () => {
   const navigate = useNavigate();
-  const [userData] = useState(() => authService.getUserData());
+  const [userData, setUserData] = useState(() => authService.getUserData());
+  const [planesModalOpen, setPlanesModalOpen] = useState(false);
   const [turnos, setTurnos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fechaSeleccionada, setFechaSeleccionada] = useState(() => {
@@ -56,6 +59,16 @@ const HomeOdonto = () => {
   }, [navigate, userData]);
 
   useEffect(() => {
+    const syncProfile = async () => {
+      try {
+        const latestProfile = await userService.getProfile();
+        localStorage.setItem('user_data', JSON.stringify(latestProfile));
+        setUserData(latestProfile);
+      } catch (err) {
+        console.error('Error syncing profile:', err);
+      }
+    };
+    syncProfile();
     cargarTurnos();
     cargarStorage();
   }, []);
@@ -206,18 +219,43 @@ const HomeOdonto = () => {
               <CardContent className="p-6 sm:p-8">
                 <div className="flex flex-col md:flex-row items-center justify-between text-white gap-4">
                   <div className="text-center md:text-left">
-                    <h2 className="text-xl sm:text-2xl font-bold mb-2">Gestión de Turnos</h2>
+                    <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                      <h2 className="text-xl sm:text-2xl font-bold">Gestión de Turnos</h2>
+                      {!userData?.plan?.tiene_turnos && (
+                        <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                          <Lock className="w-3 h-3" />
+                          Plan Medio / Premium
+                        </span>
+                      )}
+                    </div>
                     <p className="text-blue-100 text-sm sm:text-base">
-                      Administra, crea y visualiza todos tus turnos de manera eficiente
+                      {userData?.plan?.tiene_turnos 
+                        ? 'Administra, crea y visualiza todos tus turnos de manera eficiente'
+                        : 'Agenda de turnos y recordatorios automáticos por email. Disponible en Plan Medio y Premium.'}
                     </p>
                   </div>
                   <Button
                     variant="secondary"
-                    className="bg-white text-blue-600 hover:bg-gray-100 px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg whitespace-nowrap w-full md:w-auto"
-                    onClick={() => navigate('/gestion-turnos')}
+                    className="bg-white text-blue-600 hover:bg-gray-100 px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg whitespace-nowrap w-full md:w-auto flex items-center justify-center gap-2"
+                    onClick={() => {
+                      if (userData?.plan?.tiene_turnos) {
+                        navigate('/gestion-turnos');
+                      } else {
+                        setPlanesModalOpen(true);
+                      }
+                    }}
                   >
-                    <CalendarIcon className="w-5 h-5 mr-2 inline" />
-                    Ir a Gestión
+                    {userData?.plan?.tiene_turnos ? (
+                      <>
+                        <CalendarIcon className="w-5 h-5" />
+                        Ir a Gestión
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        Ver Planes
+                      </>
+                    )}
                   </Button>
                 </div>
               </CardContent>
@@ -276,243 +314,218 @@ const HomeOdonto = () => {
             </div>
           )}
 
-          {/* Selector de Fecha */}
-          <div className="mb-6">
-            <Card className="p-6 sm:p-8">
-              <div className="mb-4">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">
-                  Seleccionar Fecha
-                </h3>
+          {/* Selector de Fecha / Calendario condicionado */}
+          {userData?.plan?.tiene_turnos ? (
+            <>
+              <div className="mb-6">
+                <Card className="p-6 sm:p-8">
+                  <div className="mb-4">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">
+                      Seleccionar Fecha
+                    </h3>
 
-                {/* Calendario */}
-                <TurnoCalendar
-                  turnosPorDia={turnosActivosPorDia}
-                  fechaSeleccionada={fechaSeleccionada}
-                  onSelectFecha={(fecha) => {
-                    setFechaSeleccionada(fecha);
-                    setPaginaReservados(1);
-                    setPaginaDisponibles(1);
-                  }}
-                  highlightColor="blue"
-                  label="turnos activos"
-                  showTotal={false}
-                />
+                    {/* Calendario */}
+                    <TurnoCalendar
+                      turnosPorDia={turnosActivosPorDia}
+                      fechaSeleccionada={fechaSeleccionada}
+                      onSelectFecha={(fecha) => {
+                        setFechaSeleccionada(fecha);
+                        setPaginaReservados(1);
+                        setPaginaDisponibles(1);
+                      }}
+                      highlightColor="blue"
+                      label="turnos activos"
+                      showTotal={false}
+                    />
+                  </div>
+
+                  <div className="flex justify-between items-center mt-6">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={retrocederDia}
+                        className="flex items-center"
+                      >
+                        <ChevronLeft className="w-4 h-4 mr-1" />
+                        Día anterior
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={irHoy}
+                      >
+                        Hoy
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={avanzarDia}
+                        className="flex items-center"
+                      >
+                        Día siguiente
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-md">
+                      {formatearFechaLarga(fechaSeleccionada)}
+                    </span>
+                  </div>
+                </Card>
               </div>
 
-              {/* Separador */}
-              <div className="h-px bg-gray-200 mt-2 mb-4"></div>
-
-              {/* Navegación por día */}
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-2">
-                {/* Mobile: Layout vertical */}
-                <div className="md:hidden w-full space-y-3">
-                  <div className="flex gap-2">
-                    <div className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-center font-medium text-gray-700 shadow-sm flex items-center justify-center">
-                      {new Date(fechaSeleccionada + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={irHoy}
-                      className="whitespace-nowrap shadow-sm"
-                    >
-                      Hoy
-                    </Button>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={retrocederDia}
-                      className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
-                    >
-                      ← Anterior
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={avanzarDia}
-                      className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
-                    >
-                      Siguiente →
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Desktop: Layout horizontal */}
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={retrocederDia}
-                  className="hidden md:block shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
-                >
-                  ← Día Anterior
-                </Button>
-
-                <div className="hidden md:flex items-center gap-3">
-                  <div className="relative">
-                    <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-center font-medium text-gray-700 shadow-sm flex items-center justify-center min-w-[120px]">
-                      {new Date(fechaSeleccionada + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                    </div>
-                  </div>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={irHoy}
-                    className="px-4 shadow-sm"
-                  >
-                    Hoy
-                  </Button>
-                </div>
-
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={avanzarDia}
-                  className="hidden md:block shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
-                >
-                  Día Siguiente →
-                </Button>
-              </div>
-
-              <p className="text-sm text-gray-600 mt-4 text-center">
-                Viendo turnos para el {formatearFechaLarga(fechaSeleccionada)}
-              </p>
-            </Card>
-          </div>
-
-          {/* Grid de Turnos */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Turnos Reservados/Confirmados */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Turnos Reservados</CardTitle>
-                <CardDescription>
-                  Turnos con pacientes asignados ({getTurnosPorFechaYEstado('reservados').length})
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <p className="text-center py-8 text-gray-500">Cargando...</p>
-                ) : getTurnosPorFechaYEstado('reservados').length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <CalendarIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No hay turnos reservados para esta fecha</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-3">
-                      {getTurnosPaginados('reservados', paginaReservados).map((turno) => (
-                        <div
-                          key={turno.id}
-                          className="p-4 bg-blue-50 rounded-lg border border-blue-100"
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-semibold text-gray-900">
-                                {formatearFecha(turno.fecha_hora)}
-                              </p>
-                              {turno.paciente ? (
-                                <p className="text-sm text-gray-600 mt-1">
-                                  Paciente: {turno.paciente.nombre_completo}
-                                </p>
-                              ) : turno.nombre_paciente_manual && turno.apellido_paciente_manual ? (
-                                <div className="text-sm text-gray-600 mt-1">
-                                  <p>Paciente: {turno.nombre_paciente_manual} {turno.apellido_paciente_manual}</p>
-                                  {turno.telefono_paciente_manual && (
-                                    <p className="text-xs text-gray-500 mt-0.5">📞 {turno.telefono_paciente_manual}</p>
+              {/* Listados de Turnos */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {/* Reservados y Confirmados */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-bold text-gray-800 flex items-center justify-between">
+                      <span>Turnos Agendados</span>
+                      <span className="text-sm bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium">
+                        {getTurnosPorFechaYEstado('reservados').length}
+                      </span>
+                    </CardTitle>
+                    <CardDescription>Pacientes citados para esta fecha</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {getTurnosPorFechaYEstado('reservados').length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        No hay turnos agendados para este día.
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-4">
+                          {getTurnosPaginados('reservados', paginaReservados).map((turno) => (
+                            <div
+                              key={turno.id}
+                              className="border border-gray-100 rounded-lg p-4 hover:border-gray-200 transition-colors"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h4 className="font-semibold text-gray-900">
+                                    {turno.paciente_nombre || 'Paciente no registrado'}
+                                  </h4>
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    🕒 {formatearFecha(turno.fecha_hora)}
+                                  </p>
+                                  <p className="text-sm text-gray-500">
+                                    Duración: {turno.duracion_minutos} min
+                                  </p>
+                                  {turno.motivo && (
+                                    <p className="text-sm text-gray-600 mt-2 bg-gray-50 p-2 rounded italic">
+                                      "{turno.motivo}"
+                                    </p>
                                   )}
                                 </div>
-                              ) : null}
-                              <p className="text-sm text-gray-500">
-                                Duración: {turno.duracion_minutos} min
-                              </p>
-                            </div>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(turno.estado)}`}>
-                              {turno.estado}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {getTotalPaginas('reservados') > 1 && (
-                      <Pagination
-                        currentPage={paginaReservados}
-                        totalPages={getTotalPaginas('reservados')}
-                        onPageChange={setPaginaReservados}
-                        itemsPerPage={ITEMS_POR_PAGINA}
-                        totalItems={getTurnosPorFechaYEstado('reservados').length}
-                      />
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Turnos Disponibles */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Turnos Disponibles</CardTitle>
-                <CardDescription>
-                  Espacios libres para reservar ({getTurnosPorFechaYEstado('disponibles').length})
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <p className="text-center py-8 text-gray-500">Cargando...</p>
-                ) : getTurnosPorFechaYEstado('disponibles').length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <CalendarIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No hay turnos disponibles para esta fecha</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-3">
-                      {getTurnosPaginados('disponibles', paginaDisponibles).map((turno) => (
-                        <div
-                          key={turno.id}
-                          className={`p-4 rounded-lg border ${turno.visible ? 'bg-green-50 border-green-100' : 'bg-yellow-50 border-yellow-200'}`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="font-semibold text-gray-900">
-                                  {formatearFecha(turno.fecha_hora)}
-                                </p>
-                                {!turno.visible && (
-                                  <span className="text-xs bg-yellow-100 text-yellow-800 border border-yellow-300 px-2 py-0.5 rounded-full font-medium">
-                                    🚫 Oculto
-                                  </span>
-                                )}
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(turno.estado)}`}>
+                                  {turno.estado}
+                                </span>
                               </div>
-                              <p className="text-sm text-gray-500">
-                                Duración: {turno.duracion_minutos} min
-                              </p>
                             </div>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(turno.estado)}`}>
-                              {turno.estado}
-                            </span>
-                          </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
 
-                    {getTotalPaginas('disponibles') > 1 && (
-                      <Pagination
-                        currentPage={paginaDisponibles}
-                        totalPages={getTotalPaginas('disponibles')}
-                        onPageChange={setPaginaDisponibles}
-                        itemsPerPage={ITEMS_POR_PAGINA}
-                        totalItems={getTurnosPorFechaYEstado('disponibles').length}
-                      />
+                        {getTotalPaginas('reservados') > 1 && (
+                          <Pagination
+                            currentPage={paginaReservados}
+                            totalPages={getTotalPaginas('reservados')}
+                            onPageChange={setPaginaReservados}
+                            itemsPerPage={ITEMS_POR_PAGINA}
+                            totalItems={getTurnosPorFechaYEstado('reservados').length}
+                          />
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                  </CardContent>
+                </Card>
+
+                {/* Disponibles */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-bold text-gray-800 flex items-center justify-between">
+                      <span>Turnos Disponibles</span>
+                      <span className="text-sm bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
+                        {getTurnosPorFechaYEstado('disponibles').length}
+                      </span>
+                    </CardTitle>
+                    <CardDescription>Horarios libres para reserva online</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {getTurnosPorFechaYEstado('disponibles').length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        No hay horarios disponibles creados para este día.
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-4">
+                          {getTurnosPaginados('disponibles', paginaDisponibles).map((turno) => (
+                            <div
+                              key={turno.id}
+                              className="border border-gray-100 rounded-lg p-4 hover:border-gray-200 transition-colors"
+                            >
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <p className="font-semibold text-gray-900">
+                                    🕒 {formatearFecha(turno.fecha_hora)}
+                                  </p>
+                                  <div className="flex gap-2 items-center mt-1">
+                                    {!turno.visible && (
+                                      <span className="text-xs bg-yellow-100 text-yellow-800 border border-yellow-300 px-2 py-0.5 rounded-full font-medium">
+                                        🚫 Oculto
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-gray-500">
+                                    Duración: {turno.duracion_minutos} min
+                                  </p>
+                                </div>
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(turno.estado)}`}>
+                                  {turno.estado}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {getTotalPaginas('disponibles') > 1 && (
+                          <Pagination
+                            currentPage={paginaDisponibles}
+                            totalPages={getTotalPaginas('disponibles')}
+                            onPageChange={setPaginaDisponibles}
+                            itemsPerPage={ITEMS_POR_PAGINA}
+                            totalItems={getTurnosPorFechaYEstado('disponibles').length}
+                          />
+                        )}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          ) : (
+            <div className="mt-8 bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-white relative overflow-hidden shadow-2xl">
+              {/* Decorative glows */}
+              <div className="absolute -top-20 -left-20 w-40 h-40 bg-blue-500/10 rounded-full blur-2xl"></div>
+              <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl"></div>
+              
+              <h3 className="text-2xl font-bold mb-3 flex items-center justify-center gap-2">
+                <Lock className="w-6 h-6 text-amber-400" />
+                Automatizá tu agenda con el Plan Medio
+              </h3>
+              <p className="text-slate-400 max-w-xl mx-auto mb-6 text-sm leading-relaxed">
+                Habilitá la agenda interactiva de turnos y permití que tus pacientes agenden de forma online. Recibirán confirmaciones y recordatorios automáticos de turnos por email 24 horas antes de su cita.
+              </p>
+              <Button
+                onClick={() => setPlanesModalOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 border-none text-white px-6 py-2.5 font-bold rounded-xl"
+              >
+                Conocé los planes de suscripción
+              </Button>
+            </div>
+          )}
         </div>
       </main>
+      <PlanModal isOpen={planesModalOpen} onClose={() => setPlanesModalOpen(false)} />
       <Footer />
     </div>
   );

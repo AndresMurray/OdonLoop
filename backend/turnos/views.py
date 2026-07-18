@@ -27,24 +27,27 @@ class TurnoViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Filtrar turnos según el usuario y parámetros"""
-        queryset = Turno.objects.select_related('paciente__user', 'odontologo__user').all()
+        queryset = Turno.objects.select_related('paciente__user', 'odontologo__user', 'odontologo__plan').all()
         user = self.request.user
         
-        # Si es paciente, mostrar solo sus turnos y los disponibles VISIBLES
+        # Si es paciente, mostrar solo sus turnos y los disponibles VISIBLES de odontólogos con plan con turnos
         if user.tipo_usuario == 'paciente':
             try:
                 paciente = Paciente.objects.get(user=user)
                 queryset = queryset.filter(
                     Q(paciente=paciente) | Q(estado='disponible', paciente__isnull=True, visible=True)
-                )
+                ).filter(odontologo__plan__tiene_turnos=True)
             except Paciente.DoesNotExist:
-                queryset = queryset.filter(estado='disponible', paciente__isnull=True, visible=True)
+                queryset = queryset.filter(estado='disponible', paciente__isnull=True, visible=True).filter(odontologo__plan__tiene_turnos=True)
         
-        # Si es odontólogo, mostrar solo sus turnos
+        # Si es odontólogo, mostrar solo sus turnos (si su plan lo incluye)
         elif user.tipo_usuario == 'odontologo':
             try:
                 odontologo = Odontologo.objects.get(user=user)
-                queryset = queryset.filter(odontologo=odontologo)
+                if not getattr(odontologo.plan, 'tiene_turnos', False):
+                    queryset = queryset.none()
+                else:
+                    queryset = queryset.filter(odontologo=odontologo)
             except Odontologo.DoesNotExist:
                 queryset = queryset.none()
         
@@ -92,6 +95,11 @@ class TurnoViewSet(viewsets.ModelViewSet):
         
         try:
             odontologo = Odontologo.objects.get(user=request.user)
+            if not getattr(odontologo.plan, 'tiene_turnos', False):
+                return Response(
+                    {'error': 'Tu plan actual no incluye la función de turnos. Por favor, actualiza tu plan.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
         except Odontologo.DoesNotExist:
             return Response(
                 {'error': 'No se encontró el perfil de odontólogo. Por favor contacta al administrador.'},
@@ -156,6 +164,12 @@ class TurnoViewSet(viewsets.ModelViewSet):
         try:
             paciente = Paciente.objects.get(user=request.user)
             turno = self.get_object()
+            
+            if not getattr(turno.odontologo.plan, 'tiene_turnos', False):
+                return Response(
+                    {'error': 'El odontólogo seleccionado no tiene habilitado el sistema de turnos.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
             
             if not turno.esta_disponible:
                 return Response(
@@ -520,6 +534,11 @@ class TurnoViewSet(viewsets.ModelViewSet):
         
         try:
             odontologo = Odontologo.objects.get(user=request.user)
+            if not getattr(odontologo.plan, 'tiene_turnos', False):
+                return Response(
+                    {'error': 'Tu plan actual no incluye la función de turnos. Por favor, actualiza tu plan.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
         except Odontologo.DoesNotExist:
             return Response(
                 {'error': 'No se encontró el perfil de odontólogo'},

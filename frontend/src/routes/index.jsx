@@ -153,7 +153,7 @@ export const router = createBrowserRouter([
   {
     path: '/gestion-turnos',
     element: (
-      <ProtectedRoute requiredRole="odontologo">
+      <ProtectedRoute requiredRole="odontologo" requiredPermission="tiene_turnos">
         <GestionTurnosOdonto />
       </ProtectedRoute>
     ),
@@ -177,7 +177,7 @@ export const router = createBrowserRouter([
   {
     path: '/odontograma/:pacienteId',
     element: (
-      <ProtectedRoute requiredRole="odontologo">
+      <ProtectedRoute requiredRole="odontologo" requiredPermission="tiene_odontograma">
         <OdontogramaPage />
       </ProtectedRoute>
     ),
@@ -193,7 +193,7 @@ export const router = createBrowserRouter([
   {
     path: '/turnos',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute requiredRole="paciente">
         <TurnosPage />
       </ProtectedRoute>
     ),

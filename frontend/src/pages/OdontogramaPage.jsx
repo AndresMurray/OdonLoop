@@ -7,7 +7,9 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Odontograma from '../components/Odontograma';
 import StatusModal from '../components/StatusModal';
-import { ArrowLeft, FileDown, FilePlus, List, Calendar, ChevronRight, Trash2 } from 'lucide-react';
+import { PlanModal } from '../components';
+import { authService } from '../api/authService';
+import { ArrowLeft, FileDown, FilePlus, List, Calendar, ChevronRight, Trash2, Lock } from 'lucide-react';
 import { 
   getOdontograma,
   crearOdontograma,
@@ -21,6 +23,9 @@ import { exportarHistorialPacientePDF } from '../utils/exportarPDF';
 const OdontogramaPage = () => {
   const { pacienteId } = useParams();
   const navigate = useNavigate();
+  
+  const [userData] = useState(() => authService.getUserData());
+  const [planesModalOpen, setPlanesModalOpen] = useState(false);
   
   const [odontogramaData, setOdontogramaData] = useState(null);
   const [odontogramaId, setOdontogramaId] = useState(null);
@@ -46,8 +51,12 @@ const OdontogramaPage = () => {
   const [eliminando, setEliminando] = useState(false);
 
   useEffect(() => {
+    if (userData && !userData.plan?.tiene_odontograma) {
+      setLoading(false);
+      return;
+    }
     cargarOdontograma();
-  }, [pacienteId]);
+  }, [pacienteId, userData]);
 
   const cargarOdontograma = async (odontogramaIdParam = null) => {
     setLoading(true);
@@ -237,6 +246,46 @@ const OdontogramaPage = () => {
     const fecha = new Date(fechaStr);
     return fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
+
+  if (userData && !userData.plan?.tiene_odontograma) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center p-4">
+          <div className="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-white relative overflow-hidden shadow-2xl animate-fadeIn">
+            {/* Decorative glows */}
+            <div className="absolute -top-20 -left-20 w-40 h-40 bg-blue-500/10 rounded-full blur-2xl"></div>
+            <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl"></div>
+            
+            <Lock className="w-16 h-16 text-amber-400 mx-auto mb-4" />
+            <h3 className="text-2xl font-bold mb-3">
+              Odontograma Interactivo (Premium)
+            </h3>
+            <p className="text-slate-400 mb-6 text-sm leading-relaxed">
+              El odontograma interactivo profesional te permite registrar tratamientos realizados y pendientes de manera visual en 52 piezas dentales en notación FDI. Esta funcionalidad está reservada para el Plan Premium.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => navigate(-1)}
+                className="text-white hover:bg-slate-850 border-slate-750"
+              >
+                Volver
+              </Button>
+              <Button
+                onClick={() => setPlanesModalOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 border-none text-white px-6 font-bold rounded-xl"
+              >
+                Conocé el Plan Premium
+              </Button>
+            </div>
+          </div>
+        </main>
+        <PlanModal isOpen={planesModalOpen} onClose={() => setPlanesModalOpen(false)} />
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-blue-900 flex flex-col">

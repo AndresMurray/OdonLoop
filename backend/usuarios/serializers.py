@@ -8,11 +8,12 @@ class UserSerializer(serializers.ModelSerializer):
     perfil_id = serializers.SerializerMethodField()
     nombre = serializers.CharField(source='first_name', read_only=True)
     apellido = serializers.CharField(source='last_name', read_only=True)
+    plan = serializers.SerializerMethodField()
     
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'nombre', 'apellido', 'bio', 'telefono', 'fecha_nacimiento', 'tipo_usuario', 'edad', 'perfil_id']
-        read_only_fields = ['id', 'edad', 'perfil_id']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'nombre', 'apellido', 'bio', 'telefono', 'fecha_nacimiento', 'tipo_usuario', 'edad', 'perfil_id', 'plan']
+        read_only_fields = ['id', 'edad', 'perfil_id', 'plan']
     
     def get_perfil_id(self, obj):
         """Obtener el ID del perfil asociado (paciente u odontólogo)"""
@@ -20,8 +21,34 @@ class UserSerializer(serializers.ModelSerializer):
             if hasattr(obj, 'paciente'):
                 return obj.paciente.id
         elif obj.tipo_usuario == 'odontologo':
-            if hasattr(obj, 'odontologo'):
-                return obj.odontologo.id
+            if hasattr(obj, 'perfil_odontologo'):
+                return obj.perfil_odontologo.id
+        return None
+
+    def get_plan(self, obj):
+        """Obtener permisos y características del plan del odontólogo"""
+        if obj.tipo_usuario == 'odontologo' and hasattr(obj, 'perfil_odontologo'):
+            odontologo = obj.perfil_odontologo
+            if odontologo.plan:
+                return {
+                    'plan_key': odontologo.plan.plan_key,
+                    'nombre': odontologo.plan.nombre,
+                    'tiene_turnos': odontologo.plan.tiene_turnos,
+                    'tiene_recordatorios_email': odontologo.plan.tiene_recordatorios_email,
+                    'tiene_odontograma': odontologo.plan.tiene_odontograma,
+                    'tiene_exportacion_pdf': odontologo.plan.tiene_exportacion_pdf,
+                    'limite_almacenamiento_gb': odontologo.plan.limite_almacenamiento_gb,
+                }
+            else:
+                return {
+                    'plan_key': 'basico',
+                    'nombre': 'Básico',
+                    'tiene_turnos': False,
+                    'tiene_recordatorios_email': False,
+                    'tiene_odontograma': False,
+                    'tiene_exportacion_pdf': False,
+                    'limite_almacenamiento_gb': 1,
+                }
         return None
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

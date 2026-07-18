@@ -48,3 +48,25 @@ export const activarOdontologo = async (id) => {
     throw error;
   }
 };
+
+// Actualizar la configuración de un plan de suscripción
+export const updatePlan = async (planKey, data) => {
+  try {
+    const response = await apiClient.patch(`/api/odontologos/planes/${planKey}/`, data);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Cambiar el plan de suscripción de un odontólogo
+export const cambiarPlanOdontologo = async (odontologoId, planKey) => {
+  try {
+    const response = await apiClient.post(`/api/odontologos/admin/${odontologoId}/cambiar-plan/`, {
+      plan_key: planKey
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};

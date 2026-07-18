@@ -11,8 +11,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from .models import Odontologo
-from .serializers import OdontologoSerializer, OdontologoPerfilSerializer
+from .models import Odontologo, PlanConfig
+from .serializers import OdontologoSerializer, OdontologoPerfilSerializer, PlanConfigSerializer
 
 User = get_user_model()
 
@@ -468,3 +468,69 @@ class MiPerfilOdontologoView(APIView):
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class PlanConfigListView(generics.ListAPIView):
+    """Lista todos los planes configurados (para el home modal y administración)"""
+    queryset = PlanConfig.objects.all().order_by('id')
+    serializer_class = PlanConfigSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class PlanConfigUpdateView(generics.UpdateAPIView):
+    """Permite al administrador editar los detalles de un plan"""
+    queryset = PlanConfig.objects.all()
+    serializer_class = PlanConfigSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'plan_key'
+
+    def update(self, request, *args, **kwargs):
+        if request.user.tipo_usuario != 'admin':
+            return Response(
+                {'error': 'No tienes permisos para realizar esta acción'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().update(request, *args, **kwargs)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def cambiar_plan_odontologo(request, pk):
+    """Permite al administrador cambiar el plan de suscripción de un odontólogo"""
+    if request.user.tipo_usuario != 'admin':
+        return Response(
+            {'error': 'No tienes permisos para realizar esta acción'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    try:
+        odontologo = Odontologo.objects.get(pk=pk)
+    except Odontologo.DoesNotExist:
+        return Response(
+            {'error': 'Odontólogo no encontrado'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    plan_key = request.data.get('plan_key')
+    if not plan_key:
+        return Response(
+            {'error': 'La clave del plan (plan_key) es obligatoria'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        plan = PlanConfig.objects.get(plan_key=plan_key)
+    except PlanConfig.DoesNotExist:
+        return Response(
+            {'error': 'El plan de suscripción especificado no existe'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    odontologo.plan = plan
+    odontologo.save()  # Esto actualizará storage_limit automáticamente
+
+    return Response({
+        'message': f'Plan del odontólogo actualizado correctamente a {plan.nombre}',
+        'odontologo_id': odontologo.id,
+        'plan': PlanConfigSerializer(plan).data
+    }, status=status.HTTP_200_OK)

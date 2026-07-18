@@ -1,6 +1,29 @@
 from django.db import models
 from django.utils import timezone
 
+class PlanConfig(models.Model):
+    plan_key = models.CharField(max_length=20, unique=True, choices=[
+        ('basico', 'Básico'),
+        ('medio', 'Medio'),
+        ('premium', 'Premium')
+    ], verbose_name="Identificador del Plan")
+    nombre = models.CharField(max_length=100, verbose_name="Nombre")
+    precio = models.CharField(max_length=50, verbose_name="Precio", default="Free")
+    limite_almacenamiento_gb = models.IntegerField(default=1, verbose_name="Límite Almacenamiento (GB)")
+    tiene_turnos = models.BooleanField(default=False, verbose_name="Tiene Turnos")
+    tiene_recordatorios_email = models.BooleanField(default=False, verbose_name="Recordatorios por Email")
+    tiene_odontograma = models.BooleanField(default=False, verbose_name="Odontograma Interactivo")
+    tiene_exportacion_pdf = models.BooleanField(default=False, verbose_name="Exportar en PDF (Seguimiento/Odontograma)")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
+
+    class Meta:
+        verbose_name = "Configuración de Plan"
+        verbose_name_plural = "Configuraciones de Planes"
+
+    def __str__(self):
+        return f"{self.nombre} ({self.plan_key})"
+
+
 class Odontologo(models.Model):
     # Estados posibles del odontólogo
     ESTADO_CHOICES = [
@@ -11,6 +34,16 @@ class Odontologo(models.Model):
     
     # Relación con el usuario (reutiliza: nombre, apellido, email, teléfono, fecha_nacimiento)
     user = models.OneToOneField('usuarios.CustomUser', on_delete=models.CASCADE, related_name='perfil_odontologo')
+    
+    # Plan de suscripción
+    plan = models.ForeignKey(
+        PlanConfig,
+        on_delete=models.SET_NULL,
+        related_name='odontologos',
+        null=True,
+        blank=True,
+        verbose_name='Plan de Suscripción'
+    )
     
     # Datos profesionales específicos
     matricula = models.CharField(max_length=50, unique=True, blank=True, null=True, verbose_name='Matrícula Profesional')
@@ -62,6 +95,21 @@ class Odontologo(models.Model):
         verbose_name_plural = 'Odontólogos'
         ordering = ['user__last_name', 'user__first_name']
     
+    def save(self, *args, **kwargs):
+        # Auto-asignar plan básico si no está definido
+        if not self.plan:
+            try:
+                basic_plan = PlanConfig.objects.get(plan_key='basico')
+                self.plan = basic_plan
+            except (PlanConfig.DoesNotExist, Exception):
+                pass
+        
+        # Sincronizar el storage_limit con el plan config
+        if self.plan:
+            self.storage_limit = self.plan.limite_almacenamiento_gb * 1024 * 1024 * 1024
+        
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Dr. {self.user.first_name} {self.user.last_name}"
     

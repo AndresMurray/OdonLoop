@@ -66,3 +66,13 @@ export const verificarStorage = async (fileSize) => {
     throw error;
   }
 };
+
+// Obtener todos los planes de suscripción configurados
+export const getPlanes = async () => {
+  try {
+    const response = await apiClient.get('/api/odontologos/planes/');
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};

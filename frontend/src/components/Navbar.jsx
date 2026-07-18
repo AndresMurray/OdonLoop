@@ -75,9 +75,14 @@ const Navbar = () => {
                         <p className="text-sm font-medium text-gray-900">
                           {userData.first_name} {userData.last_name}
                         </p>
-                        <p className="text-xs text-gray-500 truncate">
+                        <p className="text-xs text-gray-500 truncate mb-1">
                           {userData.email}
                         </p>
+                        {userData.tipo_usuario === 'odontologo' && userData.plan && (
+                          <span className="inline-block bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                            Plan {userData.plan.nombre}
+                          </span>
+                        )}
                       </div>
 
                       {/* Mi Perfil - no para admin */}

@@ -1,8 +1,20 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
+
+
+class TieneOdontogramaPermission(permissions.BasePermission):
+    message = "Tu plan actual no incluye la función de odontograma interactivo."
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        if not hasattr(request.user, 'perfil_odontologo'):
+            return False
+        odontologo = request.user.perfil_odontologo
+        return getattr(odontologo.plan, 'tiene_odontograma', False)
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q, Max
 from django.http import HttpResponse
@@ -302,8 +314,14 @@ class SeguimientoViewSet(viewsets.ModelViewSet):
                     {'error': 'Solo odontólogos pueden acceder'},
                     status=status.HTTP_403_FORBIDDEN
                 )
-
+            
             odontologo = request.user.perfil_odontologo
+            
+            if not getattr(odontologo.plan, 'tiene_exportacion_pdf', False):
+                return Response(
+                    {'error': 'Tu plan actual no incluye la función de exportar a PDF. Por favor, actualiza tu plan.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
             seguimientos = Seguimiento.objects.filter(
                 paciente_id=paciente_id,
@@ -399,7 +417,7 @@ class MiPerfilPacienteView(APIView):
 class OdontogramaView(APIView):
     """Vista para obtener/crear odontogramas de un paciente.
     Soporta múltiples odontogramas por paciente."""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, TieneOdontogramaPermission]
 
     def _get_paciente(self, paciente_id):
         try:
@@ -589,7 +607,7 @@ class OdontogramaView(APIView):
 
 class OdontogramaListView(APIView):
     """Vista para listar todos los odontogramas de un paciente"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, TieneOdontogramaPermission]
 
     def get(self, request, paciente_id):
         if not hasattr(request.user, 'perfil_odontologo'):
@@ -619,7 +637,7 @@ class OdontogramaListView(APIView):
 
 class HistorialPiezaDentalView(APIView):
     """Vista para obtener el historial de una pieza dental específica"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, TieneOdontogramaPermission]
     
     def get(self, request, paciente_id, pieza):
         """Obtener historial de registros de una pieza dental"""
@@ -667,7 +685,7 @@ class HistorialPiezaDentalView(APIView):
 
 class RegistroDentalViewSet(viewsets.ModelViewSet):
     """ViewSet para gestionar registros dentales"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, TieneOdontogramaPermission]
     
     def get_queryset(self):
         """Filtrar registros dentales del odontólogo"""

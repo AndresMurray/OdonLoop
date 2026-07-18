@@ -6,10 +6,12 @@ import Input from '../components/Input';
 import Alert from '../components/Alert';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { ArrowLeft, Search, User, FileText, Smile, UserPlus, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Search, User, FileText, Smile, UserPlus, Pencil, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import { getMisPacientes } from '../api/seguimientoService';
 import ModalAsignarPaciente from '../components/ModalAsignarPaciente';
 import ModalEditarPaciente from '../components/ModalEditarPaciente';
+import { authService } from '../api/authService';
+import { PlanModal } from '../components';
 
 const MisPacientesPage = () => {
   const navigate = useNavigate();
@@ -21,6 +23,9 @@ const MisPacientesPage = () => {
   const [modalNuevoPaciente, setModalNuevoPaciente] = useState(false);
   const [pacienteEditar, setPacienteEditar] = useState(null);
   const [paginaActual, setPaginaActual] = useState(1);
+  const [planesModalOpen, setPlanesModalOpen] = useState(false);
+  const userData = authService.getUserData();
+  const tieneOdontograma = userData?.plan?.tiene_odontograma;
   
   const ITEMS_POR_PAGINA = 5;
 
@@ -65,7 +70,11 @@ const MisPacientesPage = () => {
   };
 
   const handleVerOdontograma = (pacienteId) => {
-    navigate(`/odontograma/${pacienteId}`);
+    if (tieneOdontograma) {
+      navigate(`/odontograma/${pacienteId}`);
+    } else {
+      setPlanesModalOpen(true);
+    }
   };
 
   const formatearFecha = (fecha) => {
@@ -335,10 +344,21 @@ const MisPacientesPage = () => {
                             e.stopPropagation();
                             handleVerOdontograma(paciente.id);
                           }}
-                          className="flex-1 sm:flex-none"
+                          className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 ${
+                            !tieneOdontograma ? 'text-amber-600 border-amber-300 bg-amber-50/30 hover:bg-amber-50/60' : ''
+                          }`}
                         >
-                          <Smile className="w-4 h-4 mr-2" />
-                          Odontograma
+                          {tieneOdontograma ? (
+                            <Smile className="w-4 h-4" />
+                          ) : (
+                            <Lock className="w-3.5 h-3.5" />
+                          )}
+                          <span>Odontograma</span>
+                          {!tieneOdontograma && (
+                            <span className="ml-1 bg-amber-400 text-amber-950 text-[9px] font-extrabold px-1 py-0.5 rounded">
+                              PRO
+                            </span>
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -413,6 +433,7 @@ const MisPacientesPage = () => {
           setAlert({ type: 'success', message: 'Paciente actualizado exitosamente' });
         }}
       />
+      <PlanModal isOpen={planesModalOpen} onClose={() => setPlanesModalOpen(false)} />
     </div>
   );
 };

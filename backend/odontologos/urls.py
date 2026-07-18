@@ -9,7 +9,10 @@ from .views import (
     crear_paciente_rapido,
     asignar_paciente_existente,
     MiPerfilOdontologoView,
-    MiStorageView
+    MiStorageView,
+    PlanConfigListView,
+    PlanConfigUpdateView,
+    cambiar_plan_odontologo
 )
 
 app_name = 'odontologos'
@@ -34,4 +37,9 @@ urlpatterns = [
     path('admin/<int:pk>/aprobar/', aprobar_odontologo, name='admin-aprobar'),
     path('admin/<int:pk>/suspender/', suspender_odontologo, name='admin-suspender'),
     path('admin/<int:pk>/activar/', activar_odontologo, name='admin-activar'),
+    path('admin/<int:pk>/cambiar-plan/', cambiar_plan_odontologo, name='admin-cambiar-plan'),
+    
+    # Configuración de planes
+    path('planes/', PlanConfigListView.as_view(), name='planes-list'),
+    path('planes/<str:plan_key>/', PlanConfigUpdateView.as_view(), name='planes-update'),
 ]

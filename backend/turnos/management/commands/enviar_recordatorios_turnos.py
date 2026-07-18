@@ -30,13 +30,15 @@ class Command(BaseCommand):
         self.stdout.write(f'Buscando turnos entre {inicio_manana} y {fin_manana}...')
 
         # Buscar turnos reservados/confirmados para mañana que no hayan recibido recordatorio
+        # Y cuyo odontólogo tenga un plan que incluya recordatorios por mail
         turnos = Turno.objects.select_related(
-            'paciente__user', 'odontologo__user', 'odontologo'
+            'paciente__user', 'odontologo__user', 'odontologo', 'odontologo__plan'
         ).filter(
             fecha_hora__gte=inicio_manana,
             fecha_hora__lte=fin_manana,
             estado__in=['reservado', 'confirmado'],
             recordatorio_enviado=False,
+            odontologo__plan__tiene_recordatorios_email=True,
         )
 
         total = turnos.count()

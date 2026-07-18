@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
+import { authService } from '../api/authService';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -9,9 +10,10 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
 import Odontograma from '../components/Odontograma';
-import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter, Smile, Download, FileDown, Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, Image as ImageIcon, FileText, User, File, X, Filter, Smile, Download, FileDown, Pencil, Trash2, AlertTriangle, Lock } from 'lucide-react';
 import ModalEditarPaciente from '../components/ModalEditarPaciente';
 import ModalStorageError from '../components/ModalStorageError';
+import { PlanModal } from '../components';
 import { getSeguimientosPorPaciente, crearSeguimiento, actualizarSeguimiento, eliminarSeguimiento } from '../api/seguimientoService';
 import { getPacienteById } from '../api/userService';
 import { getMiStorage } from '../api/odontologoService';
@@ -31,6 +33,8 @@ const formatBytes = (bytes) => {
 const SeguimientoPacientePage = () => {
   const navigate = useNavigate();
   const { pacienteId } = useParams();
+  const [userData] = useState(() => authService.getUserData());
+  const [planesModalOpen, setPlanesModalOpen] = useState(false);
 
   const [paciente, setPaciente] = useState(null);
   const [seguimientos, setSeguimientos] = useState([]);
@@ -574,9 +578,15 @@ const SeguimientoPacientePage = () => {
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
-                onClick={handleExportarPDF}
+                onClick={() => {
+                  if (userData?.plan?.tiene_exportacion_pdf) {
+                    handleExportarPDF();
+                  } else {
+                    setPlanesModalOpen(true);
+                  }
+                }}
                 disabled={exportando}
-                className="text-sm"
+                className="text-sm flex items-center gap-1.5"
               >
                 {exportando ? (
                   <>
@@ -585,18 +595,32 @@ const SeguimientoPacientePage = () => {
                   </>
                 ) : (
                   <>
-                    <FileDown className="w-4 h-4 mr-1" />
-                    Exportar PDF
+                    {userData?.plan?.tiene_exportacion_pdf ? (
+                      <FileDown className="w-4 h-4" />
+                    ) : (
+                      <Lock className="w-3.5 h-3.5 text-amber-500" />
+                    )}
+                    Exportar PDF {!userData?.plan?.tiene_exportacion_pdf && '(Premium)'}
                   </>
                 )}
               </Button>
               <Button
                 variant="outline"
-                onClick={() => navigate(`/odontograma/${pacienteId}`)}
-                className="text-sm"
+                onClick={() => {
+                  if (userData?.plan?.tiene_odontograma) {
+                    navigate(`/odontograma/${pacienteId}`);
+                  } else {
+                    setPlanesModalOpen(true);
+                  }
+                }}
+                className="text-sm flex items-center gap-1.5"
               >
-                <Smile className="w-4 h-4 mr-1" />
-                Odontograma
+                {userData?.plan?.tiene_odontograma ? (
+                  <Smile className="w-4 h-4" />
+                ) : (
+                  <Lock className="w-3.5 h-3.5 text-amber-500" />
+                )}
+                Odontograma {!userData?.plan?.tiene_odontograma && '(Premium)'}
               </Button>
               <Button
                 variant="primary"
@@ -1529,6 +1553,7 @@ const SeguimientoPacientePage = () => {
         }}
       />
 
+      <PlanModal isOpen={planesModalOpen} onClose={() => setPlanesModalOpen(false)} />
       <Footer />
     </div>
   );
