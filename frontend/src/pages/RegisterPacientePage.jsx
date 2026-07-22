@@ -226,7 +226,7 @@ const RegisterPacientePage = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="obra_social" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="obra_social" className="block text-sm font-semibold text-slate-300 mb-1">
                     Obra Social (opcional)
                   </label>
                   
@@ -239,22 +239,22 @@ const RegisterPacientePage = () => {
                         onChange={handleChange}
                         onBlur={handleBlur}
                         disabled={loadingOS}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
                       >
-                        <option value="">Seleccione una obra social</option>
+                        <option value="" className="bg-slate-900">Seleccione una obra social</option>
                         {obrasSociales.map((os) => (
-                          <option key={os.id} value={os.id}>
+                          <option key={os.id} value={os.id} className="bg-slate-900">
                             {os.nombre}
                           </option>
                         ))}
                       </select>
                       {loadingOS && (
-                        <p className="text-sm text-gray-500 mt-1">Cargando obras sociales...</p>
+                        <p className="text-sm text-slate-400 mt-1">Cargando obras sociales...</p>
                       )}
                       <button
                         type="button"
                         onClick={() => setMostrarOtraOS(true)}
-                        className="text-sm text-blue-600 hover:text-blue-800 mt-2 underline"
+                        className="text-sm text-blue-400 hover:text-blue-300 mt-2 underline"
                       >
                         Mi obra social no está en la lista
                       </button>
@@ -272,7 +272,7 @@ const RegisterPacientePage = () => {
                       <button
                         type="button"
                         onClick={() => setMostrarOtraOS(false)}
-                        className="text-sm text-blue-600 hover:text-blue-800 mt-2 underline"
+                        className="text-sm text-blue-400 hover:text-blue-300 mt-2 underline"
                       >
                         Volver a seleccionar de la lista
                       </button>
@@ -337,11 +337,11 @@ const RegisterPacientePage = () => {
             </Form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-400">
                 ¿Ya tienes cuenta?{' '}
                 <Link
                   to="/login?tipo=paciente"
-                  className="text-blue-700 hover:text-blue-800 font-medium"
+                  className="text-blue-400 hover:text-blue-300 font-semibold"
                 >
                   Inicia sesión
                 </Link>

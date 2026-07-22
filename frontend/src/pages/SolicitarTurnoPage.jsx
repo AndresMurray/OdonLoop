@@ -523,7 +523,6 @@ const SolicitarTurnoPage = () => {
                       Mostrando <span className="font-semibold">{getTurnosFiltrados().length}</span> turnos disponibles para el {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                   </div>
-                </Card>
 
                 {getTurnosFiltrados().length === 0 ? (
                   <p className="text-slate-400 text-center py-8">No hay turnos disponibles para esta fecha</p>

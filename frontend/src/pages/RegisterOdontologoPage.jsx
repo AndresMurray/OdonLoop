@@ -178,7 +178,7 @@ const RegisterOdontologoPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-semibold text-slate-300">
                     Biografía profesional (opcional)
                   </label>
                   <textarea
@@ -187,13 +187,13 @@ const RegisterOdontologoPage = () => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                     placeholder="Cuéntanos sobre tu experiencia y especialidades..."
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-semibold text-slate-300">
                     Dirección del consultorio (opcional)
                   </label>
                   <textarea
@@ -202,10 +202,10 @@ const RegisterOdontologoPage = () => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     rows="2"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
                     placeholder="Ej: Av. Corrientes 1234, Piso 3, CABA"
                   />
-                  <p className="text-xs text-gray-500">Se incluirá en los recordatorios de turnos de tus pacientes</p>
+                  <p className="text-xs text-slate-400">Se incluirá en los recordatorios de turnos de tus pacientes</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -246,11 +246,11 @@ const RegisterOdontologoPage = () => {
             </Form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-400">
                 ¿Ya tienes cuenta?{' '}
                 <Link
                   to="/login?tipo=odontologo"
-                  className="text-slate-700 hover:text-slate-800 font-medium"
+                  className="text-blue-400 hover:text-blue-300 font-semibold"
                 >
                   Inicia sesión
                 </Link>
