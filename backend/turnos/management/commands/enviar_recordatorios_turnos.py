@@ -62,41 +62,38 @@ class Command(BaseCommand):
                 fecha_formateada = fecha_local.strftime('%d/%m/%Y')
                 hora_formateada = fecha_local.strftime('%H:%M')
 
-                # Construir el cuerpo del email
-                cuerpo = (
-                    f'Hola {nombre_paciente},\n\n'
-                    f'Te recordamos que tenés un turno agendado para mañana.\n\n'
-                    f'Detalles de tu cita:\n\n'
-                    f'Profesional: Dr./Dra. {nombre_odontologo}\n'
-                    f'Fecha: {fecha_formateada}\n'
-                    f'Hora: {hora_formateada}\n'
-                )
+                body_paragraphs = [
+                    'Te recordamos que tenés un turno agendado para mañana.',
+                    'Detalles de tu cita:',
+                    f'• Profesional: Dr./Dra. {nombre_odontologo}',
+                    f'• Fecha: {fecha_formateada}',
+                    f'• Hora: {hora_formateada}'
+                ]
 
                 # Incluir dirección del consultorio si está cargada
                 consultorio = getattr(turno.odontologo, 'consultorio', None)
                 if consultorio and consultorio.strip():
-                    cuerpo += f'Dirección: {consultorio.strip()}\n'
+                    body_paragraphs.append(f'• Dirección: {consultorio.strip()}')
 
                 if turno.motivo:
-                    cuerpo += f'Motivo: {turno.motivo}\n'
+                    body_paragraphs.append(f'• Motivo: {turno.motivo}')
 
-                cuerpo += (
-                    f'\nTe recomendamos llegar unos 10 minutos antes para completar '
-                    f'cualquier trámite administrativo si fuera necesario.\n\n'
-                    f'Saludos,\n'
-                    f'El equipo de OdonLoop\n\n'
-                    f'---\n'
-                    f'Este es un mensaje automático, por favor no respondas a este email.'
-                )
+                body_paragraphs.extend([
+                    'Te recomendamos llegar unos 10 minutos antes para completar cualquier trámite administrativo si fuera necesario.',
+                    'Saludos,',
+                    'El equipo de OdonLoop'
+                ])
 
-                email = EmailMessage(
+                from config.email_utils import send_html_email
+                send_html_email(
                     subject=f'Recordatorio: turno mañana {hora_formateada} con Dr./Dra. {nombre_odontologo}',
-                    body=cuerpo,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[paciente_email],
-                    reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+                    recipient_list=[paciente_email],
+                    title=f'¡Hola {nombre_paciente}!',
+                    body_paragraphs=body_paragraphs,
+                    button_text='Ver mis turnos',
+                    button_url=getattr(settings, 'FRONTEND_URL', 'https://odonloop.com'),
+                    reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
                 )
-                email.send(fail_silently=False)
 
                 # Marcar recordatorio como enviado
                 turno.recordatorio_enviado = True

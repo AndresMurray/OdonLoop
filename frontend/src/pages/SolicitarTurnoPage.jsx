@@ -466,34 +466,28 @@ const SolicitarTurnoPage = () => {
                           </Button>
                         </div>
                         <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="secondary"
+                          <button
                             onClick={retrocederDia}
-                            className="flex-1 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-white shadow-sm"
+                            className="flex-1 bg-slate-900 border border-slate-800 hover:bg-slate-800 active:scale-95 transition-all duration-150 text-white rounded-lg px-4 py-1.5 text-sm font-semibold shadow-sm cursor-pointer"
                           >
                             ← Anterior
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
+                          </button>
+                          <button
                             onClick={avanzarDia}
-                            className="flex-1 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-white shadow-sm"
+                            className="flex-1 bg-slate-900 border border-slate-800 hover:bg-slate-800 active:scale-95 transition-all duration-150 text-white rounded-lg px-4 py-1.5 text-sm font-semibold shadow-sm cursor-pointer"
                           >
                             Siguiente →
-                          </Button>
+                          </button>
                         </div>
                       </div>
 
                       {/* Desktop: Layout horizontal */}
-                      <Button
-                        size="sm"
-                        variant="secondary"
+                      <button
                         onClick={retrocederDia}
-                        className="hidden md:block shrink-0 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-white shadow-sm"
+                        className="hidden md:block shrink-0 bg-slate-900 border border-slate-800 hover:bg-slate-800 active:scale-95 transition-all duration-150 text-white rounded-lg px-4 py-1.5 text-sm font-semibold shadow-sm cursor-pointer"
                       >
                         ← Día Anterior
-                      </Button>
+                      </button>
 
                       <div className="hidden md:flex items-center gap-3">
                         <div className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg text-center font-semibold text-white shadow-sm flex items-center justify-center min-w-[120px]">
@@ -509,14 +503,12 @@ const SolicitarTurnoPage = () => {
                         </Button>
                       </div>
 
-                      <Button
-                        size="sm"
-                        variant="secondary"
+                      <button
                         onClick={avanzarDia}
-                        className="hidden md:block shrink-0 bg-slate-900 border border-slate-800 hover:bg-slate-850 text-white shadow-sm"
+                        className="hidden md:block shrink-0 bg-slate-900 border border-slate-800 hover:bg-slate-800 active:scale-95 transition-all duration-150 text-white rounded-lg px-4 py-1.5 text-sm font-semibold shadow-sm cursor-pointer"
                       >
                         Día Siguiente →
-                      </Button>
+                      </button>
                     </div>
 
                     <p className="text-sm text-slate-350 mt-3 text-center">

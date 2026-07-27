@@ -37,11 +37,11 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="bg-white/10 backdrop-blur-sm sticky top-0 z-50">
+      <nav className="bg-slate-950/90 backdrop-blur-md sticky top-0 z-50 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to={getHomeUrl()} className="flex items-center space-x-2">
-              <span className="text-xl font-semibold text-white">OdonLoop</span>
+              <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400 bg-clip-text text-transparent hover:scale-[1.02] transition-transform duration-200">OdonLoop</span>
             </Link>
 
             {/* Menú de usuario - solo si está logueado */}

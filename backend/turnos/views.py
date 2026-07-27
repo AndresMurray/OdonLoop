@@ -204,26 +204,36 @@ class TurnoViewSet(viewsets.ModelViewSet):
                     consultorio = getattr(turno.odontologo, 'consultorio', None)
                     linea_consultorio = f'Dirección: {consultorio.strip()}\n' if consultorio and consultorio.strip() else ''
                     
-                    email = EmailMessage(
+                    from config.email_utils import send_html_email
+                    
+                    body_paragraphs = [
+                        'Tu turno odontológico ha sido agendado correctamente.',
+                        'Detalles de tu cita:',
+                        f'• Profesional: Dr./Dra. {nombre_odontologo}',
+                        f'• Fecha: {fecha_formateada}',
+                        f'• Hora: {hora_formateada}'
+                    ]
+                    
+                    if consultorio and consultorio.strip():
+                        body_paragraphs.append(f'• Dirección: {consultorio.strip()}')
+                    if turno.motivo:
+                        body_paragraphs.append(f'• Motivo: {turno.motivo}')
+                        
+                    body_paragraphs.extend([
+                        'Te recomendamos llegar unos 10 minutos antes de tu cita.',
+                        'Saludos,',
+                        'El equipo de OdonLoop'
+                    ])
+                    
+                    send_html_email(
                         subject=f'Tu turno del {fecha_formateada} está confirmado',
-                        body=f'Hola {nombre_completo},\n\n'
-                             f'Tu turno odontológico ha sido agendado correctamente.\n\n'
-                             f'Detalles de tu cita:\n\n'
-                             f'Profesional: Dr./Dra. {nombre_odontologo}\n'
-                             f'Fecha: {fecha_formateada}\n'
-                             f'Hora: {hora_formateada}\n'
-                             f'{linea_consultorio}'
-                             f'{f"Motivo: {turno.motivo}" if turno.motivo else ""}\n\n'
-                             f'Te recomendamos llegar unos 10 minutos antes para completar cualquier trámite administrativo si fuera necesario.\n\n'
-                             f'Saludos,\n'
-                             f'El equipo de OdonLoop\n\n'
-                             f'---\n'
-                             f'Este es un mensaje automático, por favor no respondas a este email.',
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        to=[paciente_email],
-                        reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+                        recipient_list=[paciente_email],
+                        title=f'¡Hola {nombre_completo}!',
+                        body_paragraphs=body_paragraphs,
+                        button_text='Ver mis turnos',
+                        button_url=getattr(settings, 'FRONTEND_URL', 'https://odonloop.com'),
+                        reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
                     )
-                    email.send(fail_silently=True)
                     logger.info(f'Email de confirmación enviado exitosamente a {paciente_email}')
                     
                 except Exception as e:
@@ -292,25 +302,24 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 nombre_odontologo = turno.odontologo.get_nombre_completo()
 
                 logger.info(f'Enviando email de cancelación al odontólogo {odontologo_email}...')
-                email_odontologo = EmailMessage(
+                from config.email_utils import send_html_email
+                send_html_email(
                     subject=f'Turno cancelado — {nombre_paciente} — {fecha_formateada} {hora_formateada}',
-                    body=(
-                        f'Estimado/a Dr./Dra. {nombre_odontologo},\n\n'
-                        f'Le informamos que el siguiente turno ha sido cancelado por el paciente:\n\n'
-                        f'Paciente: {nombre_paciente}\n'
-                        f'Fecha: {fecha_formateada}\n'
-                        f'Hora: {hora_formateada}\n\n'
-                        f'Nota: el horario NO queda disponible automáticamente. Si desea que otro paciente pueda reservarlo, deberá generar un nuevo turno desde la plataforma para ese horario.\n\n'
-                        f'Saludos,\n'
-                        f'El equipo de OdonLoop\n\n'
-                        f'---\n'
-                        f'Este es un mensaje automático, por favor no respondas a este email.'
-                    ),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[odontologo_email],
-                    reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+                    recipient_list=[odontologo_email],
+                    title=f'Estimado/a Dr./Dra. {nombre_odontologo},',
+                    body_paragraphs=[
+                        'Le informamos que el siguiente turno ha sido cancelado por el paciente:',
+                        f'• Paciente: {nombre_paciente}',
+                        f'• Fecha: {fecha_formateada}',
+                        f'• Hora: {hora_formateada}',
+                        'Nota: El horario NO queda disponible automáticamente. Si desea que otro paciente pueda reservarlo, deberá generar un nuevo turno desde la plataforma para ese horario.',
+                        'Saludos,',
+                        'El equipo de OdonLoop'
+                    ],
+                    button_text='Ir a Gestión de Turnos',
+                    button_url=getattr(settings, 'FRONTEND_URL', 'https://odonloop.com') + "/gestion-turnos",
+                    reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
                 )
-                email_odontologo.send(fail_silently=True)
                 logger.info(f'Email de cancelación enviado al odontólogo {odontologo_email}')
             except Exception as e:
                 logger.error(f'Error al enviar email de cancelación al odontólogo: {str(e)}')
@@ -334,23 +343,23 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 logger.info(f'EMAIL_BACKEND: {settings.EMAIL_BACKEND}')
                 logger.info(f'DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}')
                 
-                # Usar EmailMessage para soportar reply_to
-                email = EmailMessage(
+                from config.email_utils import send_html_email
+                send_html_email(
                     subject=f'Cancelación de turno del {fecha_formateada}',
-                    body=f'Hola {nombre_completo},\n\n'
-                         f'Te informamos que tu turno con el Dr./Dra. {nombre_odontologo} ha sido cancelado.\n\n'
-                         f'Turno original: {fecha_formateada}\n\n'
-                         f'Si necesitas agendar una nueva cita, puedes hacerlo a través de la plataforma cuando lo desees.\n\n'
-                         f'También puedes contactar directamente al consultorio si tienes alguna pregunta sobre esta cancelación.\n\n'
-                         f'Saludos,\n'
-                         f'El equipo de OdonLoop\n\n'
-                         f'---\n'
-                         f'Este es un mensaje automático, por favor no respondas a este email.',
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[paciente_email],
-                    reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+                    recipient_list=[paciente_email],
+                    title=f'Hola {nombre_completo},',
+                    body_paragraphs=[
+                        f'Te informamos que tu turno con el Dr./Dra. {nombre_odontologo} ha sido cancelado.',
+                        f'• Turno original: {fecha_formateada}',
+                        'Si necesitas agendar una nueva cita, puedes hacerlo a través de la plataforma cuando lo desees.',
+                        'También puedes contactar directamente al consultorio si tienes alguna pregunta sobre esta cancelación.',
+                        'Saludos,',
+                        'El equipo de OdonLoop'
+                    ],
+                    button_text='Agendar nuevo turno',
+                    button_url=getattr(settings, 'FRONTEND_URL', 'https://odonloop.com') + "/solicitar-turno",
+                    reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
                 )
-                email.send(fail_silently=False)
                 email_sent = True
                 logger.info(f'Email enviado exitosamente a {paciente_email}')
                 

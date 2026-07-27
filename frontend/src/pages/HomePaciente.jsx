@@ -109,14 +109,13 @@ const HomePaciente = () => {
                     Solicita tu turno de manera rápida y sencilla
                   </p>
                 </div>
-                <Button 
-                  variant="secondary" 
-                  className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 text-lg"
+                <button 
+                  className="bg-white text-blue-600 hover:bg-slate-100 active:scale-95 transition-all duration-150 rounded-lg font-bold px-8 py-3 text-lg flex items-center justify-center shadow-md cursor-pointer"
                   onClick={() => navigate('/solicitar-turno')}
                 >
-                  <CalendarIcon className="w-5 h-5 mr-2 inline" />
+                  <CalendarIcon className="w-5 h-5 mr-2" />
                   Solicitar Turno
-                </Button>
+                </button>
               </div>
             </CardContent>
           </Card>

@@ -973,7 +973,7 @@ const GestionTurnosOdonto = () => {
               {tabActiva === 'disponibles' && (
                 <Card className="p-6 sm:p-8">
                   <div className="mb-4">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">
+                    <h3 className="text-xl font-bold text-white mb-4">
                       Turnos Disponibles
                     </h3>
 
@@ -988,21 +988,19 @@ const GestionTurnosOdonto = () => {
                     />
 
                     {/* Separador */}
-                    <div className="h-px bg-gray-200 my-4"></div>
+                    <div className="h-px bg-slate-800 my-4"></div>
 
                     {/* Navegación por día */}
                     <div className="flex flex-wrap items-center justify-between gap-3 py-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
+                      <button
                         onClick={retrocederDia}
-                        className="shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
+                        className="shrink-0 bg-slate-900 border border-slate-800 hover:bg-slate-800 active:scale-95 transition-all duration-150 text-white rounded-lg px-4 py-1.5 text-sm font-semibold shadow-sm cursor-pointer"
                       >
                         ← Anterior
-                      </Button>
+                      </button>
 
                       <div className="flex items-center gap-3 flex-wrap justify-center flex-1">
-                        <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-center font-medium text-gray-700 shadow-sm flex items-center justify-center min-w-[120px]">
+                        <div className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg text-center font-semibold text-white shadow-sm flex items-center justify-center min-w-[120px]">
                           {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                         </div>
                         <Button
@@ -1015,60 +1013,58 @@ const GestionTurnosOdonto = () => {
                         </Button>
                       </div>
 
-                      <Button
-                        size="sm"
-                        variant="secondary"
+                      <button
                         onClick={avanzarDia}
-                        className="shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
+                        className="shrink-0 bg-slate-900 border border-slate-800 hover:bg-slate-800 active:scale-95 transition-all duration-150 text-white rounded-lg px-4 py-1.5 text-sm font-semibold shadow-sm cursor-pointer"
                       >
                         Siguiente →
-                      </Button>
+                      </button>
                     </div>
 
-                    <p className="text-sm text-gray-600 mt-3 text-center">
+                    <p className="text-sm text-slate-400 mt-3 text-center">
                       Mostrando <span className="font-semibold">{getTurnosPorEstado('disponible').length}</span> turnos disponibles para el {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                   </div>
 
                   {turnosDisponibles.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">No hay turnos disponibles para esta fecha</p>
+                    <p className="text-slate-400 text-center py-8">No hay turnos disponibles para esta fecha</p>
                   ) : (
                     <>
                       <div className="space-y-3">
                         {turnosDisponiblesPaginados.map((turno) => (
                           <div
                             key={turno.id}
-                            className="p-4 bg-gray-50 rounded-lg"
+                            className="p-4 bg-slate-900/60 border border-slate-800 rounded-lg"
                           >
                             {turnoEditando && turnoEditando.id === turno.id ? (
                               /* Modo Edición */
                               <div className="space-y-3">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                   <div>
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">Fecha</label>
+                                    <label className="block text-xs font-semibold text-slate-300 mb-1">Fecha</label>
                                     <input
                                       type="date"
                                       value={turnoEditando.fecha}
                                       onChange={(e) => setTurnoEditando({ ...turnoEditando, fecha: e.target.value })}
-                                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                      className="w-full px-3 py-2 text-sm bg-slate-950 border border-slate-800 text-white rounded-lg focus:outline-none focus:border-blue-500"
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">Hora</label>
+                                    <label className="block text-xs font-semibold text-slate-300 mb-1">Hora</label>
                                     <input
                                       type="time"
                                       value={turnoEditando.hora}
                                       onChange={(e) => setTurnoEditando({ ...turnoEditando, hora: e.target.value })}
-                                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                      className="w-full px-3 py-2 text-sm bg-slate-950 border border-slate-800 text-white rounded-lg focus:outline-none focus:border-blue-500"
                                     />
                                   </div>
                                   <div>
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">Duración (min)</label>
+                                    <label className="block text-xs font-semibold text-slate-300 mb-1">Duración (min)</label>
                                     <input
                                       type="number"
                                       value={turnoEditando.duracion_minutos}
                                       onChange={(e) => setTurnoEditando({ ...turnoEditando, duracion_minutos: e.target.value })}
-                                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                      className="w-full px-3 py-2 text-sm bg-slate-950 border border-slate-800 text-white rounded-lg focus:outline-none focus:border-blue-500"
                                       min="10"
                                       max="180"
                                       step="5"
@@ -1077,18 +1073,18 @@ const GestionTurnosOdonto = () => {
                                 </div>
 
                                 {/* Opciones de Asignación de Paciente */}
-                                <div className="border-t pt-3">
-                                  <h4 className="text-sm font-medium text-gray-700 mb-3">Asignar Paciente</h4>
+                                <div className="border-t border-slate-800 pt-3">
+                                  <h4 className="text-sm font-semibold text-slate-200 mb-3">Asignar Paciente</h4>
 
                                   {/* Paciente Registrado Asignado */}
                                   {turnoEditando.paciente_id && (
-                                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-3">
+                                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 mb-3">
                                       <div className="flex items-center justify-between">
                                         <div>
-                                          <p className="text-sm font-medium text-emerald-900">
+                                          <p className="text-sm font-bold text-emerald-400">
                                             Paciente Registrado
                                           </p>
-                                          <p className="text-sm text-emerald-700 mt-1">
+                                          <p className="text-sm text-slate-300 mt-1">
                                             {turnoEditando.paciente_nombre}
                                           </p>
                                         </div>
@@ -1149,9 +1145,9 @@ const GestionTurnosOdonto = () => {
                                   <button
                                     onClick={() => handleToggleVisible(turno.id)}
                                     title={turno.visible ? 'Ocultar para pacientes' : 'Mostrar para pacientes'}
-                                    className={`p-1.5 rounded-lg border text-sm transition-colors ${turno.visible
-                                      ? 'bg-green-50 border-green-300 text-green-700 hover:bg-green-100'
-                                      : 'bg-yellow-50 border-yellow-300 text-yellow-700 hover:bg-yellow-100'
+                                    className={`p-1.5 rounded-lg border text-sm transition-colors cursor-pointer ${turno.visible
+                                      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
+                                      : 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20'
                                       }`}
                                   >
                                     {turno.visible ? '👁' : '🚫'}
@@ -1194,7 +1190,7 @@ const GestionTurnosOdonto = () => {
               {tabActiva === 'reservados' && (
                 <Card className="p-6 sm:p-8">
                   <div className="mb-4">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">
+                    <h3 className="text-xl font-bold text-white mb-4">
                       Turnos Reservados
                     </h3>
 
@@ -1209,21 +1205,19 @@ const GestionTurnosOdonto = () => {
                     />
 
                     {/* Separador */}
-                    <div className="h-px bg-gray-200 my-4"></div>
+                    <div className="h-px bg-slate-800 my-4"></div>
 
                     {/* Navegación por día */}
                     <div className="flex flex-wrap items-center justify-between gap-3 py-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
+                      <button
                         onClick={retrocederDia}
-                        className="shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
+                        className="shrink-0 bg-slate-900 border border-slate-800 hover:bg-slate-800 active:scale-95 transition-all duration-150 text-white rounded-lg px-4 py-1.5 text-sm font-semibold shadow-sm cursor-pointer"
                       >
                         ← Anterior
-                      </Button>
+                      </button>
 
                       <div className="flex items-center gap-3 flex-wrap justify-center flex-1">
-                        <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-center font-medium text-gray-700 shadow-sm flex items-center justify-center min-w-[120px]">
+                        <div className="px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg text-center font-semibold text-white shadow-sm flex items-center justify-center min-w-[120px]">
                           {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                         </div>
                         <Button
@@ -1236,17 +1230,15 @@ const GestionTurnosOdonto = () => {
                         </Button>
                       </div>
 
-                      <Button
-                        size="sm"
-                        variant="secondary"
+                      <button
                         onClick={avanzarDia}
-                        className="shrink-0 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 shadow-sm"
+                        className="shrink-0 bg-slate-900 border border-slate-800 hover:bg-slate-800 active:scale-95 transition-all duration-150 text-white rounded-lg px-4 py-1.5 text-sm font-semibold shadow-sm cursor-pointer"
                       >
                         Siguiente →
-                      </Button>
+                      </button>
                     </div>
 
-                    <p className="text-sm text-gray-600 mt-3 text-center">
+                    <p className="text-sm text-slate-400 mt-3 text-center">
                       Mostrando <span className="font-semibold">{contadores.reservados}</span> turnos reservados para el {new Date(fechaFiltro + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </p>
                   </div>

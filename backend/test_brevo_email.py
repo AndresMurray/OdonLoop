@@ -47,25 +47,28 @@ def test_brevo_email():
     print(f"\n📤 Enviando email de prueba a {to_email}...")
     
     try:
-        # Crear y enviar email
-        email = EmailMessage(
-            subject='Prueba de Brevo - OdonLoop',
-            body='Hola,\n\n'
-                 'Este es un email de prueba desde OdonLoop usando Brevo.\n\n'
-                 'Si recibiste este mensaje en tu bandeja de entrada (no spam), '
-                 'significa que la configuración de Brevo está funcionando correctamente.\n\n'
-                 'Características probadas:\n'
-                 '• Envío desde dominio odonloop.com\n'
-                 '• Deliverability a Hotmail/Outlook\n'
-                 '• API de Brevo funcionando\n\n'
-                 'Saludos,\n'
-                 'El equipo de OdonLoop',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[to_email],
-            reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+        # Crear y enviar email HTML
+        from config.email_utils import send_html_email
+        send_html_email(
+            subject='Prueba de Diseño HTML - OdonLoop',
+            recipient_list=[to_email],
+            title='Prueba de Plantilla HTML Premium',
+            body_paragraphs=[
+                'Hola,',
+                'Este es un correo de prueba con el nuevo diseño HTML premium de OdonLoop.',
+                'Si ves este mensaje con un fondo oscuro, bordes redondeados y un botón azul, significa que el rediseño y la configuración de Brevo están funcionando correctamente.',
+                'Características de la plantilla probadas:',
+                '• Diseño responsive optimizado para móviles',
+                '• Estética oscura consistente con la plataforma',
+                '• Tipografía moderna sin serifas',
+                '• Botones de llamada a la acción estilizados',
+                'Saludos cordiales,',
+                'El equipo de OdonLoop'
+            ],
+            button_text='Visitar OdonLoop',
+            button_url=getattr(settings, 'FRONTEND_URL', 'https://odonloop.com'),
+            reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
         )
-        
-        email.send(fail_silently=False)
         
         print("✅ Email enviado exitosamente!")
         print("\n📬 Verifica tu bandeja de entrada (y spam si no lo ves)")

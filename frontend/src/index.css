@@ -23,3 +23,13 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.2s ease-out;
 } 
+
+/* Sobrescribir estilos de autocompletado en navegadores (autofill) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important; /* Mismo color que bg-slate-900 */
+  -webkit-text-fill-color: #ffffff !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

@@ -126,25 +126,26 @@ def aprobar_odontologo(request, pk):
             nombre_completo = odontologo.get_nombre_completo()
             logger.info(f'Enviando email de aprobación a {odontologo.user.email}...')
             
-            email = EmailMessage(
+            from config.email_utils import send_html_email
+            send_html_email(
                 subject='Tu cuenta OdonLoop ha sido aprobada',
-                body=f'Hola Dr./Dra. {nombre_completo},\n\n'
-                     f'Tenemos buenas noticias: tu cuenta profesional en OdonLoop ha sido aprobada y está lista para usar.\n\n'
-                     f'Ahora puedes acceder a todas las herramientas de la plataforma:\n\n'
-                     f'• Organizar y gestionar tu agenda de turnos\n'
-                     f'• Administrar la información de tus pacientes\n'
-                     f'• Aprovechar todas las funcionalidades disponibles\n\n'
-                     f'Para comenzar, simplemente inicia sesión con tus credenciales y explora las opciones disponibles.\n\n'
-                     f'Te damos la bienvenida a OdonLoop.\n\n'
-                     f'Saludos cordiales,\n'
-                     f'El equipo de OdonLoop\n\n'
-                     f'---\n'
-                     f'Este es un mensaje automático, por favor no respondas a este email.',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[odontologo.user.email],
-                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+                recipient_list=[odontologo.user.email],
+                title=f'¡Hola Dr./Dra. {nombre_completo}!',
+                body_paragraphs=[
+                    'Tenemos buenas noticias: tu cuenta profesional en OdonLoop ha sido aprobada y está lista para usar.',
+                    'Ahora puedes acceder a todas las herramientas de la plataforma:',
+                    '• Organizar y gestionar tu agenda de turnos',
+                    '• Administrar la información de tus pacientes',
+                    '• Aprovechar todas las funcionalidades disponibles',
+                    'Para comenzar, simplemente inicia sesión con tus credenciales y explora las opciones disponibles.',
+                    'Te damos la bienvenida a OdonLoop.',
+                    'Saludos cordiales,',
+                    'El equipo de OdonLoop'
+                ],
+                button_text='Iniciar Sesión',
+                button_url=getattr(settings, "FRONTEND_URL", "https://odonloop.com") + "/login",
+                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
             )
-            email.send(fail_silently=True)
             logger.info(f'Email de aprobación enviado exitosamente a {odontologo.user.email}')
         except Exception as e:
             logger.error(f'Error al enviar email de aprobación: {str(e)}')
@@ -236,23 +237,24 @@ def activar_odontologo(request, pk):
             nombre_completo = odontologo.get_nombre_completo()
             logger.info(f'Enviando email de reactivación a {odontologo.user.email}...')
             
-            email = EmailMessage(
+            from config.email_utils import send_html_email
+            send_html_email(
                 subject='Tu cuenta OdonLoop ha sido reactivada',
-                body=f'Hola Dr./Dra. {nombre_completo},\n\n'
-                     f'Te informamos que tu cuenta profesional en OdonLoop ha sido reactivada.\n\n'
-                     f'Puedes volver a acceder a la plataforma y utilizar todas sus funcionalidades:\n\n'
-                     f'• Gestionar tu agenda de turnos\n'
-                     f'• Administrar la información de tus pacientes\n'
-                     f'• Acceder a todas las herramientas disponibles\n\n'
-                     f'Saludos cordiales,\n'
-                     f'El equipo de OdonLoop\n\n'
-                     f'---\n'
-                     f'Este es un mensaje automático, por favor no respondas a este email.',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[odontologo.user.email],
-                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+                recipient_list=[odontologo.user.email],
+                title=f'¡Hola Dr./Dra. {nombre_completo}!',
+                body_paragraphs=[
+                    'Te informamos que tu cuenta profesional en OdonLoop ha sido reactivada.',
+                    'Puedes volver a acceder a la plataforma y utilizar todas sus funcionalidades:',
+                    '• Gestionar tu agenda de turnos',
+                    '• Administrar la información de tus pacientes',
+                    '• Acceder a todas las herramientas disponibles',
+                    'Saludos cordiales,',
+                    'El equipo de OdonLoop'
+                ],
+                button_text='Iniciar Sesión',
+                button_url=getattr(settings, "FRONTEND_URL", "https://odonloop.com") + "/login",
+                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
             )
-            email.send(fail_silently=True)
             logger.info(f'Email de reactivación enviado exitosamente a {odontologo.user.email}')
         except Exception as e:
             logger.error(f'Error al enviar email de reactivación: {str(e)}')

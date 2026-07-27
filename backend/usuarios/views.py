@@ -178,20 +178,19 @@ class UserRegistrationView(generics.CreateAPIView):
                         # Enviar email de bienvenida al paciente que hace upgrade
                         if user.email:
                             try:
-                                email_msg = EmailMessage(
+                                from config.email_utils import send_html_email
+                                send_html_email(
                                     subject='Tu cuenta OdonLoop está lista',
-                                    body=f'Hola {user.first_name},\n\n'
-                                         f'Excelentes noticias: tu cuenta en OdonLoop ya está activa y lista para usar.\n\n'
-                                         f'Estamos aquí para hacer tu experiencia más simple.\n\n'
-                                         f'Saludos,\n'
-                                         f'El equipo de OdonLoop\n\n'
-                                         f'---\n'
-                                         f'Este es un mensaje automático, por favor no respondas a este email.',
-                                    from_email=settings.DEFAULT_FROM_EMAIL,
-                                    to=[user.email],
-                                    reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+                                    recipient_list=[user.email],
+                                    title=f'¡Hola {user.first_name}!',
+                                    body_paragraphs=[
+                                        'Excelentes noticias: tu cuenta en OdonLoop ya está activa y lista para usar.',
+                                        'Estamos aquí para hacer tu experiencia de gestión de turnos mucho más simple.',
+                                        'Saludos,',
+                                        'El equipo de OdonLoop'
+                                    ],
+                                    reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
                                 )
-                                email_msg.send(fail_silently=True)
                             except Exception:
                                 # No fallar el registro si falla el email
                                 pass
@@ -266,7 +265,7 @@ class UserRegistrationView(generics.CreateAPIView):
             
             # Notificar al admin sobre nuevo odontólogo registrado
             try:
-                from django.core.mail import EmailMessage as DjangoEmailMessage
+                from config.email_utils import send_html_email
                 
                 admin_email = 'amurrayroppel@gmail.com'
                 nombre_completo = f'{user.first_name} {user.last_name}'.strip() or user.email
@@ -276,25 +275,20 @@ class UserRegistrationView(generics.CreateAPIView):
                 
                 logger.info(f'Notificando al admin sobre nuevo odontólogo: {user.email}')
                 
-                email = DjangoEmailMessage(
+                send_html_email(
                     subject=f'Nuevo odontólogo registrado: {nombre_completo}',
-                    body=(
-                        f'Hola Andrés,\n\n'
-                        f'Se ha registrado un nuevo odontólogo en OdonLoop y está pendiente de verificación:\n\n'
-                        f'Nombre: {nombre_completo}\n'
-                        f'Email: {user.email}\n'
-                        f'Fecha de registro: {fecha_registro}\n\n'
-                        f'Ingresá a OdonLoop para revisarlo y aprobarlo.\n\n'
-                        f'{getattr(settings, "FRONTEND_URL", "https://odonloop.com")}\n\n'
-                        f'Saludos,\n'
-                        f'OdonLoop\n\n'
-                        f'---\n'
-                        f'Este es un mensaje automático.'
-                    ),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[admin_email],
+                    recipient_list=[admin_email],
+                    title='Nuevo odontólogo registrado',
+                    body_paragraphs=[
+                        'Se ha registrado un nuevo odontólogo en OdonLoop y está pendiente de verificación.',
+                        f'• Nombre: {nombre_completo}',
+                        f'• Email: {user.email}',
+                        f'• Fecha de registro: {fecha_registro}',
+                        'Ingresá a la plataforma para revisarlo y aprobarlo.'
+                    ],
+                    button_text='Ir a OdonLoop',
+                    button_url=getattr(settings, "FRONTEND_URL", "https://odonloop.com")
                 )
-                email.send(fail_silently=True)
                 logger.info(f'Notificación al admin enviada exitosamente')
                 
             except Exception as e:
@@ -325,40 +319,41 @@ class UserRegistrationView(generics.CreateAPIView):
             logger.info(f'Generando email de verificación para {user.email}...')
             logger.info(f'Token generado: {token.token}')
             
+            from config.email_utils import send_html_email
+            
             if is_odontologo:
                 subject = 'Confirma tu cuenta en OdonLoop'
-                body = (f'Hola Dr./Dra. {user.first_name} {user.last_name},\n\n'
-                       f'Gracias por registrarte en OdonLoop.\n\n'
-                       f'Solo necesitamos confirmar tu dirección de email. Por favor, haz clic en el siguiente enlace:\n\n'
-                       f'{activation_link}\n\n'
-                       f'Este enlace estará disponible durante las próximas 48 horas.\n\n'
-                       f'Una vez que confirmes tu email, verás los pasos a seguir para activar tu cuenta. Te enviaremos una notificación cuando tu cuenta esté lista para usar.\n\n'
-                       f'Si no realizaste este registro, simplemente ignora este mensaje. Tu dirección de email no será utilizada sin tu confirmación.\n\n'
-                       f'Saludos cordiales,\n'
-                       f'El equipo de OdonLoop\n\n'
-                       f'---\n'
-                       f'Este es un mensaje automático, por favor no respondas a este email.')
+                title = f'¡Bienvenido Dr./Dra. {user.first_name} {user.last_name}!'
+                body_paragraphs = [
+                    'Gracias por registrarte en OdonLoop.',
+                    'Solo necesitamos confirmar tu dirección de email. Por favor, haz clic en el siguiente botón para continuar:',
+                    'Este enlace estará disponible durante las próximas 48 horas.',
+                    'Una vez que confirmes tu email, verás los pasos a seguir para activar tu cuenta. Te enviaremos una notificación cuando tu cuenta esté lista para usar.',
+                    'Si no realizaste este registro, simplemente ignora este mensaje. Tu dirección de email no será utilizada sin tu confirmación.',
+                    'Saludos cordiales,',
+                    'El equipo de OdonLoop'
+                ]
             else:
                 subject = 'Confirma tu cuenta en OdonLoop'
-                body = (f'Hola {user.first_name},\n\n'
-                       f'Te damos la bienvenida a OdonLoop, tu herramienta para gestionar turnos odontológicos de forma simple.\n\n'
-                       f'Para activar tu cuenta, necesitamos que confirmes tu email haciendo clic aquí:\n\n'
-                       f'{activation_link}\n\n'
-                       f'Este enlace estará disponible durante las próximas 48 horas.\n\n'
-                       f'Si no creaste esta cuenta, no te preocupes. Simplemente ignora este mensaje.\n\n'
-                       f'Saludos,\n'
-                       f'El equipo de OdonLoop\n\n'
-                       f'---\n'
-                       f'Este es un mensaje automático, por favor no respondas a este email.')
+                title = f'¡Hola {user.first_name}!'
+                body_paragraphs = [
+                    'Te damos la bienvenida a OdonLoop, tu herramienta para gestionar turnos odontológicos de forma simple.',
+                    'Para activar tu cuenta, necesitamos que confirmes tu email haciendo clic en el siguiente botón:',
+                    'Este enlace estará disponible durante las próximas 48 horas.',
+                    'Si no creaste esta cuenta, no te preocupes. Simplemente ignora este mensaje.',
+                    'Saludos,',
+                    'El equipo de OdonLoop'
+                ]
             
-            email = EmailMessage(
+            send_html_email(
                 subject=subject,
-                body=body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[user.email],
-                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+                recipient_list=[user.email],
+                title=title,
+                body_paragraphs=body_paragraphs,
+                button_text='Confirmar Cuenta',
+                button_url=activation_link,
+                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
             )
-            email.send(fail_silently=False)
             logger.info(f'Email de verificación enviado exitosamente a {user.email}')
             
         except Exception as e:
@@ -484,33 +479,40 @@ class ResendVerificationEmailView(APIView):
             
             is_odontologo = user.tipo_usuario == 'odontologo'
             
+            from config.email_utils import send_html_email
+            
             if is_odontologo:
                 subject = 'Verifica tu email - OdonLoop'
-                body = (f'Estimado/a Dr./Dra. {user.first_name} {user.last_name},\n\n'
-                       f'Has solicitado un nuevo enlace de verificación.\n\n'
-                       f'Para completar tu registro, haz clic en el siguiente enlace:\n\n'
-                       f'{activation_link}\n\n'
-                       f'Este enlace es válido por 48 horas.\n\n'
-                       f'Atentamente,\n'
-                       f'Equipo OdonLoop')
+                title = 'Nuevo enlace de verificación'
+                body_paragraphs = [
+                    f'Estimado/a Dr./Dra. {user.first_name} {user.last_name},',
+                    'Has solicitado un nuevo enlace de verificación.',
+                    'Para completar tu registro, haz clic en el siguiente botón:',
+                    'Este enlace es válido por 48 horas.',
+                    'Atentamente,',
+                    'El equipo de OdonLoop'
+                ]
             else:
                 subject = 'Verifica tu email - OdonLoop'
-                body = (f'Estimado/a {user.first_name} {user.last_name},\n\n'
-                       f'Has solicitado un nuevo enlace de verificación.\n\n'
-                       f'Para activar tu cuenta, haz clic en el siguiente enlace:\n\n'
-                       f'{activation_link}\n\n'
-                       f'Este enlace es válido por 48 horas.\n\n'
-                       f'Atentamente,\n'
-                       f'Equipo OdonLoop')
+                title = 'Nuevo enlace de verificación'
+                body_paragraphs = [
+                    f'Estimado/a {user.first_name} {user.last_name},',
+                    'Has solicitado un nuevo enlace de verificación.',
+                    'Para activar tu cuenta, haz clic en el siguiente botón:',
+                    'Este enlace es válido por 48 horas.',
+                    'Atentamente,',
+                    'El equipo de OdonLoop'
+                ]
             
-            email_msg = EmailMessage(
+            send_html_email(
                 subject=subject,
-                body=body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[user.email],
-                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+                recipient_list=[user.email],
+                title=title,
+                body_paragraphs=body_paragraphs,
+                button_text='Verificar Cuenta',
+                button_url=activation_link,
+                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
             )
-            email_msg.send(fail_silently=False)
             
             logger.info(f'Email de verificación reenviado a {user.email}')
             
@@ -577,25 +579,24 @@ class RequestPasswordResetView(APIView):
         
         # Enviar email con el código
         try:
-            # Usar EmailMessage para soportar reply_to
-            email = EmailMessage(
+            from config.email_utils import send_html_email
+            send_html_email(
                 subject='Código de recuperación de contraseña',
-                body=f'Hola {user.first_name},\n\n'
-                     f'Recibimos tu solicitud para restablecer la contraseña de tu cuenta OdonLoop.\n\n'
-                     f'Aquí está tu código de verificación:\n\n'
-                     f'{token.code}\n\n'
-                     f'Ingresa este código en la aplicación para crear tu nueva contraseña.\n\n'
-                     f'Por tu seguridad, este código solo es válido durante los próximos 15 minutos.\n\n'
-                     f'Si no solicitaste este cambio, no te preocupes. Tu cuenta está segura y puedes ignorar este mensaje.\n\n'
-                     f'Saludos,\n'
-                     f'El equipo de OdonLoop\n\n'
-                     f'---\n'
-                     f'Este es un mensaje automático, por favor no respondas a este email.',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[user.email],
-                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)],
+                recipient_list=[user.email],
+                title='Recuperación de contraseña',
+                body_paragraphs=[
+                    f'Hola {user.first_name},',
+                    'Recibimos tu solicitud para restablecer la contraseña de tu cuenta OdonLoop.',
+                    'Aquí está tu código de verificación:',
+                    f'{token.code}',
+                    'Ingresa este código en la aplicación para crear tu nueva contraseña.',
+                    'Por tu seguridad, este código solo es válido durante los próximos 15 minutos.',
+                    'Si no solicitaste este cambio, no te preocupes. Tu cuenta está segura y puedes ignorar este mensaje.',
+                    'Saludos,',
+                    'El equipo de OdonLoop'
+                ],
+                reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
             )
-            email.send(fail_silently=False)
         except Exception as e:
             return Response(
                 {'error': 'Error al enviar el email'},
