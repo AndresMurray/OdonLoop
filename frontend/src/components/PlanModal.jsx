@@ -190,7 +190,7 @@ const PlanModal = ({ isOpen, onClose }) => {
                     </div>
 
                     <a
-                      href={`https://wa.me/5492262512370?text=Hola!%20Estoy%20interesado%20en%20el%2520${encodeURIComponent(plan.nombre)}%2520de%2520Odonloop.`}
+                      href={`https://wa.me/5492262512370?text=${encodeURIComponent(`Hola! Estoy interesado en el ${plan.nombre} de Odonloop.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all duration-200 block text-center ${

@@ -74,7 +74,7 @@ const HomePage = () => {
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-500/15 blur-[120px] pointer-events-none"></div>
       <div className="absolute top-[30%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-500/10 blur-[130px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] left-[10%] w-[500px] h-[500px] rounded-full bg-cyan-500/15 blur-[120px] pointer-events-none"></div>
-      
+
       <Navbar />
       <div className="flex-grow flex items-center justify-center px-4 py-12 z-10">
         <div className="max-w-4xl w-full space-y-10">
@@ -174,11 +174,10 @@ const HomePage = () => {
                     return (
                       <div
                         key={plan.plan_key}
-                        className={`relative rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 ${
-                          isPremium
-                            ? 'bg-slate-900 border-2 border-blue-500 shadow-xl shadow-blue-500/25 text-white'
-                            : 'bg-slate-900/80 backdrop-blur-md border border-white/10 hover:border-white/20 shadow-lg text-white'
-                        }`}
+                        className={`relative rounded-2xl p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 ${isPremium
+                          ? 'bg-slate-900 border-2 border-blue-500 shadow-xl shadow-blue-500/25 text-white'
+                          : 'bg-slate-900/80 backdrop-blur-md border border-white/10 hover:border-white/20 shadow-lg text-white'
+                          }`}
                       >
                         {isPremium && (
                           <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md animate-pulse">
@@ -249,14 +248,13 @@ const HomePage = () => {
                         </div>
 
                         <a
-                          href={`https://wa.me/5492262512370?text=Hola!%20Estoy%20interesado%20en%20el%2520${encodeURIComponent(plan.nombre)}%2520de%2520Odonloop.`}
+                          href={`https://wa.me/5492262512370?text=${encodeURIComponent(`Hola! Estoy interesado en el plan ${plan.nombre} de Odonloop.`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold text-center transition-all duration-200 block ${
-                            isPremium
-                              ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-md shadow-blue-500/25 active:scale-95'
-                              : 'bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:border-white/20 active:scale-95 shadow-sm'
-                          }`}
+                          className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold text-center transition-all duration-200 block ${isPremium
+                            ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-md shadow-blue-500/25 active:scale-95'
+                            : 'bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:border-white/20 active:scale-95 shadow-sm'
+                            }`}
                         >
                           Me interesa
                         </a>
