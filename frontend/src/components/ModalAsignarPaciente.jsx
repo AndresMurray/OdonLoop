@@ -215,16 +215,16 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
-          <h2 className="text-2xl font-bold text-gray-900">
+        <div className="flex items-center justify-between p-6 border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
+          <h2 className="text-2xl font-bold text-white">
             {soloCrear ? 'Crear Nuevo Paciente' : 'Asignar Paciente al Turno'}
           </h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-slate-400 hover:text-white transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -232,25 +232,25 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
 
         {/* Tabs */}
         {!soloCrear && (
-          <div className="flex border-b bg-gray-50">
+          <div className="flex border-b border-slate-800 bg-slate-950/40">
             <button
               onClick={() => setModo('buscar')}
-              className={`flex-1 py-3 px-6 font-medium transition-colors ${modo === 'buscar'
-                ? 'border-b-2 border-emerald-600 text-emerald-600 bg-white'
-                : 'text-gray-600 hover:text-gray-900'
+              className={`flex-1 py-3 px-6 font-semibold transition-colors flex items-center justify-center gap-2 ${modo === 'buscar'
+                ? 'border-b-2 border-emerald-500 text-emerald-400 bg-slate-900/30'
+                : 'text-slate-400 hover:text-white'
                 }`}
             >
-              <Search className="w-5 h-5 inline mr-2" />
+              <Search className="w-5 h-5" />
               Buscar Paciente
             </button>
             <button
               onClick={() => setModo('crear')}
-              className={`flex-1 py-3 px-6 font-medium transition-colors ${modo === 'crear'
-                ? 'border-b-2 border-emerald-600 text-emerald-600 bg-white'
-                : 'text-gray-600 hover:text-gray-900'
+              className={`flex-1 py-3 px-6 font-semibold transition-colors flex items-center justify-center gap-2 ${modo === 'crear'
+                ? 'border-b-2 border-emerald-500 text-emerald-400 bg-slate-900/30'
+                : 'text-slate-400 hover:text-white'
                 }`}
             >
-              <UserPlus className="w-5 h-5 inline mr-2" />
+              <UserPlus className="w-5 h-5" />
               Crear Nuevo Paciente
             </button>
           </div>
@@ -269,37 +269,37 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
             <>
               {/* Búsqueda en tiempo real */}
               <div className="mb-6">
-                <p className="text-sm text-gray-500 mb-3">
+                <p className="text-sm text-slate-400 mb-3">
                   Buscá entre tus pacientes vinculados por nombre o DNI.
                 </p>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                   <input
                     type="text"
                     placeholder="Empezá a escribir nombre o DNI..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     autoFocus
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-base"
+                    className="w-full pl-10 pr-4 py-3 border rounded-lg bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:ring-1 focus:ring-emerald-500 focus:border-transparent text-base"
                   />
                 </div>
               </div>
 
               {loading ? (
                 <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Cargando pacientes...</p>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto"></div>
+                  <p className="mt-4 text-slate-400">Cargando pacientes...</p>
                 </div>
               ) : !searchTerm.trim() ? (
                 <div className="text-center py-8">
-                  <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">Empezá a escribir para buscar</p>
+                  <Search className="w-16 h-16 text-slate-700 mx-auto mb-4" />
+                  <p className="text-slate-400">Empezá a escribir para buscar</p>
                 </div>
               ) : pacientesFiltrados.length === 0 ? (
                 <div className="text-center py-8">
-                  <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 font-medium">No se encontró el paciente en tu lista</p>
-                  <p className="text-sm text-gray-500 mt-2">
+                  <User className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                  <p className="text-slate-300 font-medium">No se encontró el paciente en tu lista</p>
+                  <p className="text-sm text-slate-500 mt-2">
                     Si es un paciente nuevo, podés crearlo desde la pestaña &quot;Crear Nuevo Paciente&quot;.
                   </p>
                   <Button
@@ -316,7 +316,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                   {pacientesFiltrados.map((paciente) => (
                     <Card
                       key={paciente.id}
-                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      className="cursor-pointer hover:shadow-md transition-shadow border-slate-800 bg-slate-950/40 hover:bg-slate-900/60"
                       onClick={() => {
                         onSeleccionar(paciente);
                         handleClose();
@@ -325,10 +325,10 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h3 className="font-semibold text-lg text-gray-900">
+                            <h3 className="font-semibold text-lg text-white">
                               {paciente.nombre_completo}
                             </h3>
-                            <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                            <div className="flex items-center gap-4 text-sm text-slate-400 mt-1">
                               {paciente.dni && <span>DNI: {paciente.dni}</span>}
                               {paciente.telefono && <span>📱 {paciente.telefono}</span>}
                             </div>
@@ -347,14 +347,14 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
             <>
               {/* Paciente existente detectado */}
               {pacienteExistente && (
-                <div className="mb-6 border-2 border-amber-300 bg-amber-50 rounded-xl p-5">
+                <div className="mb-6 border border-amber-500/30 bg-amber-500/10 rounded-xl p-5 text-amber-200">
                   <div className="flex items-start gap-3 mb-3">
-                    <AlertCircle className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
+                    <AlertCircle className="w-6 h-6 text-amber-400 shrink-0 mt-0.5" />
                     <div>
-                      <h3 className="font-bold text-amber-800 text-lg">
+                      <h3 className="font-bold text-amber-300 text-lg">
                         Este paciente ya existe en OdonLoop
                       </h3>
-                      <p className="text-sm text-amber-700 mt-1">
+                      <p className="text-sm text-amber-400/90 mt-1">
                         {yaAsignado
                           ? 'Este paciente ya está asignado a tu lista.'
                           : 'Puede haberse atendido previamente con otro odontólogo. Podés asignarlo a tu lista de pacientes.'
@@ -362,16 +362,16 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                       </p>
                     </div>
                   </div>
-                  <div className="bg-white rounded-lg p-4 border border-amber-200 mb-4">
+                  <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 mb-4 text-white">
                     <div className="flex items-center gap-3">
-                      <div className="bg-emerald-100 p-2 rounded-full">
-                        <User className="w-5 h-5 text-emerald-700" />
+                      <div className="bg-emerald-500/10 border border-emerald-500/25 p-2 rounded-full">
+                        <User className="w-5 h-5 text-emerald-400" />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-900 text-lg">
+                        <h4 className="font-semibold text-white text-lg">
                           {pacienteExistente.nombre_completo}
                         </h4>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                        <div className="flex items-center gap-4 text-sm text-slate-400 mt-1">
                           <span>DNI: {pacienteExistente.dni}</span>
                           {pacienteExistente.telefono && <span>Tel: {pacienteExistente.telefono}</span>}
                           {pacienteExistente.obra_social_detalle && (
@@ -392,7 +392,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                       {asignando ? 'Asignando...' : 'Asignar a mi lista de pacientes'}
                     </Button>
                   ) : (
-                    <p className="text-center text-sm text-amber-700 font-medium">
+                    <p className="text-center text-sm text-amber-400 font-semibold">
                       Ya tenés a este paciente en tu lista
                     </p>
                   )}
@@ -402,7 +402,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
               {/* Formulario crear paciente */}
               {!pacienteExistente && (
                 <form onSubmit={handleCrearPaciente} className="space-y-4">
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-slate-400 mb-4">
                     Este paciente podrá activar su cuenta después ingresando su DNI y email en el registro.
                   </p>
 
@@ -457,14 +457,14 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-slate-300 mb-1">
                       Obra Social
                     </label>
                     <select
                       name="obra_social"
                       value={nuevoPaciente.obra_social}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                      className="w-full px-4 py-2 border rounded-lg bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-sm"
                     >
                       <option value="">Sin obra social</option>
                       {obrasSociales.map(os => (
@@ -506,7 +506,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-slate-300 mb-1">
                       Alergias
                     </label>
                     <textarea
@@ -515,12 +515,12 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                       onChange={handleInputChange}
                       placeholder="Alergias conocidas..."
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
+                      className="w-full px-4 py-2 border rounded-lg bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-sm resize-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-semibold text-slate-300 mb-1">
                       Antecedentes Médicos
                     </label>
                     <textarea
@@ -529,11 +529,11 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                       onChange={handleInputChange}
                       placeholder="Antecedentes médicos relevantes..."
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
+                      className="w-full px-4 py-2 border rounded-lg bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-sm resize-none"
                     />
                   </div>
 
-                  <div className="flex justify-end gap-3 pt-4">
+                  <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
                     <Button
                       type="button"
                       variant="outline"
@@ -560,7 +560,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                       setPacienteExistente(null);
                       setYaAsignado(false);
                     }}
-                    className="text-sm text-gray-500 hover:text-gray-700 underline"
+                    className="text-sm text-slate-400 hover:text-white underline"
                   >
                     Volver al formulario
                   </button>

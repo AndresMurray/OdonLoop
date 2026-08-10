@@ -100,14 +100,14 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-emerald-500 to-teal-600 rounded-t-2xl">
+        <div className="flex items-center justify-between p-6 border-b border-slate-800 sticky top-0 bg-slate-900 z-10">
           <h2 className="text-xl font-bold text-white">Editar Paciente</h2>
           <button
             onClick={onClose}
-            className="text-white/80 hover:text-white transition-colors"
+            className="text-slate-400 hover:text-white transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -116,7 +116,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-500/10 border border-red-500/20 text-red-200 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
@@ -124,7 +124,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
           {/* Nombre y Apellido */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-slate-300 mb-1">
                 Nombre <span className="text-red-500">*</span>
               </label>
               <Input
@@ -134,7 +134,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-slate-300 mb-1">
                 Apellido <span className="text-red-500">*</span>
               </label>
               <Input
@@ -148,7 +148,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
           {/* DNI y Teléfono */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">DNI</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-1">DNI</label>
               <Input
                 value={form.dni}
                 onChange={(e) => handleChange('dni', e.target.value)}
@@ -156,7 +156,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-1">Teléfono</label>
               <Input
                 value={form.telefono}
                 onChange={(e) => handleChange('telefono', e.target.value)}
@@ -168,7 +168,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
           {/* Fecha de nacimiento y Dirección */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Nacimiento</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-1">Fecha de Nacimiento</label>
               <Input
                 type="date"
                 value={form.fecha_nacimiento}
@@ -176,7 +176,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-1">Dirección</label>
               <Input
                 value={form.direccion}
                 onChange={(e) => handleChange('direccion', e.target.value)}
@@ -186,12 +186,12 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
           </div>
 
           {/* Obra Social */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Obra Social</label>
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-slate-300 mb-1">Obra Social</label>
             <select
               value={form.obra_social}
               onChange={(e) => handleChange('obra_social', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white text-sm"
+              className="w-full px-4 py-2 border rounded-lg bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-sm"
             >
               <option value="">Sin obra social</option>
               {obrasSociales.map((os) => (
@@ -206,7 +206,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
           {/* Obra Social Otra */}
           {form.obra_social === 'otra' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Especificar Obra Social</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-1">Especificar Obra Social</label>
               <Input
                 value={form.obra_social_otra}
                 onChange={(e) => handleChange('obra_social_otra', e.target.value)}
@@ -218,7 +218,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
           {/* Número de Afiliado y Plan */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">N° de Afiliado</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-1">N° de Afiliado</label>
               <Input
                 value={form.numero_afiliado}
                 onChange={(e) => handleChange('numero_afiliado', e.target.value)}
@@ -226,7 +226,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+              <label className="block text-sm font-semibold text-slate-300 mb-1">Plan</label>
               <Input
                 value={form.plan}
                 onChange={(e) => handleChange('plan', e.target.value)}
@@ -236,31 +236,31 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
           </div>
 
           {/* Alergias */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Alergias</label>
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-slate-300 mb-1">Alergias</label>
             <textarea
               value={form.alergias}
               onChange={(e) => handleChange('alergias', e.target.value)}
               placeholder="Alergias conocidas..."
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm resize-none"
+              className="w-full px-4 py-2 border rounded-lg bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-sm resize-none"
             />
           </div>
 
           {/* Antecedentes Médicos */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Antecedentes Médicos</label>
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-slate-300 mb-1">Antecedentes Médicos</label>
             <textarea
               value={form.antecedentes_medicos}
               onChange={(e) => handleChange('antecedentes_medicos', e.target.value)}
               placeholder="Antecedentes médicos relevantes..."
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm resize-none"
+              className="w-full px-4 py-2 border rounded-lg bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-200 text-sm resize-none"
             />
           </div>
 
           {/* Botones */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
             <Button
               type="button"
               variant="outline"
@@ -273,7 +273,6 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
               type="submit"
               variant="primary"
               disabled={loading}
-              className="bg-emerald-600 hover:bg-emerald-700"
             >
               {loading ? (
                 <>
