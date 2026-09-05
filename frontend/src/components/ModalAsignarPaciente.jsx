@@ -457,7 +457,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-300 mb-1">
+                    <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">
                       Obra Social
                     </label>
                     <select
@@ -506,7 +506,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-300 mb-1">
+                    <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">
                       Alergias
                     </label>
                     <textarea
@@ -520,7 +520,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-300 mb-1">
+                    <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">
                       Antecedentes Médicos
                     </label>
                     <textarea

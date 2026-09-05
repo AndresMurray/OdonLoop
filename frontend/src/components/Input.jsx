@@ -22,7 +22,7 @@ const Input = ({
   return (
     <div className="mb-4">
       {label && (
-        <label htmlFor={name} className="block text-sm font-semibold text-slate-300 mb-1">
+        <label htmlFor={name} className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -38,10 +38,10 @@ const Input = ({
           placeholder={placeholder}
           maxLength={maxLength}
           className={`
-            w-full px-4 py-2 border rounded-lg bg-slate-900 border-slate-800 text-white placeholder-slate-500
-            focus:ring-1 focus:ring-blue-500 focus:border-blue-500
+            w-full px-4 py-2 border rounded-lg bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500
+            focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
             transition duration-200
-            ${error ? 'border-red-500' : 'border-slate-800'}
+            ${error ? 'border-red-500' : 'border-slate-300 dark:border-slate-800'}
             ${isPassword ? 'pr-10' : ''}
             ${className}
           `}
@@ -51,7 +51,7 @@ const Input = ({
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none"
             tabIndex={-1}
             aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
           >

@@ -10,4 +10,4 @@ export { Calendar } from './Calendar';
 export { default as PiezaDental } from './PiezaDental';
 export { default as Odontograma } from './Odontograma';
 export { default as PlanModal } from './PlanModal';
-
+export { default as ThemeToggle } from './ThemeToggle';

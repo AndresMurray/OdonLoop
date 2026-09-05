@@ -1,11 +1,26 @@
 @import "tailwindcss"; 
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Outfit', 'Inter', sans-serif;
 }
 
+:root {
+  color-scheme: light dark;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
 body {
   font-family: 'Outfit', 'Inter', sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Animación para el modal */
@@ -24,12 +39,264 @@ body {
   animation: fadeIn 0.2s ease-out;
 } 
 
-/* Sobrescribir estilos de autocompletado en navegadores (autofill) */
-input:-webkit-autofill,
-input:-webkit-autofill:hover, 
-input:-webkit-autofill:focus, 
-input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important; /* Mismo color que bg-slate-900 */
+/* Sobrescribir estilos de autocompletado en navegadores (autofill) - Modo Oscuro */
+html.dark input:-webkit-autofill,
+html.dark input:-webkit-autofill:hover, 
+html.dark input:-webkit-autofill:focus, 
+html.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
   -webkit-text-fill-color: #ffffff !important;
   transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Autocompletado - Modo Claro */
+html:not(.dark) input:-webkit-autofill,
+html:not(.dark) input:-webkit-autofill:hover, 
+html:not(.dark) input:-webkit-autofill:focus, 
+html:not(.dark) input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ==========================================================================
+   ESTILOS GLOBALES PARA MODO CLARO (html:not(.dark))
+   ========================================================================== */
+
+/* Fondo general y contenedor principal de páginas */
+html:not(.dark) body,
+html:not(.dark) .min-h-screen.bg-slate-950 {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 45%, #eff6ff 100%) !important;
+  color: #0f172a !important;
+}
+
+/* Luces de fondo ambientales / glow blobs */
+html:not(.dark) .blur-\[120px\] {
+  opacity: 0.22 !important;
+}
+
+/* Encabezados sticky */
+html:not(.dark) header.bg-slate-900\/40,
+html:not(.dark) header {
+  background-color: rgba(255, 255, 255, 0.82) !important;
+  border-bottom-color: rgba(226, 232, 240, 0.85) !important;
+}
+
+html:not(.dark) header p.text-slate-400 {
+  color: #64748b !important;
+}
+
+/* Tarjetas y paneles que tenían bg-slate-900 */
+html:not(.dark) div.bg-slate-900\/60,
+html:not(.dark) div.bg-slate-900\/40,
+html:not(.dark) div.bg-slate-900\/80,
+html:not(.dark) section.bg-slate-900\/40,
+html:not(.dark) section.bg-slate-900\/60 {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.03) !important;
+}
+
+/* Modales y cuadros de diálogo */
+html:not(.dark) .bg-slate-900.border-slate-800.rounded-xl,
+html:not(.dark) .bg-slate-900.border-slate-800.rounded-2xl,
+html:not(.dark) .bg-slate-900.border.border-slate-800 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05) !important;
+}
+
+/* Encabezados sticky internos dentro de modales */
+html:not(.dark) .sticky.bg-slate-900 {
+  background-color: #ffffff !important;
+  border-bottom-color: #e2e8f0 !important;
+}
+
+/* Bordes en modo claro */
+html:not(.dark) .border-slate-800,
+html:not(.dark) .border-slate-850,
+html:not(.dark) .border-white\/5,
+html:not(.dark) .border-white\/10 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Textos secundarios en modo claro */
+html:not(.dark) p.text-slate-400,
+html:not(.dark) span.text-slate-400,
+html:not(.dark) div.text-slate-400 {
+  color: #64748b !important;
+}
+
+html:not(.dark) p.text-slate-350,
+html:not(.dark) span.text-slate-350,
+html:not(.dark) div.text-slate-350 {
+  color: #475569 !important;
+}
+
+html:not(.dark) p.text-slate-300,
+html:not(.dark) span.text-slate-300,
+html:not(.dark) div.text-slate-300 {
+  color: #334155 !important;
+}
+
+/* Inputs, selects y textareas */
+html:not(.dark) input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+html:not(.dark) select,
+html:not(.dark) textarea {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html:not(.dark) input::placeholder,
+html:not(.dark) textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Opciones de select */
+html:not(.dark) option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Tablas en modo claro */
+html:not(.dark) table {
+  color: #0f172a !important;
+}
+
+html:not(.dark) th {
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) td {
+  border-color: #f1f5f9 !important;
+}
+
+html:not(.dark) tr:hover {
+  background-color: rgba(241, 245, 249, 0.5) !important;
+}
+
+/* Ocultar resplandores oscuros en modo claro para fondos completamente limpios */
+html:not(.dark) .blur-\[120px\],
+html:not(.dark) .blur-\[50px\],
+html:not(.dark) .blur-\[100px\] {
+  opacity: 0 !important;
+}
+
+/* En modo claro, los encabezados con clase text-white deben ser oscuros salvo que tengan degradado */
+html:not(.dark) h1.text-white:not(.text-transparent):not(.bg-clip-text),
+html:not(.dark) h2.text-white:not(.text-transparent):not(.bg-clip-text),
+html:not(.dark) h3.text-white:not(.text-transparent):not(.bg-clip-text),
+html:not(.dark) h4.text-white:not(.text-transparent):not(.bg-clip-text) {
+  color: #0f172a !important;
+}
+
+html:not(.dark) p.font-black.text-white,
+html:not(.dark) p.font-bold.text-white,
+html:not(.dark) span.font-extrabold.text-white {
+  color: #0f172a !important;
+}
+
+/* Contenedores secundarios bg-white/5 y bg-white/10 */
+html:not(.dark) div.bg-white\/5 {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) div.bg-white\/10 {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Botones secundarios con bg-white/5 o bg-slate-950/40 en modo claro */
+html:not(.dark) button.bg-white\/5,
+html:not(.dark) button.bg-white\/10,
+html:not(.dark) button.bg-slate-950\/40,
+html:not(.dark) a.bg-white\/5,
+html:not(.dark) a.bg-white\/10,
+html:not(.dark) a.bg-slate-950\/40 {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+html:not(.dark) button.bg-white\/5:hover,
+html:not(.dark) button.bg-white\/10:hover,
+html:not(.dark) button.bg-slate-950\/40:hover,
+html:not(.dark) a.bg-white\/5:hover,
+html:not(.dark) a.bg-white\/10:hover,
+html:not(.dark) a.bg-slate-950\/40:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Contrastes de texto claro sobre fondos que ahora son claros */
+html:not(.dark) label {
+  color: #000000 !important;
+}
+
+html:not(.dark) .text-slate-250,
+html:not(.dark) .text-slate-200,
+html:not(.dark) .text-slate-100 {
+  color: #1e293b !important;
+}
+
+html:not(.dark) .bg-slate-900 h1:not(.text-transparent):not(.bg-clip-text),
+html:not(.dark) .bg-slate-900 h2:not(.text-transparent):not(.bg-clip-text),
+html:not(.dark) .bg-slate-900 h3:not(.text-transparent):not(.bg-clip-text),
+html:not(.dark) .bg-slate-900 h4:not(.text-transparent):not(.bg-clip-text) {
+  color: #0f172a !important;
+}
+
+/* Plan Premium destacado en la página de inicio */
+html:not(.dark) .border-blue-500.bg-slate-900 {
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%) !important;
+  border-color: #3b82f6 !important;
+}
+
+html:not(.dark) .border-blue-500.bg-slate-900 > div > h3,
+html:not(.dark) .border-blue-500.bg-slate-900 > div > p {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .border-blue-500.bg-slate-900 ul li span {
+  color: #1e293b !important;
+}
+
+/* Modales y tarjetas con fondos oscuros específicos */
+html:not(.dark) .bg-slate-950\/80 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Enlaces de retorno (ej. Volver al inicio) que tenían text-white */
+html:not(.dark) a.inline-flex.text-white,
+html:not(.dark) a.text-white:not([class*="bg-"]):not([class*="btn"]):not([class*="from-"]):not([class*="shadow-"]) {
+  color: #334155 !important;
+}
+
+html:not(.dark) a.inline-flex.text-white:hover,
+html:not(.dark) a.text-white:not([class*="bg-"]):not([class*="btn"]):not([class*="from-"]):not([class*="shadow-"]):hover {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .from-blue-950\/80.to-slate-900\/90 {
+  background-image: linear-gradient(to bottom, #eff6ff, #ffffff) !important;
+  border-color: #3b82f6 !important;
+  color: #0f172a !important;
+}
+
+html:not(.dark) .from-blue-900\/80.to-indigo-950\/80 {
+  background-image: linear-gradient(to right, #2563eb, #3730a3) !important;
+  border-color: rgba(37, 99, 235, 0.3) !important;
+}
+
+html:not(.dark) .from-emerald-950\/80.to-teal-950\/80 {
+  background-image: linear-gradient(to right, #059669, #0f766e) !important;
+  border-color: rgba(5, 150, 105, 0.3) !important;
 }

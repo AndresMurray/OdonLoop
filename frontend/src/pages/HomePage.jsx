@@ -87,8 +87,8 @@ const HomePage = () => {
               <div className="absolute -top-12 -left-12 w-40 h-40 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
               
               <div className="space-y-4 relative z-10">
-                <div className="inline-flex items-center gap-1.5 bg-blue-550/10 border border-blue-400/20 rounded-full px-3.5 py-1 text-blue-300 text-xs font-semibold w-fit">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-450" />
+                <div className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-400/20 rounded-full px-3.5 py-1 text-blue-600 dark:text-blue-300 text-xs font-semibold w-fit">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
                   Gestión odontológica profesional
                 </div>
                 <h1 className="text-4xl md:text-5xl font-black mb-3 leading-tight tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400">
@@ -140,15 +140,15 @@ const HomePage = () => {
                 </a>
                 <button
                   onClick={() => document.getElementById('planes-suscripcion')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="inline-flex items-center gap-2 bg-blue-550/10 hover:bg-blue-500/20 border border-blue-400/30 text-blue-300 font-bold rounded-xl px-5 py-3 transition-all duration-200 text-xs shadow-md cursor-pointer animate-pulse"
+                  className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-400/30 text-blue-600 dark:text-blue-300 font-bold rounded-xl px-5 py-3 transition-all duration-200 text-xs shadow-sm cursor-pointer animate-pulse"
                 >
                   Ver Planes ↓
                 </button>
                 <a
                   href="mailto:sistemagestionodontologico@gmail.com"
-                  className="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl px-5 py-3 transition-colors duration-200 text-xs border border-white/5 shadow-md"
+                  className="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-semibold rounded-xl px-5 py-3 transition-colors duration-200 text-xs border border-slate-200 dark:border-white/5 shadow-sm"
                 >
-                  <Mail className="w-4 h-4 text-slate-300" />
+                  <Mail className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                   Contacto
                 </a>
               </div>
@@ -166,7 +166,7 @@ const HomePage = () => {
                 </div>
 
                 <Link to="/login" className="block">
-                  <button className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-650 hover:from-blue-600 hover:to-indigo-700 text-white font-bold rounded-2xl py-4 text-base shadow-lg shadow-blue-500/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+                  <button className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl py-4 text-base shadow-lg shadow-blue-500/25 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer">
                     <LogIn className="w-5 h-5" />
                     Iniciar Sesión
                   </button>
@@ -194,7 +194,7 @@ const HomePage = () => {
                 </div>
 
                 <div className="pt-3 border-t border-white/5 flex items-center justify-center gap-2">
-                  <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-550/20 rounded-full px-4 py-1.5 text-emerald-400 font-semibold text-xs">
+                  <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 text-emerald-400 font-semibold text-xs">
                     <Gift className="w-4 h-4" />
                     <span>¡30 días gratis de prueba!</span>
                   </div>

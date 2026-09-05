@@ -124,7 +124,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
           {/* Nombre y Apellido */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-1">
+              <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">
                 Nombre <span className="text-red-500">*</span>
               </label>
               <Input
@@ -134,7 +134,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-1">
+              <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">
                 Apellido <span className="text-red-500">*</span>
               </label>
               <Input
@@ -148,7 +148,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
           {/* DNI y Teléfono */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-1">DNI</label>
+              <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">DNI</label>
               <Input
                 value={form.dni}
                 onChange={(e) => handleChange('dni', e.target.value)}
@@ -156,7 +156,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-1">Teléfono</label>
+              <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">Teléfono</label>
               <Input
                 value={form.telefono}
                 onChange={(e) => handleChange('telefono', e.target.value)}
@@ -168,7 +168,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
           {/* Fecha de nacimiento y Dirección */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-1">Fecha de Nacimiento</label>
+              <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">Fecha de Nacimiento</label>
               <Input
                 type="date"
                 value={form.fecha_nacimiento}
@@ -176,7 +176,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-1">Dirección</label>
+              <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">Dirección</label>
               <Input
                 value={form.direccion}
                 onChange={(e) => handleChange('direccion', e.target.value)}
@@ -187,7 +187,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
 
           {/* Obra Social */}
           <div className="mb-4">
-            <label className="block text-sm font-semibold text-slate-300 mb-1">Obra Social</label>
+            <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">Obra Social</label>
             <select
               value={form.obra_social}
               onChange={(e) => handleChange('obra_social', e.target.value)}
@@ -206,7 +206,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
           {/* Obra Social Otra */}
           {form.obra_social === 'otra' && (
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-1">Especificar Obra Social</label>
+              <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">Especificar Obra Social</label>
               <Input
                 value={form.obra_social_otra}
                 onChange={(e) => handleChange('obra_social_otra', e.target.value)}
@@ -218,7 +218,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
           {/* Número de Afiliado y Plan */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-1">N° de Afiliado</label>
+              <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">N° de Afiliado</label>
               <Input
                 value={form.numero_afiliado}
                 onChange={(e) => handleChange('numero_afiliado', e.target.value)}
@@ -226,7 +226,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-1">Plan</label>
+              <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">Plan</label>
               <Input
                 value={form.plan}
                 onChange={(e) => handleChange('plan', e.target.value)}
@@ -237,7 +237,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
 
           {/* Alergias */}
           <div className="mb-4">
-            <label className="block text-sm font-semibold text-slate-300 mb-1">Alergias</label>
+            <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">Alergias</label>
             <textarea
               value={form.alergias}
               onChange={(e) => handleChange('alergias', e.target.value)}
@@ -249,7 +249,7 @@ const ModalEditarPaciente = ({ isOpen, onClose, paciente, onGuardado }) => {
 
           {/* Antecedentes Médicos */}
           <div className="mb-4">
-            <label className="block text-sm font-semibold text-slate-300 mb-1">Antecedentes Médicos</label>
+            <label className="block text-sm font-bold text-black dark:text-slate-200 mb-1">Antecedentes Médicos</label>
             <textarea
               value={form.antecedentes_medicos}
               onChange={(e) => handleChange('antecedentes_medicos', e.target.value)}

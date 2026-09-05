@@ -617,62 +617,73 @@ const GestionTurnosOdonto = () => {
 
           {/* Indicadores globales */}
           <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+            <div className="bg-white/90 dark:bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-slate-200 dark:border-white/20 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-300">Total Reservados</p>
-                  <p className="text-3xl font-bold text-blue-300">{contadoresGlobales.reservados}</p>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Total Reservados</p>
+                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-300">{contadoresGlobales.reservados}</p>
                 </div>
                 <span className="text-3xl">👤</span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">Turnos futuros</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">Turnos futuros</p>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+            <div className="bg-white/90 dark:bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-slate-200 dark:border-white/20 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-300">Total Disponibles</p>
-                  <p className="text-3xl font-bold text-green-300">{contadoresGlobales.disponibles}</p>
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Total Disponibles</p>
+                  <p className="text-3xl font-bold text-emerald-600 dark:text-green-300">{contadoresGlobales.disponibles}</p>
                 </div>
                 <span className="text-3xl">📅</span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">Turnos futuros</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">Turnos futuros</p>
             </div>
           </div>
 
           {/* Tabs de navegación */}
-          <div className="flex flex-col sm:flex-row gap-2 mb-6 bg-white/10 p-2 rounded-lg">
+          <div className="flex flex-col sm:flex-row gap-2 mb-6 bg-slate-200/70 dark:bg-white/10 p-1.5 rounded-xl border border-slate-200 dark:border-white/5">
             <button
               onClick={() => { setTabActiva('disponibles'); setShowForm(false); }}
-              className={`flex-1 px-3 sm:px-4 py-3 rounded-lg font-medium transition-all text-sm sm:text-base ${tabActiva === 'disponibles'
-                ? 'bg-green-600 text-white shadow-lg'
-                : 'bg-white/20 text-white hover:bg-white/30'
+              className={`flex-1 px-3 sm:px-4 py-3 rounded-lg font-semibold transition-all text-sm sm:text-base flex items-center justify-center gap-2 ${tabActiva === 'disponibles'
+                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
+                : 'bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-transparent'
                 }`}
             >
-              <span className="hidden sm:inline">📅 </span>Disponibles
-              <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs sm:text-sm">
+              <span>📅</span>
+              <span>Disponibles</span>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                tabActiva === 'disponibles'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+              }`}>
                 {contadores.disponibles}
               </span>
             </button>
             <button
               onClick={() => { setTabActiva('reservados'); setShowForm(false); }}
-              className={`flex-1 px-3 sm:px-4 py-3 rounded-lg font-medium transition-all text-sm sm:text-base ${tabActiva === 'reservados'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-white/20 text-white hover:bg-white/30'
+              className={`flex-1 px-3 sm:px-4 py-3 rounded-lg font-semibold transition-all text-sm sm:text-base flex items-center justify-center gap-2 ${tabActiva === 'reservados'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                : 'bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-transparent'
                 }`}
             >
-              <span className="hidden sm:inline">👤 </span>Reservados
-              <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs sm:text-sm">
+              <span>👤</span>
+              <span>Reservados</span>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                tabActiva === 'reservados'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+              }`}>
                 {contadores.reservados}
               </span>
             </button>
             <button
               onClick={() => { setTabActiva('crear'); setShowForm(true); setModoCreacion('individual'); }}
-              className={`flex-1 px-3 sm:px-4 py-3 rounded-lg font-medium transition-all text-sm sm:text-base ${tabActiva === 'crear'
-                ? 'bg-purple-600 text-white shadow-lg'
-                : 'bg-white/20 text-white hover:bg-white/30'
+              className={`flex-1 px-3 sm:px-4 py-3 rounded-lg font-semibold transition-all text-sm sm:text-base flex items-center justify-center gap-2 ${tabActiva === 'crear'
+                ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+                : 'bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white border border-slate-200/80 dark:border-transparent'
                 }`}
             >
-              <span className="hidden sm:inline">➕ </span>Crear Turno
+              <span>➕</span>
+              <span>Crear Turno</span>
             </button>
           </div>
 
