@@ -76,3 +76,26 @@ export const getPlanes = async () => {
     throw error;
   }
 };
+
+// Obtener el récord de Snake del odontólogo logueado
+export const getSnakeHighScore = async () => {
+  try {
+    const response = await apiClient.get('/api/odontologos/snake-score/');
+    return response;
+  } catch (error) {
+    console.error('Error al obtener récord de Snake:', error);
+    return { high_score: 0 };
+  }
+};
+
+// Guardar nuevo récord de Snake en el backend
+export const saveSnakeHighScore = async (highScore) => {
+  try {
+    const response = await apiClient.post('/api/odontologos/snake-score/', { high_score: highScore });
+    return response;
+  } catch (error) {
+    console.error('Error al guardar récord de Snake:', error);
+    return null;
+  }
+};
+

@@ -12,6 +12,7 @@ import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
 import TurnoCalendar from '../components/TurnoCalendar';
 import { PlanModal } from '../components';
+import SnakeGame from '../components/SnakeGame';
 import { getToday } from '../utils/dateUtils';
 
 const HomeOdonto = () => {
@@ -517,6 +518,11 @@ const HomeOdonto = () => {
               </Button>
             </div>
           )}
+
+          {/* Mini-juego Snake para relax entre consultas */}
+          <div className="mt-8">
+            <SnakeGame />
+          </div>
         </div>
       </main>
       <PlanModal isOpen={planesModalOpen} onClose={() => setPlanesModalOpen(false)} />

@@ -536,3 +536,39 @@ def cambiar_plan_odontologo(request, pk):
         'odontologo_id': odontologo.id,
         'plan': PlanConfigSerializer(plan).data
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([permissions.IsAuthenticated])
+def snake_score_view(request):
+    """
+    Obtener o actualizar el récord del minijuego Snake para el odontólogo logueado.
+    GET: Devuelve el récord actual.
+    POST: Actualiza el récord si el puntaje recibido es mayor que el existente.
+    """
+    try:
+        odontologo = request.user.perfil_odontologo
+    except (AttributeError, Odontologo.DoesNotExist):
+        return Response(
+            {'error': 'No se encontró el perfil de odontólogo para este usuario'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    if request.method == 'GET':
+        return Response({'high_score': odontologo.snake_high_score}, status=status.HTTP_200_OK)
+
+    if request.method == 'POST':
+        score = request.data.get('high_score')
+        if score is None or not isinstance(score, int) or score < 0:
+            return Response(
+                {'error': 'El campo high_score debe ser un número entero mayor o igual a 0'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if score > odontologo.snake_high_score:
+            odontologo.snake_high_score = score
+            odontologo.save(update_fields=['snake_high_score'])
+            return Response({'high_score': odontologo.snake_high_score, 'updated': True}, status=status.HTTP_200_OK)
+
+        return Response({'high_score': odontologo.snake_high_score, 'updated': False}, status=status.HTTP_200_OK)
+

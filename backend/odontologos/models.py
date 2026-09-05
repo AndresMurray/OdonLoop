@@ -87,6 +87,13 @@ class Odontologo(models.Model):
         help_text='Límite máximo de almacenamiento en bytes (default: 1 GB)'
     )
 
+    # Minijuego Snake
+    snake_high_score = models.IntegerField(
+        default=0,
+        verbose_name='Récord Snake',
+        help_text='Puntaje máximo alcanzado en el minijuego Snake'
+    )
+
     # Campo legacy - mantener por compatibilidad pero deprecado
     activo = models.BooleanField(default=True, verbose_name='Activo (deprecado)')
     

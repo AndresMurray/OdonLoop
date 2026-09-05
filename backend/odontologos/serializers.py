@@ -25,7 +25,7 @@ class OdontologoSerializer(serializers.ModelSerializer):
             'anos_experiencia', 'horario_atencion', 'consultorio', 'fecha_alta', 'activo',
             'estado', 'estado_display', 'fecha_aprobacion', 'fecha_suspension', 'motivo_suspension',
             'terms_accepted', 'terms_accepted_date',
-            'storage_used', 'storage_limit'
+            'storage_used', 'storage_limit', 'snake_high_score'
         ]
         read_only_fields = ['id', 'fecha_alta', 'storage_used', 'storage_limit']
 
@@ -56,6 +56,6 @@ class OdontologoPerfilSerializer(serializers.ModelSerializer):
             'id', 'first_name', 'last_name', 'email', 'telefono', 'fecha_nacimiento',
             'nombre_completo', 'plan', 'matricula', 'especialidad', 'anos_experiencia', 
             'horario_atencion', 'consultorio', 'estado', 'estado_display', 'fecha_alta',
-            'storage_used', 'storage_limit'
+            'storage_used', 'storage_limit', 'snake_high_score'
         ]
         read_only_fields = ['id', 'email', 'fecha_alta', 'estado', 'estado_display', 'storage_used', 'storage_limit']
