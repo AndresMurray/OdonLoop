@@ -9,7 +9,7 @@ import Odontograma from '../components/Odontograma';
 import StatusModal from '../components/StatusModal';
 import { PlanModal } from '../components';
 import { authService } from '../api/authService';
-import { ArrowLeft, FileDown, FilePlus, List, Calendar, ChevronRight, Trash2, Lock } from 'lucide-react';
+import { ArrowLeft, FileDown, FilePlus, List, Calendar, ChevronRight, Trash2, Lock, ClipboardPlus } from 'lucide-react';
 import { 
   getOdontograma,
   crearOdontograma,
@@ -212,9 +212,11 @@ const OdontogramaPage = () => {
     }
   }, [pacienteId]);
 
-  // Navegar a la página de nuevo seguimiento
+  // Navegar directamente a crear un nuevo seguimiento
   const handleNuevoSeguimiento = useCallback(() => {
-    navigate(`/seguimiento-paciente/${pacienteId}`);
+    navigate(`/seguimiento-paciente/${pacienteId}?nuevo=true`, {
+      state: { nuevoSeguimiento: true }
+    });
   }, [navigate, pacienteId]);
 
   // Exportar PDF
@@ -327,31 +329,21 @@ const OdontogramaPage = () => {
               </div>
             </div>
             
-            {/* Indicador de guardado y botones */}
+            {/* Indicador de guardado y botón Seguimiento */}
             <div className="flex items-center gap-3">
               {guardando && (
-                <div className="flex items-center gap-2 text-blue-600">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <span className="text-sm font-medium">Guardando...</span>
+                <div className="flex items-center gap-2 text-cyan-400 bg-cyan-950/40 px-3 py-1.5 rounded-lg border border-cyan-800/40">
+                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-cyan-400"></div>
+                  <span className="text-xs font-medium">Guardando...</span>
                 </div>
               )}
               <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExportarPDF}
-                disabled={exportando || !odontogramaData}
+                variant="primary"
+                onClick={handleNuevoSeguimiento}
+                className="px-8 py-2.5 min-w-[200px] font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                {exportando ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                    Exportando...
-                  </>
-                ) : (
-                  <>
-                    <FileDown className="w-4 h-4 mr-2" />
-                    Exportar PDF
-                  </>
-                )}
+                <ClipboardPlus className="w-4 h-4 mr-1" />
+                Nuevo Seguimiento
               </Button>
             </div>
           </div>
@@ -368,41 +360,6 @@ const OdontogramaPage = () => {
             onClose={() => setAlert({ type: '', message: '' })}
           />
 
-          {/* Botones de Nuevo Odontograma y Ver Odontogramas */}
-          {!loading && odontogramaData && (
-            <div className="flex flex-wrap gap-3 mb-4 justify-end">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleNuevoOdontograma}
-                disabled={creandoNuevo}
-              >
-                {creandoNuevo ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Creando...
-                  </>
-                ) : (
-                  <>
-                    <FilePlus className="w-4 h-4 mr-2" />
-                    Nuevo Odontograma
-                  </>
-                )}
-              </Button>
-              {totalOdontogramas > 1 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleVerOdontogramas}
-                  className="bg-white"
-                >
-                  <List className="w-4 h-4 mr-2" />
-                  Ver Odontogramas ({totalOdontogramas})
-                </Button>
-              )}
-            </div>
-          )}
-
           {loading ? (
             <Card>
               <CardContent className="p-8 text-center">
@@ -416,7 +373,12 @@ const OdontogramaPage = () => {
                 <Odontograma 
                   odontograma={odontogramaData.odontograma} 
                   onChange={handlePiezaChange}
-                  onNuevoSeguimiento={handleNuevoSeguimiento}
+                  onNuevoOdontograma={handleNuevoOdontograma}
+                  creandoNuevo={creandoNuevo}
+                  onVerOdontogramas={handleVerOdontogramas}
+                  totalOdontogramas={totalOdontogramas}
+                  onExportarPDF={handleExportarPDF}
+                  exportando={exportando}
                   modoCaptura={modoCaptura}
                 />
               </div>

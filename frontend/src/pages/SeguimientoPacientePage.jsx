@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { authService } from '../api/authService';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
 import Button from '../components/Button';
@@ -33,6 +33,7 @@ const formatBytes = (bytes) => {
 const SeguimientoPacientePage = () => {
   const navigate = useNavigate();
   const { pacienteId } = useParams();
+  const location = useLocation();
   const [userData] = useState(() => authService.getUserData());
   const [planesModalOpen, setPlanesModalOpen] = useState(false);
 
@@ -40,7 +41,11 @@ const SeguimientoPacientePage = () => {
   const [seguimientos, setSeguimientos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingPaciente, setLoadingPaciente] = useState(true);
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [mostrarFormulario, setMostrarFormulario] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('nuevo') === 'true';
+  });
+  const formularioRef = useRef(null);
   const [alert, setAlert] = useState({ type: '', message: '', detail: '' });
 
   // Paginación
@@ -106,6 +111,16 @@ const SeguimientoPacientePage = () => {
   useEffect(() => {
     cargarSeguimientos();
   }, [pacienteId, currentPage, fechaDesde, fechaHasta]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('nuevo') === 'true' || location.state?.nuevoSeguimiento) {
+      setMostrarFormulario(true);
+      setTimeout(() => {
+        formularioRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    }
+  }, [location]);
 
   const cargarPaciente = async () => {
     setLoadingPaciente(true);
@@ -740,11 +755,12 @@ const SeguimientoPacientePage = () => {
 
           {/* Formulario de nuevo seguimiento */}
           {mostrarFormulario && (
-            <Card className="mb-6 border-2 border-emerald-500">
-              <CardHeader>
-                <CardTitle className="text-emerald-700">Nuevo Seguimiento</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
+            <div ref={formularioRef} className="scroll-mt-24">
+              <Card className="mb-6 border-2 border-emerald-500">
+                <CardHeader>
+                  <CardTitle className="text-emerald-700">Nuevo Seguimiento</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <Input
                     label="Fecha de Atención"
@@ -919,6 +935,7 @@ const SeguimientoPacientePage = () => {
                 </form>
               </CardContent>
             </Card>
+            </div>
           )}
 
           {/* Lista de seguimientos - se oculta cuando se muestra el formulario */}
@@ -1538,7 +1555,7 @@ const SeguimientoPacientePage = () => {
             <Odontograma
               odontograma={odontogramaParaCaptura.odontograma}
               onChange={() => { }}
-              onNuevoSeguimiento={() => { }}
+              onNuevoOdontograma={() => { }}
               modoCaptura={true}
             />
           </div>

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import PiezaDental from './PiezaDental';
-import { Link2, Square, ClipboardPlus, XCircle, Trash2 } from 'lucide-react';
+import { Link2, Square, XCircle, Trash2, FilePlus, List, FileDown } from 'lucide-react';
 import ModalSeleccionarPiezasAusentes from './ModalSeleccionarPiezasAusentes';
 
 /**
@@ -8,7 +8,7 @@ import ModalSeleccionarPiezasAusentes from './ModalSeleccionarPiezasAusentes';
  * Muestra 52 piezas dentales (32 permanentes + 20 temporales)
  * Organizadas según notación FDI
  */
-const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSeguimiento, modoCaptura = false }, ref) => {
+const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoOdontograma, creandoNuevo = false, onVerOdontogramas, totalOdontogramas = 0, onExportarPDF, exportando = false, onNuevoSeguimiento, modoCaptura = false }, ref) => {
   const [hoveredPieza, setHoveredPieza] = useState(null);
   const [modoMarca, setModoMarca] = useState(null); // 'puente' o 'protesis'
   const [marcaEnProgreso, setMarcaEnProgreso] = useState({ inicio: null, fin: null });
@@ -246,48 +246,106 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
   }, [odontogramaMap, modoMarca, marcaEnProgreso.inicio, onChange, handlePiezaClickMarca]);
 
   return (
-    <div ref={containerRef} className="relative bg-white rounded-xl p-4 md:p-8 shadow-2xl" style={{ isolation: 'isolate' }}>
+    <div ref={containerRef} className="relative bg-white text-slate-800 rounded-xl p-4 md:p-8 shadow-2xl" style={{ isolation: 'isolate' }}>
       {/* Botones para activar modos — ocultos en modoCaptura */}
       {!modoCaptura && (
-        <div data-no-pdf className="mb-4 flex flex-wrap justify-between items-center gap-2">
-          {/* Botón de Nuevo Seguimiento */}
-          <button
-            onClick={onNuevoSeguimiento}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold transition-all bg-blue-600 text-white hover:bg-blue-700 shadow-md text-sm"
-          >
-            <ClipboardPlus size={16} />
-            Agregar Nuevo Seguimiento
-          </button>
+        <div data-no-pdf className="mb-6 pb-4 border-b border-gray-200/90 flex flex-wrap justify-between items-center gap-3">
+          {/* Botones de Odontograma: Nuevo y Ver Lista */}
+          <div className="flex flex-wrap items-center gap-2">
+            {onNuevoOdontograma && (
+              <button
+                type="button"
+                onClick={onNuevoOdontograma}
+                disabled={creandoNuevo}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-all active:scale-95 disabled:opacity-50"
+              >
+                {creandoNuevo ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Creando...
+                  </>
+                ) : (
+                  <>
+                    <FilePlus size={16} />
+                    Nuevo Odontograma
+                  </>
+                )}
+              </button>
+            )}
 
-          {/* Botones de marcado */}
-          <div className="flex flex-wrap gap-2">
+            {totalOdontogramas > 1 && onVerOdontogramas && (
+              <button
+                type="button"
+                onClick={onVerOdontogramas}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-sm bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 shadow-sm transition-all active:scale-95"
+              >
+                <List size={16} />
+                <span>Ver Odontogramas</span>
+                <span className="ml-0.5 px-2 py-0.5 text-xs font-bold bg-blue-50 text-blue-700 rounded-full border border-blue-200">
+                  {totalOdontogramas}
+                </span>
+              </button>
+            )}
+          </div>
+
+          {/* Botones de marcado y Exportar PDF */}
+          <div className="flex flex-wrap items-center gap-2">
             <button
+              type="button"
               onClick={() => {
                 setModoMarca(modoMarca === 'puente' ? null : 'puente');
                 setMarcaEnProgreso({ inicio: null, fin: null });
               }}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold transition-all text-sm ${modoMarca === 'puente'
-                ? 'bg-red-600 text-white hover:bg-red-700'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-sm transition-all active:scale-95 ${
+                modoMarca === 'puente'
+                  ? 'bg-red-600 text-white shadow-sm ring-2 ring-red-300'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 shadow-sm'
+              }`}
             >
-              <Link2 size={16} />
+              <Link2 size={16} className={modoMarca === 'puente' ? 'text-white' : 'text-gray-500'} />
               {modoMarca === 'puente' ? 'Cancelar Puente' : 'Marcar Puente'}
             </button>
 
             <button
+              type="button"
               onClick={() => {
                 setModoMarca(modoMarca === 'protesis' ? null : 'protesis');
                 setMarcaEnProgreso({ inicio: null, fin: null });
               }}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold transition-all text-sm ${modoMarca === 'protesis'
-                ? 'bg-red-600 text-white hover:bg-red-700'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-sm transition-all active:scale-95 ${
+                modoMarca === 'protesis'
+                  ? 'bg-red-600 text-white shadow-sm ring-2 ring-red-300'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 shadow-sm'
+              }`}
             >
-              <Square size={16} />
+              <Square size={16} className={modoMarca === 'protesis' ? 'text-white' : 'text-gray-500'} />
               {modoMarca === 'protesis' ? 'Cancelar Prótesis' : 'Marcar Prótesis'}
             </button>
+
+            {onExportarPDF && (
+              <>
+                <div className="h-5 w-px bg-gray-300 mx-1 hidden sm:block"></div>
+                <button
+                  type="button"
+                  onClick={onExportarPDF}
+                  disabled={exportando}
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-sm bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-300 shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                  title="Exportar odontograma e historial a PDF"
+                >
+                  {exportando ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-700"></div>
+                      <span>Exportando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileDown size={16} className="text-slate-600" />
+                      <span>Exportar PDF</span>
+                    </>
+                  )}
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -332,70 +390,72 @@ const Odontograma = React.forwardRef(({ odontograma = [], onChange, onNuevoSegui
       )}
 
       {/* Leyenda — oculta en modoCaptura */}
-      {!modoCaptura && <div data-no-pdf className="mb-8 bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg">
-        <h3 className="text-lg font-bold text-gray-800 mb-3">Sistema de Marcado Profesional</h3>
+      {!modoCaptura && (
+        <div data-no-pdf className="mb-8 bg-gradient-to-r from-blue-50/90 via-slate-50 to-cyan-50/90 border border-blue-100/90 p-5 rounded-xl shadow-xs text-gray-800">
+          <h3 className="text-lg font-bold text-gray-900 mb-3">Sistema de Marcado Profesional</h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
-          <div>
-            <h4 className="font-semibold text-gray-700 mb-2">Tratamientos por Cara:</h4>
-            <div className="space-y-1 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 bg-blue-500 rounded"></div>
-                <span><strong>Azul:</strong> Pendiente</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm mb-4">
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-2.5">Tratamientos por Cara:</h4>
+              <div className="space-y-1.5 text-xs text-gray-700">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 bg-blue-500 rounded shadow-xs"></div>
+                  <span className="text-gray-700"><strong className="text-gray-900">Azul:</strong> Pendiente</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 bg-red-500 rounded shadow-xs"></div>
+                  <span className="text-gray-700"><strong className="text-gray-900">Rojo:</strong> Realizado</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 bg-red-500 rounded shadow-xs" style={{ border: '3px solid #2563EB', boxSizing: 'border-box' }}></div>
+                  <span className="text-gray-700"><strong className="text-gray-900">Rojo + Borde Azul:</strong> Realizado Filtrado</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 bg-yellow-500 rounded shadow-xs"></div>
+                  <span className="text-gray-700"><strong className="text-gray-900">Amarillo:</strong> Absceso/Fístula</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 bg-red-500 rounded"></div>
-                <span><strong>Rojo:</strong> Realizado</span>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-2.5">Estados de Pieza (Doble clic / Mantener presionado en mobile):</h4>
+              <div className="grid grid-cols-2 gap-2 text-xs text-gray-700 font-medium">
+                <div className="flex items-center gap-1.5"><span className="text-red-600 font-bold text-sm">✕</span> <span className="text-gray-700">Ausente</span></div>
+                <div className="flex items-center gap-1.5"><span className="text-blue-600 font-bold text-sm">✕</span> <span className="text-gray-700">Extracción</span></div>
+                <div className="flex items-center gap-1.5"><span className="text-red-600 font-bold text-xs bg-red-50 px-1 py-0.5 rounded border border-red-200">TC</span> <span className="text-gray-700">Conducto hecho</span></div>
+                <div className="flex items-center gap-1.5"><span className="text-blue-600 font-bold text-xs bg-blue-50 px-1 py-0.5 rounded border border-blue-200">TC</span> <span className="text-gray-700">Conducto pendiente</span></div>
+                <div className="flex items-center gap-1.5"><span className="text-red-600 font-bold text-sm">◯</span> <span className="text-gray-700">Corona hecha</span></div>
+                <div className="flex items-center gap-1.5"><span className="text-blue-600 font-bold text-sm">◯</span> <span className="text-gray-700">Corona pendiente</span></div>
+                <div className="flex items-center gap-1.5"><span className="text-green-600 font-bold text-sm">I</span> <span className="text-gray-700">Implante</span></div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 bg-red-500 rounded" style={{ border: '3px solid #2563EB', boxSizing: 'border-box' }}></div>
-                <span><strong>Rojo + Borde Azul:</strong> Realizado Filtrado</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 bg-yellow-500 rounded"></div>
-                <span><strong>Amarillo:</strong> Absceso/Fístula</span>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-2.5">Prótesis:</h4>
+              <div className="space-y-2 text-xs text-gray-700">
+                <div className="flex items-center gap-2">
+                  <svg width="40" height="12" className="border border-gray-300 rounded bg-white">
+                    <path d="M 5,6 Q 20,12 35,6" fill="none" stroke="#EF4444" strokeWidth="2" />
+                    <circle cx="5" cy="6" r="2" fill="#EF4444" />
+                    <circle cx="35" cy="6" r="2" fill="#EF4444" />
+                  </svg>
+                  <span className="text-gray-700"><strong className="text-red-600">Puente dental</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg width="40" height="12" className="border border-gray-300 rounded bg-white">
+                    <rect x="5" y="3" width="30" height="6" fill="none" stroke="#EF4444" strokeWidth="2" rx="1" />
+                  </svg>
+                  <span className="text-gray-700"><strong className="text-red-600">Prótesis removible</strong></span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div>
-            <h4 className="font-semibold text-gray-700 mb-2">Estados de Pieza (Doble clic / Mantener presionado en mobile):</h4>
-            <div className="grid grid-cols-2 gap-1 text-xs">
-              <div><span className="text-red-600 font-bold">✕</span> Ausente</div>
-              <div><span className="text-blue-600 font-bold">✕</span> Extracción</div>
-              <div><span className="text-red-600 font-bold">TC</span> Conducto hecho</div>
-              <div><span className="text-blue-600 font-bold">TC</span> Conducto pendiente</div>
-              <div><span className="text-red-600 font-bold">◯</span> Corona hecha</div>
-              <div><span className="text-blue-600 font-bold">◯</span> Corona pendiente</div>
-              <div><span className="text-green-600 font-bold">I</span> Implante</div>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-gray-700 mb-2">Prótesis:</h4>
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center gap-2">
-                <svg width="40" height="12" className="border border-gray-300 rounded">
-                  <path d="M 5,6 Q 20,12 35,6" fill="none" stroke="#EF4444" strokeWidth="2" />
-                  <circle cx="5" cy="6" r="2" fill="#EF4444" />
-                  <circle cx="35" cy="6" r="2" fill="#EF4444" />
-                </svg>
-                <span><strong className="text-red-600">Puente dental</strong></span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg width="40" height="12" className="border border-gray-300 rounded">
-                  <rect x="5" y="3" width="30" height="6" fill="none" stroke="#EF4444" strokeWidth="2" rx="1" />
-                </svg>
-                <span><strong className="text-red-600">Prótesis removible</strong></span>
-              </div>
-            </div>
+          <div className="mt-4 text-xs text-gray-700 bg-white/95 border border-blue-100 p-3 rounded-lg shadow-xs">
+            <strong className="text-gray-900">Instrucciones:</strong> Click en cara → Tratamiento | Clic en centro → Tratamiento oclusal | Doble clic en centro → Estado de pieza (TC, corona…) | Botones superiores → Marcar puente/prótesis entre piezas
           </div>
         </div>
-
-        <div className="mt-3 text-xs text-gray-600 bg-white p-2 rounded">
-          <strong>Instrucciones:</strong> Click en cara → Tratamiento | Clic en centro → Tratamiento oclusal | Doble clic en centro → Estado de pieza (TC, corona…) | Botones superiores → Marcar puente/prótesis entre piezas
-        </div>
-      </div>}
+      )}
 
       {/* Indicador de orientación */}
       <div className="flex justify-between text-sm font-semibold text-gray-600 mb-4 px-4">
