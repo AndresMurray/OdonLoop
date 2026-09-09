@@ -15,6 +15,7 @@ from .views import (
     cambiar_plan_odontologo,
     snake_score_view
 )
+from . import whatsapp_views
 
 app_name = 'odontologos'
 
@@ -46,4 +47,10 @@ urlpatterns = [
     # Configuración de planes
     path('planes/', PlanConfigListView.as_view(), name='planes-list'),
     path('planes/<str:plan_key>/', PlanConfigUpdateView.as_view(), name='planes-update'),
+    
+    # WhatsApp (Evolution API)
+    path('whatsapp/generar-qr/', whatsapp_views.GenerarQRView.as_view(), name='whatsapp-generar-qr'),
+    path('whatsapp/estado/', whatsapp_views.EstadoWhatsAppView.as_view(), name='whatsapp-estado'),
+    path('whatsapp/desvincular/', whatsapp_views.DesvincularWhatsAppView.as_view(), name='whatsapp-desvincular'),
+    path('whatsapp/webhook/', whatsapp_views.WhatsAppWebhookView.as_view(), name='whatsapp-webhook'),
 ]

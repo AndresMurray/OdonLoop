@@ -9,6 +9,7 @@ import Footer from '../components/Footer';
 import { User, Save, ArrowLeft, Edit2, X, Key } from 'lucide-react';
 import { getMiPerfil, actualizarMiPerfil } from '../api/odontologoService';
 import { changePassword } from '../api/passwordService';
+import WhatsAppConnection from '../components/WhatsAppConnection';
 
 const PerfilOdontologoPage = () => {
   const navigate = useNavigate();
@@ -469,6 +470,11 @@ const PerfilOdontologoPage = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* WhatsApp Connection */}
+            {perfil?.plan?.tiene_recordatorios_whatsapp && (
+              <WhatsAppConnection />
+            )}
 
             {/* Información de la cuenta */}
             <Card>

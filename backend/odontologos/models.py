@@ -14,6 +14,7 @@ class PlanConfig(models.Model):
     tiene_recordatorios_email = models.BooleanField(default=False, verbose_name="Recordatorios por Email")
     tiene_odontograma = models.BooleanField(default=False, verbose_name="Odontograma Interactivo")
     tiene_exportacion_pdf = models.BooleanField(default=False, verbose_name="Exportar en PDF (Seguimiento/Odontograma)")
+    tiene_recordatorios_whatsapp = models.BooleanField(default=False, verbose_name="Recordatorios por WhatsApp (Premium)")
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
 
     class Meta:
@@ -102,6 +103,12 @@ class Odontologo(models.Model):
         verbose_name_plural = 'Odontólogos'
         ordering = ['user__last_name', 'user__first_name']
     
+    def check_and_create_consultorio_default(self):
+        # Esta función puede usarse después de crear el odontólogo
+        if not self.consultorio:
+            self.consultorio = ""
+            self.save()
+
     def save(self, *args, **kwargs):
         # Auto-asignar plan básico si no está definido
         if not self.plan:
@@ -130,3 +137,28 @@ class Odontologo(models.Model):
     def es_visible_para_pacientes(self):
         """Verifica si el odontólogo debe aparecer en listados públicos"""
         return self.estado == 'activo'
+
+
+class WhatsAppConfig(models.Model):
+    ESTADOS = [
+        ('desconectado', 'Desconectado'),
+        ('conectando', 'Esperando escaneo QR'),
+        ('conectado', 'Conectado'),
+    ]
+
+    odontologo = models.OneToOneField(
+        Odontologo, 
+        on_delete=models.CASCADE, 
+        related_name='whatsapp_config'
+    )
+    instance_name = models.CharField(max_length=64, unique=True, verbose_name="Nombre de Instancia")
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='desconectado', verbose_name="Estado de WhatsApp")
+    numero_vinculado = models.CharField(max_length=30, blank=True, null=True, verbose_name="Número Vinculado")
+    ultima_conexion = models.DateTimeField(blank=True, null=True, verbose_name="Última Conexión")
+
+    class Meta:
+        verbose_name = "Configuración de WhatsApp"
+        verbose_name_plural = "Configuraciones de WhatsApp"
+
+    def __str__(self):
+        return f"{self.odontologo.user.get_full_name()} - {self.get_estado_display()}"

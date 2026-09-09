@@ -25,6 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env_config('SECRET_KEY', default='django-insecure-k=6hc7a45$7en4nyd16h!h+9^%q=jn4-1r^a#gog9qdt08y81_')
 
+# Evolution API Settings
+EVOLUTION_API_URL = env_config('EVOLUTION_API_URL', default='http://localhost:8080')
+EVOLUTION_API_KEY = env_config('EVOLUTION_API_KEY', default='')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env_config('DEBUG', default=False, cast=bool)
 

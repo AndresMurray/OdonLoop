@@ -50,6 +50,11 @@ class Turno(models.Model):
         verbose_name='Recordatorio enviado',
         help_text='Indica si ya se envió el recordatorio por email para este turno'
     )
+    recordatorio_whatsapp_enviado = models.BooleanField(
+        default=False,
+        verbose_name='Recordatorio WhatsApp enviado',
+        help_text='Indica si ya se envió el recordatorio por WhatsApp para este turno'
+    )
     fecha_creacion = models.DateTimeField(default=timezone.now, verbose_name='Fecha de creación')
     fecha_actualizacion = models.DateTimeField(auto_now=True, verbose_name='Fecha de actualización')
 

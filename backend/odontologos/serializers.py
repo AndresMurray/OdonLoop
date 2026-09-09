@@ -8,7 +8,7 @@ class PlanConfigSerializer(serializers.ModelSerializer):
         model = PlanConfig
         fields = [
             'id', 'plan_key', 'nombre', 'precio', 'limite_almacenamiento_gb',
-            'tiene_turnos', 'tiene_recordatorios_email', 'tiene_odontograma', 'tiene_exportacion_pdf', 'descripcion'
+            'tiene_turnos', 'tiene_recordatorios_email', 'tiene_recordatorios_whatsapp', 'tiene_odontograma', 'tiene_exportacion_pdf', 'descripcion'
         ]
 
 
