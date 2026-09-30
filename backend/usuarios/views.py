@@ -544,9 +544,14 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
 
 class UserListView(generics.ListAPIView):
-    queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Solo el administrador puede listar usuarios
+        if self.request.user.tipo_usuario != 'admin':
+            return CustomUser.objects.none()
+        return CustomUser.objects.all()
 
 
 class RequestPasswordResetView(APIView):

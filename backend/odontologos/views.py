@@ -304,12 +304,16 @@ def crear_paciente_rapido(request):
     from pacientes.models import Paciente
     paciente_existente = Paciente.objects.filter(dni=dni).select_related('user', 'obra_social').first()
     if paciente_existente:
-        from pacientes.serializers import PacienteSerializer
         odontologo = request.user.perfil_odontologo
         ya_asignado = paciente_existente.odontologos_asignados.filter(id=odontologo.id).exists()
+        # Solo lo mínimo para confirmar identidad: el resto de los datos se ve recién al asignarlo
         return Response({
             'error': 'Ya existe un paciente con este DNI',
-            'paciente_existente': PacienteSerializer(paciente_existente).data,
+            'paciente_existente': {
+                'id': paciente_existente.id,
+                'nombre_completo': paciente_existente.get_nombre_completo(),
+                'dni': paciente_existente.dni,
+            },
             'ya_asignado': ya_asignado
         }, status=status.HTTP_409_CONFLICT)
     
@@ -381,22 +385,24 @@ def asignar_paciente_existente(request):
         )
 
     paciente_id = request.data.get('paciente_id')
-    if not paciente_id:
+    dni = str(request.data.get('dni', '')).strip()
+    if not paciente_id or not dni:
         return Response(
-            {'error': 'ID del paciente es obligatorio'},
+            {'error': 'ID y DNI del paciente son obligatorios'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
+    odontologo = request.user.perfil_odontologo
+
+    # Exigir el DNI evita que se puedan vincular pacientes ajenos probando IDs
     from pacientes.models import Paciente
     try:
-        paciente = Paciente.objects.select_related('user').get(id=paciente_id)
+        paciente = Paciente.objects.select_related('user').get(id=paciente_id, dni=dni)
     except Paciente.DoesNotExist:
         return Response(
             {'error': 'Paciente no encontrado'},
             status=status.HTTP_404_NOT_FOUND
         )
-
-    odontologo = request.user.perfil_odontologo
 
     # Agregar relación M2M (idempotente, no falla si ya existe)
     paciente.odontologos_asignados.add(odontologo)

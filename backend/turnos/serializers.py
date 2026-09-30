@@ -146,6 +146,15 @@ class TurnoUpdateSerializer(serializers.ModelSerializer):
                 f"No se puede cambiar de '{current_estado}' a '{value}'.")
         
         return value
+
+    def validate_paciente(self, value):
+        """Un odontólogo solo puede asignar turnos a sus propios pacientes."""
+        request = self.context.get('request')
+        if value and request and hasattr(request.user, 'perfil_odontologo'):
+            from pacientes.permisos import pacientes_del_odontologo
+            if not pacientes_del_odontologo(request.user.perfil_odontologo).filter(id=value.id).exists():
+                raise serializers.ValidationError('Paciente no encontrado.')
+        return value
     
     def validate(self, data):
         """Validar asignación de paciente o reserva manual"""

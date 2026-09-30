@@ -106,7 +106,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
     if (!pacienteExistente) return;
     setAsignando(true);
     try {
-      const response = await asignarPacienteExistente(pacienteExistente.id);
+      const response = await asignarPacienteExistente(pacienteExistente.id, pacienteExistente.dni);
       setAlert({
         type: 'success',
         message: 'Paciente asignado a tu lista exitosamente'

@@ -29,6 +29,7 @@ from .serializers import (
     OdontogramaSerializer, OdontogramaListSerializer
 )
 from turnos.models import Turno
+from .permisos import pacientes_visibles_para
 
 
 class SeguimientoPagination(PageNumberPagination):
@@ -56,8 +57,8 @@ class PacienteViewSet(viewsets.ModelViewSet):
         return PacienteSerializer
     
     def get_queryset(self):
-        """Filtrar pacientes con búsqueda opcional"""
-        queryset = Paciente.objects.select_related('user', 'obra_social').filter(activo=True)
+        """Filtrar pacientes con búsqueda opcional (solo los que el usuario puede ver)"""
+        queryset = pacientes_visibles_para(self.request.user).select_related('user', 'obra_social').filter(activo=True)
         
         # Obtener parámetro de búsqueda si existe
         search = self.request.query_params.get('search', '')
@@ -420,10 +421,8 @@ class OdontogramaView(APIView):
     permission_classes = [IsAuthenticated, TieneOdontogramaPermission]
 
     def _get_paciente(self, paciente_id):
-        try:
-            return Paciente.objects.get(id=paciente_id)
-        except Paciente.DoesNotExist:
-            return None
+        # Solo pacientes del odontólogo que consulta
+        return pacientes_visibles_para(self.request.user).filter(id=paciente_id).first()
 
     def _build_odontograma_response(self, odontograma_obj, paciente):
         """Construye la respuesta del odontograma con 52 piezas"""
