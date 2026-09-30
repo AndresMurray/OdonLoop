@@ -14,6 +14,7 @@ from .views import (
     PlanConfigUpdateView,
     cambiar_plan_odontologo,
     confirmar_suscripcion,
+    DemoLoginView,
     snake_score_view
 )
 
@@ -22,6 +23,7 @@ app_name = 'odontologos'
 urlpatterns = [
     # Endpoints públicos (solo odontólogos activos)
     path('', OdontologoListView.as_view(), name='list'),
+    path('demo/', DemoLoginView.as_view(), name='demo'),
     path('<int:pk>/', OdontologoDetailView.as_view(), name='detail'),
     
     # Récord del minijuego Snake (odontólogo logueado)

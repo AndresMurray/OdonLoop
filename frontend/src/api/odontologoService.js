@@ -99,3 +99,6 @@ export const saveSnakeHighScore = async (highScore) => {
   }
 };
 
+
+// Crear un consultorio demo con datos de ejemplo (devuelve tokens y usuario)
+export const crearDemo = () => apiClient.post('/api/odontologos/demo/');

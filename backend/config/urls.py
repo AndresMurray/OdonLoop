@@ -24,7 +24,7 @@ import json
 
 @csrf_exempt
 def enviar_recordatorios_view(request):
-    """Endpoint interno (API key) de la tarea diaria: recordatorios y pruebas gratis."""
+    """Endpoint interno (API key) de la tarea diaria: recordatorios, pruebas gratis y limpieza de demos."""
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
@@ -40,6 +40,7 @@ def enviar_recordatorios_view(request):
         out = StringIO()
         call_command('enviar_recordatorios_turnos', stdout=out)
         call_command('gestionar_pruebas', stdout=out)
+        call_command('limpiar_demos', stdout=out)
         return JsonResponse({'status': 'ok', 'output': out.getvalue()})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

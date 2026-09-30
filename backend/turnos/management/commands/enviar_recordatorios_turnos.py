@@ -39,6 +39,7 @@ class Command(BaseCommand):
             estado__in=['reservado', 'confirmado'],
             recordatorio_enviado=False,
             odontologo__plan__tiene_recordatorios_email=True,
+            odontologo__es_demo=False,
         )
 
         total = turnos.count()

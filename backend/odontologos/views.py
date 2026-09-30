@@ -2,6 +2,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.throttling import AnonRateThrottle
 from django.utils import timezone
 from django.db import transaction
 from django.contrib.auth import get_user_model
@@ -62,22 +63,45 @@ class MiStorageView(APIView):
 
 class OdontologoListView(generics.ListAPIView):
     """Lista solo odontólogos activos (disponibles para pacientes)"""
-    queryset = Odontologo.objects.filter(estado='activo')
+    queryset = Odontologo.objects.filter(estado='activo', es_demo=False)
     serializer_class = OdontologoSerializer
     permission_classes = [permissions.AllowAny]
 
 
 class OdontologoDetailView(generics.RetrieveAPIView):
-    queryset = Odontologo.objects.filter(estado='activo')
+    queryset = Odontologo.objects.filter(estado='activo', es_demo=False)
     serializer_class = OdontologoSerializer
     permission_classes = [permissions.AllowAny]
+
+
+class DemoRateThrottle(AnonRateThrottle):
+    rate = '5/hour'
+
+
+class DemoLoginView(APIView):
+    """Crea un consultorio demo con datos de ejemplo y devuelve la sesión."""
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [DemoRateThrottle]
+
+    def post(self, request):
+        from rest_framework_simplejwt.tokens import RefreshToken
+        from usuarios.serializers import UserSerializer
+        from .demo import crear_consultorio_demo
+
+        user = crear_consultorio_demo()
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': UserSerializer(user).data,
+        }, status=status.HTTP_201_CREATED)
 
 
 # ===== PANEL DE ADMINISTRACIÓN =====
 
 class AdminOdontologoListView(generics.ListAPIView):
     """Lista TODOS los odontólogos para el panel de administración"""
-    queryset = Odontologo.objects.all().order_by('-fecha_alta')
+    queryset = Odontologo.objects.filter(es_demo=False).order_by('-fecha_alta')
     serializer_class = OdontologoSerializer
     permission_classes = [permissions.IsAuthenticated]
     
@@ -334,6 +358,11 @@ def crear_paciente_rapido(request):
     paciente_existente = Paciente.objects.filter(dni=dni).select_related('user', 'obra_social').first()
     if paciente_existente:
         odontologo = request.user.perfil_odontologo
+        if odontologo.es_demo:
+            return Response(
+                {'error': 'En la demo usá un DNI inventado que no esté cargado.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         ya_asignado = paciente_existente.odontologos_asignados.filter(id=odontologo.id).exists()
         # Solo lo mínimo para confirmar identidad: el resto de los datos se ve recién al asignarlo
         return Response({
@@ -422,6 +451,11 @@ def asignar_paciente_existente(request):
         )
 
     odontologo = request.user.perfil_odontologo
+    if odontologo.es_demo:
+        return Response(
+            {'error': 'En la demo no se pueden asignar pacientes existentes.'},
+            status=status.HTTP_403_FORBIDDEN
+        )
 
     # Exigir el DNI evita que se puedan vincular pacientes ajenos probando IDs
     from pacientes.models import Paciente

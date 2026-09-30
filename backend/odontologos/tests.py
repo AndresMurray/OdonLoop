@@ -11,6 +11,7 @@ from pacientes.models import Paciente, Seguimiento
 from turnos.models import Turno
 from usuarios.models import CustomUser, EmailVerificationToken
 
+from .demo import crear_consultorio_demo
 from .models import Odontologo
 
 EMAIL_TEST = {
@@ -103,6 +104,37 @@ class PruebaGratisTests(TestCase):
         call_command('gestionar_pruebas', stdout=StringIO())
 
         self.assertEqual(len(mail.outbox), 0)
+
+
+@override_settings(**EMAIL_TEST)
+class DemoTests(TestCase):
+    def test_probar_demo_crea_un_consultorio_con_datos(self):
+        resp = APIClient().post('/api/odontologos/demo/')
+
+        self.assertEqual(resp.status_code, 201, resp.content)
+        self.assertTrue(resp.data['user']['suscripcion']['es_demo'])
+        odontologo = Odontologo.objects.get(user_id=resp.data['user']['id'])
+        self.assertEqual(Paciente.objects.filter(creado_por_odontologo=odontologo).count(), 7)
+        self.assertTrue(Turno.objects.filter(odontologo=odontologo).exists())
+        self.assertEqual(Seguimiento.objects.filter(odontologo=odontologo).count(), 4)
+
+    def test_la_demo_no_aparece_para_pacientes_ni_manda_recordatorios(self):
+        crear_consultorio_demo()
+
+        self.assertEqual(resultados(APIClient().get('/api/odontologos/')), [])
+        call_command('enviar_recordatorios_turnos', stdout=StringIO())
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_limpiar_demos_borra_las_de_mas_de_24_horas_con_sus_pacientes(self):
+        vieja = crear_consultorio_demo()
+        nueva = crear_consultorio_demo()
+        Odontologo.objects.filter(user=vieja).update(fecha_alta=timezone.now() - timedelta(hours=25))
+
+        call_command('limpiar_demos', stdout=StringIO())
+
+        self.assertFalse(CustomUser.objects.filter(id=vieja.id).exists())
+        self.assertFalse(CustomUser.objects.filter(username__startswith=vieja.username + '_').exists())
+        self.assertTrue(CustomUser.objects.filter(id=nueva.id).exists())
 
 
 @override_settings(**EMAIL_TEST)
