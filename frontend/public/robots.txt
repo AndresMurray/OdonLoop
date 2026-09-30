@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /home-odontologo
+Disallow: /home-paciente
+Disallow: /home-admin
+Disallow: /admin/
+Disallow: /gestion-turnos
+Disallow: /mis-pacientes
+Disallow: /seguimiento-paciente/
+Disallow: /odontograma/
+
+Sitemap: https://odonloop.com/sitemap.xml

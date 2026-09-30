@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import RegisterPage from '../pages/RegisterPage';
 import RegisterPacientePage from '../pages/RegisterPacientePage';
@@ -7,23 +8,46 @@ import LoginPage from '../pages/LoginPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import ActivarCuentaPage from '../pages/ActivarCuentaPage';
 import ReenviarVerificacionPage from '../pages/ReenviarVerificacionPage';
-import TurnosPage from '../pages/TurnosPage';
-import HomeOdonto from '../pages/HomeOdonto';
-import HomePaciente from '../pages/HomePaciente';
-import HomeAdmin from '../pages/HomeAdmin';
-import PanelAdministracion from '../pages/PanelAdministracion';
-import GestionTurnosOdonto from '../pages/GestionTurnosOdonto';
-import SolicitarTurnoPage from '../pages/SolicitarTurnoPage';
-import MisPacientesPage from '../pages/MisPacientesPage';
-import SeguimientoPacientePage from '../pages/SeguimientoPacientePage';
-import PerfilPacientePage from '../pages/PerfilPacientePage';
-import PerfilOdontologoPage from '../pages/PerfilOdontologoPage';
-import OdontogramaPage from '../pages/OdontogramaPage';
 import App from '../App';
 import HomePage from '../pages/HomePage';
 import ProtectedRoute from '../components/ProtectedRoute';
 import GuestRoute from '../components/GuestRoute';
 import RootRedirect from '../components/RootRedirect';
+
+// Tras un deploy, una pestaña abierta con la versión anterior pide archivos que ya no existen:
+// en ese caso se recarga una vez para traer la versión nueva.
+const CLAVE_RECARGA = 'odonloop-recarga-por-deploy';
+const lazyConRecarga = (importar) => lazy(() =>
+  importar()
+    .then((modulo) => {
+      try { sessionStorage.removeItem(CLAVE_RECARGA); } catch { /* sin sessionStorage */ }
+      return modulo;
+    })
+    .catch((error) => {
+      let yaRecargo = true;
+      try {
+        yaRecargo = Boolean(sessionStorage.getItem(CLAVE_RECARGA));
+        if (!yaRecargo) sessionStorage.setItem(CLAVE_RECARGA, '1');
+      } catch { /* sin sessionStorage: no reintentar */ }
+      if (yaRecargo) throw error;
+      window.location.reload();
+      return new Promise(() => {});
+    })
+);
+
+// Pantallas de la app (con sesión): se descargan recién cuando se usan, así la landing carga liviana
+const TurnosPage = lazyConRecarga(() => import('../pages/TurnosPage'));
+const HomeOdonto = lazyConRecarga(() => import('../pages/HomeOdonto'));
+const HomePaciente = lazyConRecarga(() => import('../pages/HomePaciente'));
+const HomeAdmin = lazyConRecarga(() => import('../pages/HomeAdmin'));
+const PanelAdministracion = lazyConRecarga(() => import('../pages/PanelAdministracion'));
+const GestionTurnosOdonto = lazyConRecarga(() => import('../pages/GestionTurnosOdonto'));
+const SolicitarTurnoPage = lazyConRecarga(() => import('../pages/SolicitarTurnoPage'));
+const MisPacientesPage = lazyConRecarga(() => import('../pages/MisPacientesPage'));
+const SeguimientoPacientePage = lazyConRecarga(() => import('../pages/SeguimientoPacientePage'));
+const PerfilPacientePage = lazyConRecarga(() => import('../pages/PerfilPacientePage'));
+const PerfilOdontologoPage = lazyConRecarga(() => import('../pages/PerfilOdontologoPage'));
+const OdontogramaPage = lazyConRecarga(() => import('../pages/OdontogramaPage'));
 
 export const router = createBrowserRouter([
   {
