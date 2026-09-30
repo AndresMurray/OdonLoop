@@ -298,7 +298,7 @@ const PanelAdministracion = () => {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Pendientes</p>
+                        <p className="text-sm font-medium text-gray-600 dark:text-slate-300">Pendientes</p>
                         <p className="text-3xl font-bold text-yellow-600">{contadores.pendiente}</p>
                       </div>
                       <Clock className="w-12 h-12 text-yellow-600 opacity-50" />
@@ -309,7 +309,7 @@ const PanelAdministracion = () => {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Activos</p>
+                        <p className="text-sm font-medium text-gray-600 dark:text-slate-300">Activos</p>
                         <p className="text-3xl font-bold text-green-600">{contadores.activo}</p>
                       </div>
                       <CheckCircle className="w-12 h-12 text-green-600 opacity-50" />
@@ -320,7 +320,7 @@ const PanelAdministracion = () => {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Suspendidos</p>
+                        <p className="text-sm font-medium text-gray-600 dark:text-slate-300">Suspendidos</p>
                         <p className="text-3xl font-bold text-red-600">{contadores.suspendido}</p>
                       </div>
                       <XCircle className="w-12 h-12 text-red-600 opacity-50" />
@@ -455,7 +455,7 @@ const PanelAdministracion = () => {
                                       setPlanSelect(odontologo.plan?.plan_key || 'basico');
                                       setMostrarModalCambiarPlan(true);
                                     }}
-                                    className="w-full border-blue-500 text-blue-600 hover:bg-blue-50 flex items-center justify-center gap-1.5"
+                                    className="w-full border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-500! dark:text-blue-600! dark:hover:bg-blue-50! dark:hover:text-blue-700! flex items-center justify-center gap-1.5"
                                   >
                                     <Lock className="w-3.5 h-3.5" />
                                     Cambiar Plan

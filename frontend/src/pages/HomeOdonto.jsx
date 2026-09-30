@@ -426,7 +426,7 @@ const HomeOdonto = () => {
                           {getTurnosPaginados('reservados', paginaReservados).map((turno) => (
                             <div
                               key={turno.id}
-                              className="border border-slate-850 bg-slate-950/40 rounded-lg p-4 hover:border-slate-800 transition-colors"
+                              className="border border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-slate-700 rounded-lg p-4 transition-colors"
                             >
                               <div className="flex justify-between items-start gap-3">
                                 <div>
@@ -502,7 +502,7 @@ const HomeOdonto = () => {
                           {getTurnosPaginados('disponibles', paginaDisponibles).map((turno) => (
                             <div
                               key={turno.id}
-                              className="border border-slate-850 bg-slate-950/40 rounded-lg p-4 hover:border-slate-800 transition-colors"
+                              className="border border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-slate-700 rounded-lg p-4 transition-colors"
                             >
                               <div className="flex justify-between items-center">
                                 <div>

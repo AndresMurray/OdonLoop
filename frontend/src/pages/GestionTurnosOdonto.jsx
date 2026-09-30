@@ -1140,7 +1140,7 @@ const GestionTurnosOdonto = () => {
                               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <p className="font-semibold text-white">{formatearFecha(turno.fecha_hora)}</p>
+                                    <p className="font-semibold text-slate-900 dark:text-white">{formatearFecha(turno.fecha_hora)}</p>
                                     {!turno.visible && (
                                       <span className="text-xs bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2 py-0.5 rounded-full font-medium">
                                         🚫 Oculto para pacientes
@@ -1268,7 +1268,7 @@ const GestionTurnosOdonto = () => {
                             className="flex justify-between items-center p-4 bg-slate-900/60 border border-slate-800 rounded-lg"
                           >
                             <div>
-                              <p className="font-semibold text-white">{formatearFecha(turno.fecha_hora)}</p>
+                              <p className="font-semibold text-slate-900 dark:text-white">{formatearFecha(turno.fecha_hora)}</p>
                               {turno.paciente ? (
                                 <p className="text-sm text-slate-300">
                                   Paciente: {turno.paciente.nombre_completo}
