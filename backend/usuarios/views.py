@@ -142,109 +142,16 @@ class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
-    @transaction.atomic
     def create(self, request, *args, **kwargs):
         """
-        Crear nuevo usuario o hacer upgrade de cuenta existente.
-        Si el DNI existe sin email, actualiza la cuenta (upgrade).
-        Si el DNI existe con email, retorna error.
-        Si no existe, crea nuevo usuario.
+        Registro público: solo odontólogos. Los pacientes no tienen cuenta propia: los carga su
+        odontólogo o sacan turno desde el link de turnos online, sin registrarse.
         """
-        tipo_usuario = request.data.get('tipo_usuario', 'paciente')
-        
-        # Solo manejar upgrade para pacientes
-        if tipo_usuario == 'paciente':
-            dni = request.data.get('dni')
-            email = request.data.get('email')
-            
-            if dni:
-                from pacientes.models import Paciente
-                try:
-                    paciente_existente = Paciente.objects.select_related('user').get(dni=dni)
-                    
-                    # Verificar si es un upgrade (usuario sin email)
-                    if not paciente_existente.user.email:
-                        # UPGRADE: Activar cuenta existente
-                        user = paciente_existente.user
-                        
-                        # Verificar que el email no esté en uso por otro usuario
-                        if email and CustomUser.objects.filter(email=email).exists():
-                            return Response(
-                                {'error': 'Este email ya está registrado'},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
-                        
-                        # Actualizar datos del usuario
-                        user.email = email
-                        user.set_password(request.data.get('password'))
-                        user.username = email  # Cambiar username a email
-                        user.tipo_registro = 'autoregistro'
-                        user.cuenta_completa = True
-                        
-                        # Actualizar otros campos si vienen en el request
-                        if request.data.get('telefono'):
-                            user.telefono = request.data.get('telefono')
-                        if request.data.get('first_name'):
-                            user.first_name = request.data.get('first_name')
-                        if request.data.get('last_name'):
-                            user.last_name = request.data.get('last_name')
-                        
-                        user.save()
-                        
-                        # Actualizar obra social si viene en el request
-                        obra_social_id = request.data.get('obra_social_id')
-                        if obra_social_id:
-                            from pacientes.models import ObraSocial
-                            try:
-                                obra_social = ObraSocial.objects.get(id=obra_social_id, activo=True)
-                                paciente_existente.obra_social = obra_social
-                                paciente_existente.save()
-                            except ObraSocial.DoesNotExist:
-                                pass
-                        
-                        # Enviar email de bienvenida al paciente que hace upgrade
-                        if user.email:
-                            try:
-                                from config.email_utils import send_html_email
-                                send_html_email(
-                                    subject='Tu cuenta OdonLoop está lista',
-                                    recipient_list=[user.email],
-                                    title=f'¡Hola {user.first_name}!',
-                                    body_paragraphs=[
-                                        'Excelentes noticias: tu cuenta en OdonLoop ya está activa y lista para usar.',
-                                        'Estamos aquí para hacer tu experiencia de gestión de turnos mucho más simple.',
-                                        'Saludos,',
-                                        'El equipo de OdonLoop'
-                                    ],
-                                    reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
-                                )
-                            except Exception:
-                                # No fallar el registro si falla el email
-                                pass
-                        
-                        # Generar tokens JWT
-                        from rest_framework_simplejwt.tokens import RefreshToken
-                        refresh = RefreshToken.for_user(user)
-                        
-                        return Response({
-                            'message': 'Cuenta activada exitosamente',
-                            'upgrade': True,
-                            'refresh': str(refresh),
-                            'access': str(refresh.access_token),
-                            'user': UserSerializer(user).data
-                        }, status=status.HTTP_200_OK)
-                    else:
-                        # DNI existe y ya tiene cuenta completa
-                        return Response(
-                            {'error': 'Ya existe una cuenta registrada con este DNI'},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-                        
-                except Paciente.DoesNotExist:
-                    # DNI no existe, continuar con registro normal
-                    pass
-        
-        # Flujo normal de creación
+        if request.data.get('tipo_usuario') != 'odontologo':
+            return Response(
+                {'error': 'El registro es solo para odontólogos. Si sos paciente, pedile a tu odontólogo su link para sacar turno.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         return super().create(request, *args, **kwargs)
     
     @transaction.atomic
@@ -252,39 +159,7 @@ class UserRegistrationView(generics.CreateAPIView):
         # Crear el usuario como INACTIVO (requiere verificación de email)
         user = serializer.save(is_active=False, email_verified=False)
         
-        # Crear el perfil correspondiente según el tipo de usuario
-        if user.tipo_usuario == 'paciente':
-            from pacientes.models import Paciente, ObraSocial
-            
-            # Obtener datos adicionales del contexto del serializer
-            dni = serializer.context.get('dni')
-            obra_social_id = serializer.context.get('obra_social_id')
-            obra_social_otra = serializer.context.get('obra_social_otra')
-            numero_afiliado = serializer.context.get('numero_afiliado')
-            plan = serializer.context.get('plan')
-            
-            # Obtener la obra social si se proporcionó un ID
-            obra_social = None
-            if obra_social_id:
-                try:
-                    obra_social = ObraSocial.objects.get(id=obra_social_id, activo=True)
-                except ObraSocial.DoesNotExist:
-                    pass
-            
-            Paciente.objects.create(
-                user=user,
-                dni=dni,
-                obra_social=obra_social,
-                obra_social_otra=obra_social_otra if not obra_social else None,
-                numero_afiliado=numero_afiliado or None,
-                plan=plan or None
-            )
-            
-            # Enviar email de verificación
-            if user.email:
-                self._send_verification_email(user)
-                    
-        elif user.tipo_usuario == 'odontologo':
+        if user.tipo_usuario == 'odontologo':
             from odontologos.models import Odontologo
             # Obtener consultorio del request si viene
             consultorio = self.request.data.get('consultorio', '')

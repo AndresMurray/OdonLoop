@@ -69,37 +69,27 @@ class UserSerializer(serializers.ModelSerializer):
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     password2 = serializers.CharField(write_only=True, min_length=8)
-    
-    # Campos adicionales para pacientes
-    dni = serializers.CharField(max_length=20, required=False, allow_blank=True)
-    obra_social = serializers.CharField(required=False, allow_blank=True, allow_null=True, default=None)
-    obra_social_otra = serializers.CharField(max_length=200, required=False, allow_blank=True)
-    numero_afiliado = serializers.CharField(max_length=50, required=False, allow_blank=True)
-    plan = serializers.CharField(max_length=100, required=False, allow_blank=True)
 
     class Meta:
         model = CustomUser
         fields = ['email', 'password', 'password2', 'first_name', 'last_name', 
-                  'telefono', 'fecha_nacimiento', 'tipo_usuario', 'dni', 'obra_social', 'obra_social_otra',
-                  'numero_afiliado', 'plan']
+                  'telefono', 'fecha_nacimiento', 'tipo_usuario']
 
-    def validate_obra_social(self, value):
-        """Convertir a entero o None"""
-        if not value or value == '':
-            return None
-        try:
-            return int(value)
-        except (ValueError, TypeError):
-            raise serializers.ValidationError("Debe ser un número válido")
+    def validate_tipo_usuario(self, value):
+        """Solo se registran odontólogos: ni pacientes ni, sobre todo, administradores."""
+        if value != 'odontologo':
+            raise serializers.ValidationError('El registro es solo para odontólogos.')
+        return value
 
     def validate_email(self, value):
         """Validar que el email no exista o permitir re-registro si no está verificado después de 48 horas"""
         try:
             existing_user = CustomUser.objects.get(email=value)
             
-            # Si el usuario ya está verificado, no permitir el registro
-            if existing_user.email_verified:
-                raise serializers.ValidationError("Este email ya está registrado y verificado")
+            # Si la cuenta está verificada o en uso, no permitir el registro (y nunca borrarla)
+            from .models import registros_abandonados
+            if not registros_abandonados().filter(pk=existing_user.pk).exists():
+                raise serializers.ValidationError("Este email ya está registrado")
             
             # Si el usuario no está verificado, verificar si han pasado 48 horas
             time_since_registration = timezone.now() - existing_user.date_joined
@@ -124,23 +114,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({"password": "Las contraseñas no coinciden"})
-        
-        # Validar DNI para pacientes
-        if attrs.get('tipo_usuario') == 'paciente' and attrs.get('dni'):
-            from pacientes.models import Paciente
-            if Paciente.objects.filter(dni=attrs['dni']).exists():
-                raise serializers.ValidationError({"dni": "Este DNI ya está registrado"})
-        
+        if 'tipo_usuario' not in attrs:
+            raise serializers.ValidationError({"tipo_usuario": "El registro es solo para odontólogos."})
         return attrs
 
     def create(self, validated_data):
         # Extraer campos que no son del modelo CustomUser
         validated_data.pop('password2')
-        dni = validated_data.pop('dni', None)
-        obra_social_id = validated_data.pop('obra_social', None)
-        obra_social_otra = validated_data.pop('obra_social_otra', None)
-        numero_afiliado = validated_data.pop('numero_afiliado', None)
-        plan = validated_data.pop('plan', None)
         
         # Generar username automáticamente desde el email
         email = validated_data.get('email')
@@ -155,13 +135,4 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         
         validated_data['username'] = username
         
-        user = CustomUser.objects.create_user(**validated_data)
-        
-        # Guardar los datos adicionales en el contexto para que la vista los use
-        self.context['dni'] = dni
-        self.context['obra_social_id'] = obra_social_id
-        self.context['obra_social_otra'] = obra_social_otra
-        self.context['numero_afiliado'] = numero_afiliado
-        self.context['plan'] = plan
-        
-        return user
+        return CustomUser.objects.create_user(**validated_data)

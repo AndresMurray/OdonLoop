@@ -410,8 +410,7 @@ const HomePage = () => {
         <Seccion className="text-center text-sm text-slate-400 space-y-2">
           <p className="flex items-center justify-center gap-2">
             <Users className="w-4 h-4" />
-            ¿Sos paciente de un odontólogo que usa OdonLoop?{' '}
-            <Link to="/register/paciente" className="text-blue-700 dark:text-blue-300 font-semibold hover:underline">Registrate para pedir turno</Link>
+            ¿Sos paciente? Pedile a tu odontólogo su link para sacar turno online, sin registrarte.
           </p>
           <p>
             <a href={YOUTUBE_DEMO_URL} target="_blank" rel="noopener noreferrer" className="hover:text-slate-900 dark:hover:text-white">Video de presentación</a>

@@ -1,7 +1,5 @@
 import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import RegisterPage from '../pages/RegisterPage';
-import RegisterPacientePage from '../pages/RegisterPacientePage';
 import RegisterOdontologoPage from '../pages/RegisterOdontologoPage';
 import RegistroExitosoPage from '../pages/RegistroExitosoPage';
 import LoginPage from '../pages/LoginPage';
@@ -97,20 +95,13 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    // El registro es solo para odontólogos; los pacientes sacan turno con el link de su odontólogo
     path: '/register',
-    element: (
-      <GuestRoute>
-        <RegisterPage />
-      </GuestRoute>
-    ),
+    element: <Navigate to="/register/odontologo" replace />,
   },
   {
     path: '/register/paciente',
-    element: (
-      <GuestRoute>
-        <RegisterPacientePage />
-      </GuestRoute>
-    ),
+    element: <Navigate to="/home" replace />,
   },
   {
     path: '/register/odontologo',

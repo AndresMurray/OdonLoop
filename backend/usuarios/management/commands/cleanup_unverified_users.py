@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
-from usuarios.models import CustomUser, EmailVerificationToken
+from usuarios.models import EmailVerificationToken, registros_abandonados
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,11 +15,7 @@ class Command(BaseCommand):
         time_threshold = timezone.now() - timedelta(hours=48)
         
         # Buscar usuarios no verificados creados hace más de 48 horas
-        unverified_users = CustomUser.objects.filter(
-            email_verified=False,
-            is_active=False,
-            date_joined__lt=time_threshold
-        )
+        unverified_users = registros_abandonados().filter(date_joined__lt=time_threshold)
         
         count = unverified_users.count()
         
