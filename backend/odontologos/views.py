@@ -13,7 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from .models import Odontologo, PlanConfig
-from .serializers import OdontologoSerializer, OdontologoPerfilSerializer, PlanConfigSerializer
+from .serializers import OdontologoSerializer, OdontologoPerfilSerializer, OdontologoPublicoSerializer, PlanConfigSerializer
 
 User = get_user_model()
 
@@ -63,14 +63,14 @@ class MiStorageView(APIView):
 
 class OdontologoListView(generics.ListAPIView):
     """Lista solo odontólogos activos (disponibles para pacientes)"""
-    queryset = Odontologo.objects.filter(estado='activo', es_demo=False)
-    serializer_class = OdontologoSerializer
+    queryset = Odontologo.objects.filter(estado='activo', es_demo=False).select_related('user', 'plan')
+    serializer_class = OdontologoPublicoSerializer
     permission_classes = [permissions.AllowAny]
 
 
 class OdontologoDetailView(generics.RetrieveAPIView):
-    queryset = Odontologo.objects.filter(estado='activo', es_demo=False)
-    serializer_class = OdontologoSerializer
+    queryset = Odontologo.objects.filter(estado='activo', es_demo=False).select_related('user', 'plan')
+    serializer_class = OdontologoPublicoSerializer
     permission_classes = [permissions.AllowAny]
 
 

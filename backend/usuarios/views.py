@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate
 from django.db import transaction
 from django.core.mail import EmailMessage
 from django.conf import settings
+from config.telefonos import normalizar_telefono_ar
 from django.utils import timezone
 import logging
 
@@ -115,21 +116,8 @@ ADMIN_EMAIL = 'amurrayroppel@gmail.com'
 
 def whatsapp_link(telefono):
     """Link wa.me para un teléfono argentino cargado a mano (mejor esfuerzo)."""
-    digitos = ''.join(c for c in (telefono or '') if c.isdigit())
-    if not digitos:
-        return None
-    if digitos.startswith('549'):
-        return f'https://wa.me/{digitos}'
-    if digitos.startswith('54'):
-        digitos = digitos[2:]
-    digitos = digitos.lstrip('0')
-    if len(digitos) == 12:
-        # Característica + 15 + número: sacar el 15 (probando características de 2, 3 y 4 dígitos)
-        for largo in (2, 3, 4):
-            if digitos[largo:largo + 2] == '15':
-                digitos = digitos[:largo] + digitos[largo + 2:]
-                break
-    return f'https://wa.me/549{digitos}' if len(digitos) == 10 else None
+    numero = normalizar_telefono_ar(telefono)
+    return f'https://wa.me/{numero}' if numero else None
 
 
 def notificar_admin(subject, title, body_paragraphs, telefono=None):

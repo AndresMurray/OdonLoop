@@ -57,6 +57,8 @@ class UserSerializer(serializers.ModelSerializer):
         if obj.tipo_usuario == 'odontologo' and hasattr(obj, 'perfil_odontologo'):
             odontologo = obj.perfil_odontologo
             return {
+                'slug_turnos': odontologo.slug,
+                'acepta_turnos_online': odontologo.acepta_turnos_online,
                 'es_demo': odontologo.es_demo,
                 'en_prueba': odontologo.en_prueba,
                 'fecha_fin_prueba': odontologo.fecha_fin_prueba,

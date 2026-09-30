@@ -7,7 +7,7 @@ import { trackEvent } from '../utils/analytics';
 
 const PASOS = [
   { icon: Mail, titulo: 'Confirmá tu email', texto: `Tocá "Confirmar cuenta" en el mail que te mandamos. Ahí arrancan tus ${DIAS_PRUEBA} días gratis.` },
-  { icon: Users, titulo: 'Cargá tus pacientes', texto: 'Empezá por los de esta semana. Tus pacientes también pueden registrarse solos para pedirte turno.' },
+  { icon: Users, titulo: 'Cargá tus pacientes', texto: 'Empezá por los de esta semana. Y compartí tu link de turnos: tus pacientes reservan solos, sin registrarse.' },
   { icon: MessageCircle, titulo: 'Recordá turnos por WhatsApp', texto: 'Con un click desde la agenda, para que no falten.' },
 ];
 

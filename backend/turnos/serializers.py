@@ -48,6 +48,7 @@ class TurnoSerializer(serializers.ModelSerializer):
             'id', 'odontologo', 'paciente', 'fecha_hora', 
             'duracion_minutos', 'motivo', 'estado', 'esta_disponible',
             'nombre_paciente_manual', 'apellido_paciente_manual', 'telefono_paciente_manual',
+            'email_paciente_manual', 'origen',
             'fecha_creacion', 'fecha_actualizacion', 'visible'
         ]
 

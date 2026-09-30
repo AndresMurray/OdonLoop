@@ -13,6 +13,7 @@ import Pagination from '../components/Pagination';
 import TurnoCalendar from '../components/TurnoCalendar';
 import { PlanModal } from '../components';
 import SnakeGame from '../components/SnakeGame';
+import LinkTurnos from '../components/LinkTurnos';
 import { getToday } from '../utils/dateUtils';
 import { linkRecordatorioTurno, nombrePacienteTurno } from '../utils/whatsapp';
 import { trackEvent } from '../utils/analytics';
@@ -240,6 +241,10 @@ const HomeOdonto = () => {
               </a>
             </div>
           )}
+
+          <div className="mb-8">
+            <LinkTurnos userData={userData} />
+          </div>
 
           {/* Botón destacado de Gestión de Turnos */}
           <div className="mb-8 animate-fadeIn">

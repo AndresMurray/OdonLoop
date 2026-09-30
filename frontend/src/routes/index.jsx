@@ -48,6 +48,8 @@ const SeguimientoPacientePage = lazyConRecarga(() => import('../pages/Seguimient
 const PerfilPacientePage = lazyConRecarga(() => import('../pages/PerfilPacientePage'));
 const PerfilOdontologoPage = lazyConRecarga(() => import('../pages/PerfilOdontologoPage'));
 const OdontogramaPage = lazyConRecarga(() => import('../pages/OdontogramaPage'));
+const ReservarTurnoPage = lazyConRecarga(() => import('../pages/ReservarTurnoPage'));
+const CancelarTurnoPage = lazyConRecarga(() => import('../pages/CancelarTurnoPage'));
 
 export const router = createBrowserRouter([
   {
@@ -117,6 +119,15 @@ export const router = createBrowserRouter([
         <RegisterOdontologoPage />
       </GuestRoute>
     ),
+  },
+  {
+    // Link público de cada odontólogo: los pacientes reservan sin cuenta
+    path: '/turnos/:slug',
+    element: <ReservarTurnoPage />,
+  },
+  {
+    path: '/turnos/cancelar/:token',
+    element: <CancelarTurnoPage />,
   },
   {
     path: '/registro-exitoso',

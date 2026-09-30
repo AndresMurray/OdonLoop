@@ -8,5 +8,6 @@ Disallow: /gestion-turnos
 Disallow: /mis-pacientes
 Disallow: /seguimiento-paciente/
 Disallow: /odontograma/
+Disallow: /turnos/cancelar/
 
 Sitemap: https://odonloop.com/sitemap.xml

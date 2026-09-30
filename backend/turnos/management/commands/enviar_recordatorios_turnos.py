@@ -49,14 +49,19 @@ class Command(BaseCommand):
         self.stdout.write(f'Se encontraron {total} turnos para enviar recordatorio.')
 
         for turno in turnos:
-            # Solo enviar si el paciente tiene email
-            if not turno.paciente or not turno.paciente.user or not turno.paciente.user.email:
+            # Paciente con cuenta y email, o reserva online en la que dejó su email
+            es_online = not turno.paciente and turno.origen == 'online' and turno.email_paciente_manual
+            if not es_online and (not turno.paciente or not turno.paciente.user or not turno.paciente.user.email):
                 self.stdout.write(f'  Turno #{turno.id}: paciente sin email, omitido.')
                 continue
 
             try:
-                paciente_email = turno.paciente.user.email
-                nombre_paciente = turno.paciente.get_nombre_completo()
+                if es_online:
+                    paciente_email = turno.email_paciente_manual
+                    nombre_paciente = turno.nombre_paciente_manual
+                else:
+                    paciente_email = turno.paciente.user.email
+                    nombre_paciente = turno.paciente.get_nombre_completo()
                 nombre_odontologo = turno.odontologo.get_nombre_completo()
                 
                 fecha_local = turno.fecha_hora.astimezone(tz_bsas)
@@ -85,14 +90,21 @@ class Command(BaseCommand):
                     'El equipo de OdonLoop'
                 ])
 
+                # Las reservas online no tienen cuenta: el botón lleva a cancelar si no puede ir
+                frontend = getattr(settings, 'FRONTEND_URL', 'https://odonloop.com').rstrip('/')
+                if es_online:
+                    boton, url = 'Cancelar mi turno', f'{frontend}/turnos/cancelar/{turno.token_cancelacion}'
+                else:
+                    boton, url = 'Ver mis turnos', frontend
+
                 from config.email_utils import send_html_email
                 send_html_email(
                     subject=f'Recordatorio: turno mañana {hora_formateada} con Dr./Dra. {nombre_odontologo}',
                     recipient_list=[paciente_email],
                     title=f'¡Hola {nombre_paciente}!',
                     body_paragraphs=body_paragraphs,
-                    button_text='Ver mis turnos',
-                    button_url=getattr(settings, 'FRONTEND_URL', 'https://odonloop.com'),
+                    button_text=boton,
+                    button_url=url,
                     reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
                 )
 

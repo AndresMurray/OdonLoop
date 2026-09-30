@@ -32,6 +32,22 @@ class OdontologoSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'fecha_alta', 'storage_used', 'storage_limit']
 
 
+class UsuarioPublicoSerializer(serializers.Serializer):
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+
+
+class OdontologoPublicoSerializer(serializers.ModelSerializer):
+    """Datos que cualquiera puede ver (sin sesión): nada de email, teléfono ni fecha de nacimiento."""
+    user = UsuarioPublicoSerializer(read_only=True)
+    nombre_completo = serializers.ReadOnlyField(source='get_nombre_completo')
+    acepta_turnos_online = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Odontologo
+        fields = ['id', 'slug', 'user', 'nombre_completo', 'especialidad', 'consultorio', 'acepta_turnos_online']
+
+
 class OdontologoCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Odontologo

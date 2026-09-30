@@ -29,7 +29,7 @@ const FUNCIONES = [
   {
     icon: CalendarCheck, color: 'text-blue-400', titulo: 'Gestión de Turnos',
     bajada: 'Tu agenda ordenada y con menos faltazos.',
-    items: ['Turnos del día: reservados y disponibles', 'Recordatorio automático por email el día anterior', 'Recordatorio por WhatsApp con un click, con el mensaje ya escrito', 'Tus pacientes pueden pedir turno online'],
+    items: ['Turnos del día: reservados y disponibles', 'Recordatorio automático por email el día anterior', 'Recordatorio por WhatsApp con un click, con el mensaje ya escrito', 'Tu propio link para que tus pacientes saquen turno solos, sin registrarse'],
     imagenes: [{ src: '/landing/turnos.webp', alt: 'Gestión de Turnos en OdonLoop' }, { src: '/landing/recordatorio-email.webp', alt: 'Recordatorio de turno por email', chica: true }],
   },
   {
@@ -64,7 +64,8 @@ const PREGUNTAS = [
   { p: '¿Tengo que instalar algo?', r: 'No. Entrás desde odonloop.com con tu compu, tablet o celular.' },
   { p: '¿Cómo mando los recordatorios?', r: 'El recordatorio por email sale solo el día anterior al turno. Además, desde tu agenda tocás "Recordar" y se abre WhatsApp con el mensaje listo para enviar al paciente.' },
   { p: '¿Me ayudan a empezar?', r: 'Sí. Te capacitamos y te explicamos todo por WhatsApp o videollamada.' },
-  { p: '¿Tengo que cargar a todos mis pacientes?', r: 'No hace falta hacerlo de una vez: empezá por los de esta semana y sumá el resto a medida que vienen. Además, tus pacientes pueden registrarse solos en OdonLoop para pedirte turno.' },
+  { p: '¿Tengo que cargar a todos mis pacientes?', r: 'No hace falta hacerlo de una vez: empezá por los de esta semana y sumá el resto a medida que vienen. Además, con tu link de turnos los pacientes reservan solos, sin registrarse.' },
+  { p: '¿Mis pacientes pueden sacar turno solos?', r: 'Sí. Tenés un link propio (por ejemplo odonloop.com/turnos/tu-nombre) para poner en tu Instagram o mandar por WhatsApp. El paciente elige un horario libre y reserva sin crear una cuenta; a vos te llega un aviso y lo ves en tu agenda. Disponible en los planes con agenda de turnos.' },
   { p: '¿Mis datos están seguros?', r: 'Se hacen backups automáticos todos los días, el acceso es con usuario y contraseña y cada odontólogo ve solo a sus pacientes. Además podés exportar la información a PDF cuando quieras.' },
   { p: '¿Qué pasa si dejo de pagar?', r: 'Tu cuenta se pausa pero tus datos quedan guardados. Si volvés, retomás donde lo dejaste.' },
   { p: '¿Reemplaza a la historia clínica?', r: 'Hoy OdonLoop es un registro de seguimiento para organizar tu consultorio. La historia clínica legal la seguís llevando según la normativa vigente.' },
@@ -170,8 +171,8 @@ const HomePage = () => {
               </span>
             </h1>
             <p className="text-slate-300 text-lg leading-relaxed max-w-xl">
-              Turnos con recordatorio por WhatsApp y email, el seguimiento de cada paciente con fotos y radiografías,
-              odontograma interactivo y PDF. Todo en un solo lugar, desde tu compu o tu celular.
+              Turnos online con tu propio link, recordatorios por WhatsApp y email, el seguimiento de cada paciente con fotos
+              y radiografías, odontograma interactivo y PDF. Todo en un solo lugar, desde tu compu o tu celular.
             </p>
             <BotonesCTA origen="hero" onDemo={probarDemo} cargandoDemo={cargandoDemo} errorDemo={errorDemo} />
             {ofertaVigente && (

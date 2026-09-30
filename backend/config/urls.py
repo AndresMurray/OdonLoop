@@ -22,6 +22,8 @@ from django.conf import settings
 from django.core.management import call_command
 import json
 
+from turnos.publico import OdontologoPublicoView, TurnosLibresView, ReservarTurnoView, CancelarTurnoView
+
 @csrf_exempt
 def enviar_recordatorios_view(request):
     """Endpoint interno (API key) de la tarea diaria: recordatorios, pruebas gratis y limpieza de demos."""
@@ -67,4 +69,9 @@ urlpatterns = [
     path('api/odontologos/', include('odontologos.urls')),
     path('api/turnos/', include('turnos.urls')),
     path('api/internal/enviar-recordatorios/', enviar_recordatorios_view, name='enviar-recordatorios'),
+    # Reserva de turnos sin cuenta, desde el link público de cada odontólogo
+    path('api/publico/odontologos/<slug:slug>/', OdontologoPublicoView.as_view(), name='publico-odontologo'),
+    path('api/publico/odontologos/<slug:slug>/turnos/', TurnosLibresView.as_view(), name='publico-turnos'),
+    path('api/publico/odontologos/<slug:slug>/turnos/<int:turno_id>/reservar/', ReservarTurnoView.as_view(), name='publico-reservar'),
+    path('api/publico/turnos/cancelar/<str:token>/', CancelarTurnoView.as_view(), name='publico-cancelar'),
 ]

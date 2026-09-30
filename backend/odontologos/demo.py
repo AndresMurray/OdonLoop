@@ -103,6 +103,7 @@ def crear_consultorio_demo():
         plan=PlanConfig.objects.filter(plan_key='premium').first(),
         estado='activo',
         es_demo=True,
+        slug=f'demo-{sufijo}',  # para no ocupar el link de una odontóloga real que se llame igual
         especialidad='Odontología general',
         consultorio='Av. Siempre Viva 742',
         terms_accepted=True,

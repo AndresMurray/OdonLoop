@@ -50,6 +50,14 @@ class Turno(models.Model):
         verbose_name='Recordatorio enviado',
         help_text='Indica si ya se envió el recordatorio por email para este turno'
     )
+    # Reservas hechas por el paciente desde el link público, sin cuenta
+    ORIGEN_TURNO = [
+        ('consultorio', 'Cargado por el consultorio'),
+        ('online', 'Reserva online'),
+    ]
+    origen = models.CharField(max_length=15, choices=ORIGEN_TURNO, default='consultorio', db_default='consultorio', verbose_name='Origen')
+    email_paciente_manual = models.EmailField(blank=True, null=True, verbose_name='Email del paciente')
+    token_cancelacion = models.CharField(max_length=64, unique=True, blank=True, null=True, verbose_name='Token para cancelar')
     fecha_creacion = models.DateTimeField(default=timezone.now, verbose_name='Fecha de creación')
     fecha_actualizacion = models.DateTimeField(auto_now=True, verbose_name='Fecha de actualización')
 

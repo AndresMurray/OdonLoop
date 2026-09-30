@@ -11,6 +11,7 @@ import Pagination from '../components/Pagination';
 import ConfirmModal from '../components/ConfirmModal';
 import ModalAsignarPaciente from '../components/ModalAsignarPaciente';
 import TurnoCalendar from '../components/TurnoCalendar';
+import LinkTurnos from '../components/LinkTurnos';
 import { getToday } from '../utils/dateUtils';
 import { MessageCircle } from 'lucide-react';
 import { linkRecordatorioTurno } from '../utils/whatsapp';
@@ -616,6 +617,10 @@ const GestionTurnosOdonto = () => {
             <Button onClick={() => navigate('/home-odontologo')} variant="secondary" className="w-full sm:w-auto">
               Volver al Inicio
             </Button>
+          </div>
+
+          <div className="mb-6">
+            <LinkTurnos userData={userData} />
           </div>
 
           {/* Indicadores globales */}
@@ -1275,7 +1280,12 @@ const GestionTurnosOdonto = () => {
                                 </p>
                               ) : turno.nombre_paciente_manual && turno.apellido_paciente_manual ? (
                                 <div className="text-sm text-slate-300">
-                                  <p>Paciente: {turno.nombre_paciente_manual} {turno.apellido_paciente_manual} <span className="text-xs text-blue-400">(reserva manual)</span></p>
+                                  <p>Paciente: {turno.nombre_paciente_manual} {turno.apellido_paciente_manual} {turno.origen === 'online'
+                                    ? <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">(reserva online)</span>
+                                    : <span className="text-xs text-blue-400">(reserva manual)</span>}</p>
+                                  {turno.email_paciente_manual && (
+                                    <p className="text-xs text-slate-400 mt-0.5">✉️ {turno.email_paciente_manual}</p>
+                                  )}
                                   {turno.telefono_paciente_manual && (
                                     <p className="text-xs text-slate-400 mt-0.5">📞 {turno.telefono_paciente_manual}</p>
                                   )}

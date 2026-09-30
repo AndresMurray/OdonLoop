@@ -3,6 +3,17 @@ from django.utils import timezone
 
 DIAS_PRUEBA = 30
 
+
+def generar_slug(modelo, nombre, apellido, excluir_pk=None):
+    """'Valeria Sosa' → 'valeria-sosa' (o 'valeria-sosa-2' si ya existe)."""
+    from django.utils.text import slugify
+    base = slugify(f'{nombre} {apellido}')[:70] or 'odontologo'
+    slug, n = base, 1
+    while modelo.objects.filter(slug=slug).exclude(pk=excluir_pk).exists():
+        n += 1
+        slug = f'{base}-{n}'
+    return slug
+
 class PlanConfig(models.Model):
     plan_key = models.CharField(max_length=20, unique=True, choices=[
         ('basico', 'Básico'),
@@ -106,6 +117,9 @@ class Odontologo(models.Model):
     # Último aviso de vencimiento enviado (días restantes: 7 o 1) para no repetirlo
     aviso_prueba_dias = models.PositiveSmallIntegerField(blank=True, null=True)
 
+    # Link público para que los pacientes saquen turno sin registrarse: /turnos/<slug>
+    slug = models.SlugField(max_length=80, unique=True, null=True, blank=True, verbose_name='Link de turnos')
+
     # Cuentas sandbox creadas desde "Probar demo" (se borran solas a las 24 h)
     # db_default: si hubiera que volver a una versión anterior del backend, sus INSERT siguen funcionando
     es_demo = models.BooleanField(default=False, db_default=False, verbose_name='Cuenta demo')
@@ -130,6 +144,9 @@ class Odontologo(models.Model):
         # Sincronizar el storage_limit con el plan config
         if self.plan:
             self.storage_limit = self.plan.limite_almacenamiento_gb * 1024 * 1024 * 1024
+
+        if not self.slug and self.user_id:
+            self.slug = generar_slug(Odontologo, self.user.first_name, self.user.last_name, excluir_pk=self.pk)
         
         super().save(*args, **kwargs)
 
@@ -156,6 +173,11 @@ class Odontologo(models.Model):
         premium = PlanConfig.objects.filter(plan_key='premium').first()
         if premium:
             self.plan = premium
+
+    @property
+    def acepta_turnos_online(self):
+        """Puede recibir reservas por su link: cuenta activa y plan con agenda de turnos."""
+        return self.estado == 'activo' and bool(self.plan and self.plan.tiene_turnos)
 
     @property
     def en_prueba(self):

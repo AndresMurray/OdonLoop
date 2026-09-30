@@ -370,6 +370,11 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 logger.error(f'Tipo de excepción: {type(e).__name__}')
                 if hasattr(e, 'smtp_error'):
                     logger.error(f'SMTP Error: {e.smtp_error}')
+        elif turno.origen == 'online' and turno.email_paciente_manual:
+            # Reserva online con email: avisarle al paciente
+            from .publico import avisar_cancelacion_por_consultorio
+            avisar_cancelacion_por_consultorio(turno)
+            email_sent = True
         elif turno.paciente and turno.paciente.user:
             # Es un paciente registrado pero sin email
             is_manual_booking = True
