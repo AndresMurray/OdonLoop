@@ -17,6 +17,7 @@ class OdontologoSerializer(serializers.ModelSerializer):
     plan = PlanConfigSerializer(read_only=True)
     nombre_completo = serializers.ReadOnlyField(source='get_nombre_completo')
     estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+    dias_prueba_restantes = serializers.ReadOnlyField()
     
     class Meta:
         model = Odontologo
@@ -25,7 +26,8 @@ class OdontologoSerializer(serializers.ModelSerializer):
             'anos_experiencia', 'horario_atencion', 'consultorio', 'fecha_alta', 'activo',
             'estado', 'estado_display', 'fecha_aprobacion', 'fecha_suspension', 'motivo_suspension',
             'terms_accepted', 'terms_accepted_date',
-            'storage_used', 'storage_limit', 'snake_high_score'
+            'storage_used', 'storage_limit', 'snake_high_score',
+            'fecha_fin_prueba', 'dias_prueba_restantes', 'es_demo'
         ]
         read_only_fields = ['id', 'fecha_alta', 'storage_used', 'storage_limit']
 

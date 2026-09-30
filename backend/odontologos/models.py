@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
 
+DIAS_PRUEBA = 30
+
 class PlanConfig(models.Model):
     plan_key = models.CharField(max_length=20, unique=True, choices=[
         ('basico', 'Básico'),
@@ -94,6 +96,20 @@ class Odontologo(models.Model):
         help_text='Puntaje máximo alcanzado en el minijuego Snake'
     )
 
+    # Período de prueba: null = sin prueba en curso (cuenta paga o anterior al sistema de pruebas)
+    fecha_fin_prueba = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name='Fin del período de prueba',
+        help_text='Vacío si la cuenta ya está suscripta'
+    )
+    # Último aviso de vencimiento enviado (días restantes: 7 o 1) para no repetirlo
+    aviso_prueba_dias = models.PositiveSmallIntegerField(blank=True, null=True)
+
+    # Cuentas sandbox creadas desde "Probar demo" (se borran solas a las 24 h)
+    # db_default: si hubiera que volver a una versión anterior del backend, sus INSERT siguen funcionando
+    es_demo = models.BooleanField(default=False, db_default=False, verbose_name='Cuenta demo')
+
     # Campo legacy - mantener por compatibilidad pero deprecado
     activo = models.BooleanField(default=True, verbose_name='Activo (deprecado)')
     
@@ -129,4 +145,26 @@ class Odontologo(models.Model):
     
     def es_visible_para_pacientes(self):
         """Verifica si el odontólogo debe aparecer en listados públicos"""
-        return self.estado == 'activo'
+        return self.estado == 'activo' and not self.es_demo
+
+    def iniciar_prueba(self):
+        """Activa la cuenta con el plan Premium durante DIAS_PRUEBA días."""
+        self.estado = 'activo'
+        self.fecha_aprobacion = timezone.now()
+        self.fecha_fin_prueba = timezone.now() + timezone.timedelta(days=DIAS_PRUEBA)
+        self.aviso_prueba_dias = None
+        premium = PlanConfig.objects.filter(plan_key='premium').first()
+        if premium:
+            self.plan = premium
+
+    @property
+    def en_prueba(self):
+        return self.fecha_fin_prueba is not None
+
+    @property
+    def dias_prueba_restantes(self):
+        """Días enteros que quedan de prueba (0 si venció, None si no está en prueba)."""
+        if not self.fecha_fin_prueba:
+            return None
+        restante = self.fecha_fin_prueba - timezone.now()
+        return max(0, restante.days + (1 if restante.seconds > 0 else 0))

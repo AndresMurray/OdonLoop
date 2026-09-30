@@ -49,6 +49,9 @@ export const activarOdontologo = async (id) => {
   }
 };
 
+// Marcar como paga una cuenta en período de prueba
+export const confirmarSuscripcion = (id) => apiClient.post(`/api/odontologos/admin/${id}/confirmar-suscripcion/`);
+
 // Actualizar la configuración de un plan de suscripción
 export const updatePlan = async (planKey, data) => {
   try {

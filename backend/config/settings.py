@@ -293,3 +293,6 @@ EMAIL_HOST_PASSWORD = env_config('EMAIL_HOST_PASSWORD', default='')  # Tu SMTP k
 # ===== API KEY INTERNA PARA RECORDATORIOS =====
 # Usada por GitHub Actions para disparar recordatorios vía HTTP
 REMINDERS_API_KEY = env_config('REMINDERS_API_KEY', default='')
+
+# WhatsApp comercial (solo dígitos, formato internacional) para avisos de prueba y suscripción
+CONTACTO_WHATSAPP = env_config('CONTACTO_WHATSAPP', default='5492262512370')

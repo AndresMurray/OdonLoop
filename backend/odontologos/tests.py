@@ -35,6 +35,77 @@ def crear_odontologo(username, **campos):
 
 
 @override_settings(**EMAIL_TEST)
+class PruebaGratisTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+    def registrar_y_verificar(self):
+        resp = self.client.post('/api/usuarios/register/', {
+            'email': 'nueva@test.local', 'password': 'ClaveSegura123', 'password2': 'ClaveSegura123',
+            'first_name': 'Ana', 'last_name': 'López', 'telefono': '2262 15 512345',
+            'fecha_nacimiento': '1990-05-01', 'tipo_usuario': 'odontologo',
+        }, format='json')
+        self.assertEqual(resp.status_code, 201, resp.content)
+        token = EmailVerificationToken.objects.get(user__email='nueva@test.local', used=False)
+        return self.client.post('/api/usuarios/verify-email/', {'token': token.token, 'terms_accepted': True}, format='json')
+
+    def test_al_verificar_el_email_arranca_la_prueba_y_entra_directo(self):
+        resp = self.registrar_y_verificar()
+
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertIn('access', resp.data)
+        odontologo = Odontologo.objects.get(user__email='nueva@test.local')
+        self.assertEqual(odontologo.estado, 'activo')
+        self.assertEqual(odontologo.plan.plan_key, 'premium')
+        self.assertEqual(odontologo.dias_prueba_restantes, 30)
+        self.assertTrue(odontologo.terms_accepted)
+        self.assertTrue(odontologo.user.is_active)
+        self.assertEqual(resp.data['user']['suscripcion']['dias_prueba_restantes'], 30)
+
+        login = self.client.post('/api/usuarios/login/', {'email': 'nueva@test.local', 'password': 'ClaveSegura123'}, format='json')
+        self.assertEqual(login.status_code, 200, login.content)
+
+    def test_el_admin_recibe_el_lead_con_link_de_whatsapp(self):
+        self.registrar_y_verificar()
+
+        asuntos = [m.subject for m in mail.outbox]
+        self.assertTrue(any(a.startswith('Nuevo odontólogo registrado') for a in asuntos))
+        aviso = next(m for m in mail.outbox if m.subject.startswith('Empezó una prueba gratis'))
+        self.assertIn('https://wa.me/5492262512345', aviso.body)
+
+    def test_aviso_a_7_dias_se_manda_una_sola_vez(self):
+        user, odontologo = crear_odontologo('ana', fecha_fin_prueba=timezone.now() + timedelta(days=6, hours=2))
+
+        call_command('gestionar_pruebas', stdout=StringIO())
+        call_command('gestionar_pruebas', stdout=StringIO())
+
+        avisos = [m for m in mail.outbox if user.email in m.to]
+        self.assertEqual(len(avisos), 1)
+        self.assertIn('termina en 7 días', avisos[0].subject)
+
+    def test_prueba_vencida_suspende_la_cuenta_y_conserva_los_datos(self):
+        user, odontologo = crear_odontologo('beto', fecha_fin_prueba=timezone.now() - timedelta(minutes=1))
+        user.set_password('ClaveSegura123')
+        user.save()
+
+        call_command('gestionar_pruebas', stdout=StringIO())
+
+        odontologo.refresh_from_db()
+        self.assertEqual(odontologo.estado, 'suspendido')
+        login = APIClient().post('/api/usuarios/login/', {'email': user.email, 'password': 'ClaveSegura123'}, format='json')
+        self.assertEqual(login.status_code, 403)
+        self.assertEqual(login.data['estado'], 'suspendido')
+        self.assertIn('prueba', login.data['motivo'])
+
+    def test_cuentas_pagas_no_reciben_avisos(self):
+        crear_odontologo('carla')  # fecha_fin_prueba vacía = suscripta
+
+        call_command('gestionar_pruebas', stdout=StringIO())
+
+        self.assertEqual(len(mail.outbox), 0)
+
+
+@override_settings(**EMAIL_TEST)
 class PrivacidadPacientesTests(TestCase):
     """Con el registro automático cualquiera puede ser 'odontólogo': nadie debe ver pacientes ajenos."""
 

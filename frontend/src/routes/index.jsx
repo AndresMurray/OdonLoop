@@ -2,7 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import RegisterPage from '../pages/RegisterPage';
 import RegisterPacientePage from '../pages/RegisterPacientePage';
 import RegisterOdontologoPage from '../pages/RegisterOdontologoPage';
-import PendienteAprobacionPage from '../pages/PendienteAprobacionPage';
+import RegistroExitosoPage from '../pages/RegistroExitosoPage';
 import LoginPage from '../pages/LoginPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import ActivarCuentaPage from '../pages/ActivarCuentaPage';
@@ -95,12 +95,17 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/pendiente-aprobacion',
+    path: '/registro-exitoso',
     element: (
       <GuestRoute>
-        <PendienteAprobacionPage />
+        <RegistroExitosoPage />
       </GuestRoute>
     ),
+  },
+  {
+    // Ruta anterior (cuando había aprobación manual)
+    path: '/pendiente-aprobacion',
+    element: <Navigate to="/registro-exitoso" replace />,
   },
   {
     path: '/home-paciente',

@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { LogIn, ArrowLeft } from 'lucide-react';
+import { LogIn, ArrowLeft, MessageCircle } from 'lucide-react';
 import { useForm } from '../hooks/useForm';
 import { validators } from '../utils/validators';
 import { authService } from '../api/authService';
@@ -12,6 +12,8 @@ import Alert from '../components/Alert';
 import { Card, CardContent } from '../components/Card';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { linkWhatsAppVentas } from '../config/marketing';
+import { trackEvent } from '../utils/analytics';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -99,7 +101,8 @@ const LoginPage = () => {
           setAlert({
             type: 'error',
             message: error.response.data.error || 'Tu cuenta está temporalmente suspendida',
-            detail: error.response.data.detail || 'Tu suscripción ha sido inhabilitada. Por favor contacta con el administrador.',
+            detail: error.response.data.motivo || error.response.data.detail || 'Tu suscripción ha sido inhabilitada. Por favor contacta con el administrador.',
+            suspendida: true,
           });
         }
       } else {
@@ -150,6 +153,18 @@ const LoginPage = () => {
               detail={alert.detail}
               onClose={() => setAlert({ type: '', message: '', detail: '' })}
             />
+            {alert.suspendida && (
+              <a
+                href={linkWhatsAppVentas(`Hola! Quiero activar mi suscripción de OdonLoop (${values.email}).`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackEvent('contact', { origen: 'login_suspendido' })}
+                className="mb-6 flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl py-3 transition-colors"
+              >
+                <MessageCircle className="w-5 h-5" />
+                Activar mi suscripción por WhatsApp
+              </a>
+            )}
 
             <Form onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-6">

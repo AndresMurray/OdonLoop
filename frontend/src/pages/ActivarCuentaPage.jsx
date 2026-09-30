@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2, ChevronDown } from 'lucide-react';
 import { authService } from '../api/authService';
+import { trackEvent } from '../utils/analytics';
 import Button from '../components/Button';
 import { Card, CardContent } from '../components/Card';
 import Navbar from '../components/Navbar';
@@ -72,14 +73,17 @@ const ActivarCuentaPage = () => {
     }
     setIsSubmitting(true);
     try {
-      await authService.verifyEmail(token, { terms_accepted: true });
-      navigate('/pendiente-aprobacion', {
-        state: {
-          emailVerified: true,
-          message: '¡Email verificado! Tu cuenta está siendo revisada por nuestro equipo.',
-          type: 'success',
-        },
-      });
+      const response = await authService.verifyEmail(token, { terms_accepted: true });
+      if (response.access && response.refresh) {
+        // La prueba gratis arranca al verificar: entra directo a su consultorio
+        localStorage.setItem('access_token', response.access);
+        localStorage.setItem('refresh_token', response.refresh);
+        localStorage.setItem('user_data', JSON.stringify(response.user));
+        trackEvent('sign_up', { method: 'email' });
+        navigate('/home-odontologo', { state: { bienvenida: true } });
+      } else {
+        navigate('/login');
+      }
     } catch (error) {
       setStatus('error');
       setMessage(error.message || 'Error al verificar el email');

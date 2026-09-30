@@ -9,11 +9,12 @@ class UserSerializer(serializers.ModelSerializer):
     nombre = serializers.CharField(source='first_name', read_only=True)
     apellido = serializers.CharField(source='last_name', read_only=True)
     plan = serializers.SerializerMethodField()
+    suscripcion = serializers.SerializerMethodField()
     
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'nombre', 'apellido', 'bio', 'telefono', 'fecha_nacimiento', 'tipo_usuario', 'edad', 'perfil_id', 'plan']
-        read_only_fields = ['id', 'edad', 'perfil_id', 'plan']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'nombre', 'apellido', 'bio', 'telefono', 'fecha_nacimiento', 'tipo_usuario', 'edad', 'perfil_id', 'plan', 'suscripcion']
+        read_only_fields = ['id', 'edad', 'perfil_id', 'plan', 'suscripcion']
     
     def get_perfil_id(self, obj):
         """Obtener el ID del perfil asociado (paciente u odontólogo)"""
@@ -49,6 +50,18 @@ class UserSerializer(serializers.ModelSerializer):
                     'tiene_exportacion_pdf': False,
                     'limite_almacenamiento_gb': 1,
                 }
+        return None
+
+    def get_suscripcion(self, obj):
+        """Estado de la prueba gratuita / cuenta demo del odontólogo."""
+        if obj.tipo_usuario == 'odontologo' and hasattr(obj, 'perfil_odontologo'):
+            odontologo = obj.perfil_odontologo
+            return {
+                'es_demo': odontologo.es_demo,
+                'en_prueba': odontologo.en_prueba,
+                'fecha_fin_prueba': odontologo.fecha_fin_prueba,
+                'dias_prueba_restantes': odontologo.dias_prueba_restantes,
+            }
         return None
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

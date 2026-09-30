@@ -13,6 +13,7 @@ from .views import (
     PlanConfigListView,
     PlanConfigUpdateView,
     cambiar_plan_odontologo,
+    confirmar_suscripcion,
     snake_score_view
 )
 
@@ -42,6 +43,7 @@ urlpatterns = [
     path('admin/<int:pk>/suspender/', suspender_odontologo, name='admin-suspender'),
     path('admin/<int:pk>/activar/', activar_odontologo, name='admin-activar'),
     path('admin/<int:pk>/cambiar-plan/', cambiar_plan_odontologo, name='admin-cambiar-plan'),
+    path('admin/<int:pk>/confirmar-suscripcion/', confirmar_suscripcion, name='admin-confirmar-suscripcion'),
     
     # Configuración de planes
     path('planes/', PlanConfigListView.as_view(), name='planes-list'),

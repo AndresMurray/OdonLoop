@@ -4,6 +4,7 @@ import { Stethoscope, ArrowLeft } from 'lucide-react';
 import { useForm } from '../hooks/useForm';
 import { validators } from '../utils/validators';
 import { userService } from '../api/userService';
+import { trackEvent } from '../utils/analytics';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import Form from '../components/Form';
@@ -58,15 +59,10 @@ const RegisterOdontologoPage = () => {
   const onSubmit = async (formValues) => {
     try {
       await userService.register(formValues);
-      
-      // Redirigir a la página de pendiente aprobación con mensaje de verificación
-      navigate('/pendiente-aprobacion', { 
+      trackEvent('generate_lead', { origen: 'registro_odontologo' });
+      navigate('/registro-exitoso', {
         replace: true,
-        state: { 
-          message: '¡Registro exitoso! Te enviamos un email de verificación.',
-          type: 'success',
-          emailVerified: false
-        }
+        state: { email: formValues.email, nombre: formValues.first_name },
       });
     } catch (error) {
       setAlert({

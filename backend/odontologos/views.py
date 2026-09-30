@@ -112,8 +112,7 @@ def aprobar_odontologo(request, pk):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    odontologo.estado = 'activo'
-    odontologo.fecha_aprobacion = timezone.now()
+    odontologo.iniciar_prueba()
     odontologo.save()
     
     # Activar el usuario para que pueda iniciar sesión
@@ -225,6 +224,8 @@ def activar_odontologo(request, pk):
     
     odontologo.estado = 'activo'
     odontologo.motivo_suspension = None
+    # Reactivar implica que la cuenta ya está paga: termina el período de prueba
+    odontologo.fecha_fin_prueba = None
     odontologo.save()
     
     # Activar el usuario para que pueda iniciar sesión
@@ -262,6 +263,34 @@ def activar_odontologo(request, pk):
     serializer = OdontologoSerializer(odontologo)
     return Response({
         'message': f'Odontólogo {odontologo.get_nombre_completo()} reactivado exitosamente',
+        'odontologo': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def confirmar_suscripcion(request, pk):
+    """Marca como paga una cuenta en prueba (el admin registró el pago)."""
+    if request.user.tipo_usuario != 'admin':
+        return Response(
+            {'error': 'No tienes permisos para realizar esta acción'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    try:
+        odontologo = Odontologo.objects.get(pk=pk)
+    except Odontologo.DoesNotExist:
+        return Response(
+            {'error': 'Odontólogo no encontrado'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    odontologo.fecha_fin_prueba = None
+    odontologo.save()
+
+    serializer = OdontologoSerializer(odontologo)
+    return Response({
+        'message': f'Suscripción de {odontologo.get_nombre_completo()} confirmada',
         'odontologo': serializer.data
     }, status=status.HTTP_200_OK)
 

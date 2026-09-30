@@ -110,6 +110,45 @@ class UserLoginView(APIView):
 
 
 
+ADMIN_EMAIL = 'amurrayroppel@gmail.com'
+
+
+def whatsapp_link(telefono):
+    """Link wa.me para un teléfono argentino cargado a mano (mejor esfuerzo)."""
+    digitos = ''.join(c for c in (telefono or '') if c.isdigit())
+    if not digitos:
+        return None
+    if digitos.startswith('549'):
+        return f'https://wa.me/{digitos}'
+    if digitos.startswith('54'):
+        digitos = digitos[2:]
+    digitos = digitos.lstrip('0')
+    if len(digitos) == 12:
+        # Característica + 15 + número: sacar el 15 (probando características de 2, 3 y 4 dígitos)
+        for largo in (2, 3, 4):
+            if digitos[largo:largo + 2] == '15':
+                digitos = digitos[:largo] + digitos[largo + 2:]
+                break
+    return f'https://wa.me/549{digitos}' if len(digitos) == 10 else None
+
+
+def notificar_admin(subject, title, body_paragraphs, telefono=None):
+    """Aviso interno al administrador. Nunca rompe el flujo que lo llama."""
+    try:
+        from config.email_utils import send_html_email
+        link = whatsapp_link(telefono)
+        send_html_email(
+            subject=subject,
+            recipient_list=[ADMIN_EMAIL],
+            title=title,
+            body_paragraphs=body_paragraphs,
+            button_text='Escribirle por WhatsApp' if link else 'Ir a OdonLoop',
+            button_url=link or getattr(settings, 'FRONTEND_URL', 'https://odonloop.com'),
+        )
+    except Exception as e:
+        logger.error(f'Error al notificar al admin ({subject}): {str(e)}')
+
+
 class UserRegistrationView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserRegistrationSerializer
@@ -263,36 +302,22 @@ class UserRegistrationView(generics.CreateAPIView):
             consultorio = self.request.data.get('consultorio', '')
             Odontologo.objects.create(user=user, consultorio=consultorio)
             
-            # Notificar al admin sobre nuevo odontólogo registrado
-            try:
-                from config.email_utils import send_html_email
-                
-                admin_email = 'amurrayroppel@gmail.com'
-                nombre_completo = f'{user.first_name} {user.last_name}'.strip() or user.email
-                
-                from django.utils import timezone as tz
-                fecha_registro = tz.localtime(tz.now()).strftime('%d/%m/%Y %H:%M')
-                
-                logger.info(f'Notificando al admin sobre nuevo odontólogo: {user.email}')
-                
-                send_html_email(
-                    subject=f'Nuevo odontólogo registrado: {nombre_completo}',
-                    recipient_list=[admin_email],
-                    title='Nuevo odontólogo registrado',
-                    body_paragraphs=[
-                        'Se ha registrado un nuevo odontólogo en OdonLoop y está pendiente de verificación.',
-                        f'• Nombre: {nombre_completo}',
-                        f'• Email: {user.email}',
-                        f'• Fecha de registro: {fecha_registro}',
-                        'Ingresá a la plataforma para revisarlo y aprobarlo.'
-                    ],
-                    button_text='Ir a OdonLoop',
-                    button_url=getattr(settings, "FRONTEND_URL", "https://odonloop.com")
-                )
-                logger.info(f'Notificación al admin enviada exitosamente')
-                
-            except Exception as e:
-                logger.error(f'Error al notificar al admin sobre nuevo odontólogo: {str(e)}')
+            # Notificar al admin: es un lead para contactar aunque todavía no confirme el email
+            nombre_completo = f'{user.first_name} {user.last_name}'.strip() or user.email
+            fecha_registro = timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')
+            notificar_admin(
+                subject=f'Nuevo odontólogo registrado: {nombre_completo}',
+                title='Nuevo odontólogo registrado',
+                body_paragraphs=[
+                    'Se registró un nuevo odontólogo en OdonLoop. Su prueba gratis empieza cuando confirme el email.',
+                    f'• Nombre: {nombre_completo}',
+                    f'• Email: {user.email}',
+                    f'• Teléfono: {user.telefono or "-"}',
+                    f'• Fecha de registro: {fecha_registro}',
+                    'Si en unas horas no confirmó el email, escribile para ayudarlo a entrar.',
+                ],
+                telefono=user.telefono,
+            )
             
             # Enviar email de verificación
             if user.email:
@@ -323,12 +348,12 @@ class UserRegistrationView(generics.CreateAPIView):
             
             if is_odontologo:
                 subject = 'Confirma tu cuenta en OdonLoop'
-                title = f'¡Bienvenido Dr./Dra. {user.first_name} {user.last_name}!'
+                title = f'¡Hola {user.first_name}, te damos la bienvenida!'
                 body_paragraphs = [
                     'Gracias por registrarte en OdonLoop.',
                     'Solo necesitamos confirmar tu dirección de email. Por favor, haz clic en el siguiente botón para continuar:',
                     'Este enlace estará disponible durante las próximas 48 horas.',
-                    'Una vez que confirmes tu email, verás los pasos a seguir para activar tu cuenta. Te enviaremos una notificación cuando tu cuenta esté lista para usar.',
+                    'Apenas lo confirmes empieza tu prueba gratis de 30 días con todas las funciones, y entrás directo a tu consultorio digital.',
                     'Si no realizaste este registro, simplemente ignora este mensaje. Tu dirección de email no será utilizada sin tu confirmación.',
                     'Saludos cordiales,',
                     'El equipo de OdonLoop'
@@ -403,38 +428,35 @@ class VerifyEmailView(APIView):
             
             logger.info(f'Email verificado exitosamente para {user.email}')
             
-            # Solo activar is_active y generar tokens para pacientes
-            # Los odontólogos deben esperar aprobación del admin
             response_data = {
                 'message': '',
                 'verified': True,
-                'user': UserSerializer(user).data
             }
-            
+
             if user.tipo_usuario == 'odontologo':
-                # Odontólogos NO deben autenticarse hasta ser aprobados
-                response_data['message'] = 'Email verificado exitosamente. Tu cuenta está ahora en proceso de aprobación. Te notificaremos cuando sea aprobada.'
-                # Guardar aceptación de términos y condiciones
-                terms_accepted = request.data.get('terms_accepted', False)
-                if terms_accepted:
-                    try:
-                        odontologo = user.perfil_odontologo
-                        odontologo.terms_accepted = True
-                        odontologo.terms_accepted_date = timezone.now()
-                        odontologo.save(update_fields=['terms_accepted', 'terms_accepted_date'])
-                    except Exception:
-                        pass  # No bloquear la verificación si falla el guardado de términos
+                # Odontólogos: al verificar arranca la prueba gratis, sin esperar aprobación manual
+                odontologo = user.perfil_odontologo
+                if request.data.get('terms_accepted', False):
+                    odontologo.terms_accepted = True
+                    odontologo.terms_accepted_date = timezone.now()
+                if odontologo.estado == 'pendiente':
+                    odontologo.iniciar_prueba()
+                    self._notificar_admin_inicio_prueba(odontologo)
+                odontologo.save()
+                response_data['message'] = '¡Email verificado! Tu prueba gratis de 30 días ya empezó.'
             else:
-                # Pacientes y otros usuarios pueden iniciar sesión inmediatamente
-                user.is_active = True
-                user.save()
-                
-                # Generar tokens JWT para login automático
-                refresh = RefreshToken.for_user(user)
                 response_data['message'] = 'Email verificado exitosamente. Ya puedes iniciar sesión y usar la plataforma.'
-                response_data['refresh'] = str(refresh)
-                response_data['access'] = str(refresh.access_token)
-            
+
+            # Todos pueden iniciar sesión inmediatamente
+            user.is_active = True
+            user.save()
+
+            # Generar tokens JWT para login automático
+            refresh = RefreshToken.for_user(user)
+            response_data['refresh'] = str(refresh)
+            response_data['access'] = str(refresh.access_token)
+            response_data['user'] = UserSerializer(user).data
+
             return Response(response_data, status=status.HTTP_200_OK)
             
         except EmailVerificationToken.DoesNotExist:
@@ -442,6 +464,23 @@ class VerifyEmailView(APIView):
                 {'error': 'Token de verificación inválido'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+    def _notificar_admin_inicio_prueba(self, odontologo):
+        user = odontologo.user
+        fin = timezone.localtime(odontologo.fecha_fin_prueba).strftime('%d/%m/%Y')
+        notificar_admin(
+            subject=f'Empezó una prueba gratis: {odontologo.get_nombre_completo()}',
+            title='Nuevo odontólogo en prueba',
+            body_paragraphs=[
+                'Un odontólogo confirmó su email y ya está usando OdonLoop con el plan Premium.',
+                f'• Nombre: {odontologo.get_nombre_completo()}',
+                f'• Email: {user.email}',
+                f'• Teléfono: {user.telefono or "-"}',
+                f'• La prueba vence el {fin}',
+                'Escribile hoy para darle la bienvenida y ofrecerle una capacitación.',
+            ],
+            telefono=user.telefono,
+        )
 
 
 class ResendVerificationEmailView(APIView):
