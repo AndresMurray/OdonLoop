@@ -608,7 +608,7 @@ const GestionTurnosOdonto = () => {
           <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400">Gestión de Turnos</h1>
-              <p className="text-slate-400 font-semibold text-sm mt-1">Dr. {userData.nombre} {userData.apellido}</p>
+              <p className="text-slate-400 font-semibold text-sm mt-1">{userData.nombre} {userData.apellido}</p>
             </div>
             <Button onClick={() => navigate('/home-odontologo')} variant="secondary" className="w-full sm:w-auto">
               Volver al Inicio

@@ -260,7 +260,7 @@ class UserRegistrationView(generics.CreateAPIView):
         elif user.tipo_usuario == 'odontologo':
             from odontologos.models import Odontologo
             # Obtener consultorio del request si viene
-            consultorio = self.context.get('request').data.get('consultorio', '')
+            consultorio = self.request.data.get('consultorio', '')
             Odontologo.objects.create(user=user, consultorio=consultorio)
             
             # Notificar al admin sobre nuevo odontólogo registrado

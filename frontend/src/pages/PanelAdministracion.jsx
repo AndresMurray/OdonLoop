@@ -362,7 +362,7 @@ const PanelAdministracion = () => {
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
                                 <h3 className="text-lg font-semibold text-gray-900">
-                                  Dr. {odontologo.nombre_completo}
+                                  {odontologo.nombre_completo}
                                 </h3>
                                 {getEstadoBadge(odontologo.estado)}
                               </div>
@@ -541,7 +541,7 @@ const PanelAdministracion = () => {
               Cambiar Plan de Suscripción
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Estás modificando la suscripción de <strong>Dr. {odontologoSeleccionadoParaPlan.nombre_completo}</strong>.
+              Estás modificando la suscripción de <strong>{odontologoSeleccionadoParaPlan.nombre_completo}</strong>.
             </p>
             <div className="mb-4">
               <label className="block text-sm font-semibold text-gray-700 mb-2">

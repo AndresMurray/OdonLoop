@@ -23,9 +23,9 @@ export const authService = {
       return response;
     } catch (error) {
       
-      // Manejar diferentes formatos de error
+      // Manejar diferentes formatos de error (conservando status y respuesta para el login)
       if (error.message) {
-        throw new Error(error.message);
+        throw Object.assign(new Error(error.message), { status: error.status, response: error.response });
       }
       
       if (error.errors) {

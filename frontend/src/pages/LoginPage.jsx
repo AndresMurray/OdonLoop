@@ -76,7 +76,7 @@ const LoginPage = () => {
       }, 1000);
     } catch (error) {
       // Manejar email no verificado
-      if (error.response?.status === 403 && error.response?.data?.requires_verification) {
+      if (error.status === 403 && error.response?.data?.requires_verification) {
         setAlert({
           type: 'warning',
           message: 'Email no verificado',
@@ -86,7 +86,7 @@ const LoginPage = () => {
       }
       
       // Manejar errores específicos de estado del odontólogo
-      if (error.response?.status === 403 && error.response?.data?.estado) {
+      if (error.status === 403 && error.response?.data?.estado) {
         const estado = error.response.data.estado;
         
         if (estado === 'pendiente') {
