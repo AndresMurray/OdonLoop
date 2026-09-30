@@ -61,10 +61,10 @@ class PacienteAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'dni', 'get_first_name', 'get_last_name',
         'obra_social', 'obra_social_otra', 'numero_afiliado', 'plan',
-        'activo', 'creado_por_odontologo', 'fecha_alta',
+        'activo', 'odontologo', 'fecha_alta',
     )
     search_fields = ('dni', 'user__first_name', 'user__last_name', 'numero_afiliado')
-    list_filter = ('activo', 'obra_social', 'fecha_alta', 'creado_por_odontologo')
+    list_filter = ('activo', 'obra_social', 'fecha_alta', 'odontologo')
     readonly_fields = ('fecha_alta',)
     filter_horizontal = ('odontologos_asignados',)
 
@@ -82,7 +82,7 @@ class PacienteAdmin(admin.ModelAdmin):
             'fields': ('alergias', 'antecedentes_medicos')
         }),
         ('Relaciones', {
-            'fields': ('creado_por_odontologo', 'odontologos_asignados')
+            'fields': ('odontologo', 'creado_por_odontologo', 'odontologos_asignados')
         }),
         ('Estado', {
             'fields': ('activo', 'fecha_alta')

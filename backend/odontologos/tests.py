@@ -145,7 +145,8 @@ class PrivacidadPacientesTests(TestCase):
         self.user_a, self.od_a = crear_odontologo('odoa')
         self.user_b, self.od_b = crear_odontologo('odob')
         pac_user = CustomUser.objects.create(username='pac1', first_name='Paz', last_name='Ajena', tipo_usuario='paciente')
-        self.paciente_b = Paciente.objects.create(user=pac_user, dni='30111222', creado_por_odontologo=self.od_b)
+        self.paciente_b = Paciente.objects.create(user=pac_user, dni='30111222', odontologo=self.od_b,
+                                                  creado_por_odontologo=self.od_b)
         self.client = APIClient()
         self.client.force_authenticate(self.user_a)
 
@@ -153,26 +154,11 @@ class PrivacidadPacientesTests(TestCase):
         self.assertEqual(resultados(self.client.get('/api/pacientes/')), [])
         self.assertEqual(self.client.get(f'/api/pacientes/{self.paciente_b.id}/').status_code, 404)
 
-    def test_no_puede_vincularse_un_paciente_ajeno_probando_ids(self):
-        sin_dni = self.client.post('/api/odontologos/asignar-paciente/', {'paciente_id': self.paciente_b.id}, format='json')
-        dni_erroneo = self.client.post('/api/odontologos/asignar-paciente/', {'paciente_id': self.paciente_b.id, 'dni': '1'}, format='json')
-
-        self.assertEqual(sin_dni.status_code, 400)
-        self.assertEqual(dni_erroneo.status_code, 404)
-        self.assertFalse(self.paciente_b.odontologos_asignados.filter(id=self.od_a.id).exists())
-
-    def test_mantiene_acceso_a_pacientes_que_ya_atendio(self):
-        """Aunque el turno se haya liberado, si le cargó seguimientos sigue viendo a ese paciente."""
-        pac_user = CustomUser.objects.create(username='pac3', first_name='Luz', last_name='Atendida', tipo_usuario='paciente')
-        atendido = Paciente.objects.create(user=pac_user, dni='35000111')
-        Seguimiento.objects.create(paciente=atendido, odontologo=self.od_a, descripcion='Control', fecha_atencion=timezone.localdate())
-
-        self.assertEqual(self.client.get(f'/api/pacientes/{atendido.id}/').status_code, 200)
-
-    def test_con_el_dni_correcto_si_puede_vincularlo(self):
+    def test_ya_no_existe_la_vinculacion_de_pacientes_de_otros(self):
         resp = self.client.post('/api/odontologos/asignar-paciente/', {'paciente_id': self.paciente_b.id, 'dni': '30111222'}, format='json')
 
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 404)
+        self.assertFalse(self.paciente_b.odontologos_asignados.filter(id=self.od_a.id).exists())
 
     def test_un_paciente_logueado_no_ve_a_otros_pacientes(self):
         otro = CustomUser.objects.create(username='pac2', tipo_usuario='paciente')

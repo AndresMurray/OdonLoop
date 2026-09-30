@@ -1,5 +1,7 @@
 #!/bin/bash
 # Start script for Railway deployment
+# Si la migración falla, no se levanta el servidor con código nuevo sobre datos a medias
+set -e
 
 echo "Running database migrations..."
 python manage.py migrate --no-input

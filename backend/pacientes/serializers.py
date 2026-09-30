@@ -31,12 +31,6 @@ class PacienteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'email', 'fecha_alta']
 
 
-class PacienteCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Paciente
-        fields = ['dni', 'obra_social', 'numero_afiliado', 'plan']
-
-
 class PacientePerfilSerializer(serializers.ModelSerializer):
     """Serializer para el perfil del paciente (vista y edición)"""
     # Campos del usuario
@@ -94,6 +88,13 @@ class SeguimientoCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Seguimiento
         fields = ['paciente', 'descripcion', 'imagen_url', 'fecha_atencion', 'archivos']
+
+    def validate_paciente(self, value):
+        """Solo se cargan seguimientos a pacientes propios."""
+        from .permisos import pacientes_del_odontologo
+        if not pacientes_del_odontologo(self.context['request'].user.perfil_odontologo).filter(id=value.id).exists():
+            raise serializers.ValidationError('Paciente no encontrado.')
+        return value
     
     def create(self, validated_data):
         # El odontólogo se toma del contexto (request.user)
@@ -233,6 +234,18 @@ class RegistroDentalCreateUpdateSerializer(serializers.ModelSerializer):
             'cara_vestibular', 'cara_lingual', 'cara_mesial', 'cara_distal', 'cara_oclusal',
             'estado_pieza', 'puente', 'observaciones'
         ]
+
+    def validate(self, attrs):
+        """El registro tiene que ser de un paciente propio y de un odontograma de ese paciente."""
+        from .permisos import pacientes_del_odontologo
+        paciente = attrs.get('paciente', getattr(self.instance, 'paciente', None))
+        odontograma = attrs.get('odontograma', getattr(self.instance, 'odontograma', None))
+        odontologo = self.context['request'].user.perfil_odontologo
+        if not paciente or not pacientes_del_odontologo(odontologo).filter(id=paciente.id).exists():
+            raise serializers.ValidationError({'paciente': 'Paciente no encontrado.'})
+        if odontograma and odontograma.paciente_id != paciente.id:
+            raise serializers.ValidationError({'odontograma': 'Odontograma no encontrado.'})
+        return attrs
     
     def create(self, validated_data):
         odontologo = self.context['request'].user.perfil_odontologo

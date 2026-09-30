@@ -4,7 +4,7 @@ import Button from './Button';
 import Input from './Input';
 import { Card, CardContent } from './Card';
 import Alert from './Alert';
-import { getMisPacientes, crearPacienteRapido, asignarPacienteExistente } from '../api/seguimientoService';
+import { getMisPacientes, crearPacienteRapido } from '../api/seguimientoService';
 import { obraSocialService } from '../api/obraSocialService';
 
 // Normalizar texto: minúsculas + sin tildes
@@ -21,10 +21,8 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
   // Obras sociales
   const [obrasSociales, setObrasSociales] = useState([]);
 
-  // Paciente existente detectado
+  // Paciente propio con el mismo DNI (cada odontólogo tiene sus propias fichas)
   const [pacienteExistente, setPacienteExistente] = useState(null);
-  const [yaAsignado, setYaAsignado] = useState(false);
-  const [asignando, setAsignando] = useState(false);
 
   // Form para crear paciente
   const [nuevoPaciente, setNuevoPaciente] = useState({
@@ -98,32 +96,12 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
     // Limpiar paciente existente si cambia el DNI
     if (name === 'dni') {
       setPacienteExistente(null);
-      setYaAsignado(false);
     }
   };
 
-  const handleAsignarExistente = async () => {
-    if (!pacienteExistente) return;
-    setAsignando(true);
-    try {
-      const response = await asignarPacienteExistente(pacienteExistente.id, pacienteExistente.dni);
-      setAlert({
-        type: 'success',
-        message: 'Paciente asignado a tu lista exitosamente'
-      });
-      setTimeout(() => {
-        onSeleccionar(response.paciente);
-        handleClose();
-      }, 800);
-    } catch (err) {
-      setAlert({
-        type: 'error',
-        message: 'Error al asignar paciente',
-        detail: err.response?.data?.error || err.message
-      });
-    } finally {
-      setAsignando(false);
-    }
+  const handleUsarExistente = () => {
+    onSeleccionar(pacienteExistente);
+    handleClose();
   };
 
   const handleCrearPaciente = async (e) => {
@@ -161,11 +139,9 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
       }, 800);
 
     } catch (err) {
-      // Detectar conflicto 409: paciente ya existe
+      // 409: ya tiene un paciente con ese DNI
       if (err.status === 409 && err.response?.data?.paciente_existente) {
-        const pe = err.response.data.paciente_existente;
-        setPacienteExistente(pe);
-        setYaAsignado(err.response.data.ya_asignado || false);
+        setPacienteExistente(err.response.data.paciente_existente);
         setAlert({ type: '', message: '', detail: '' });
       } else {
         setAlert({
@@ -199,7 +175,6 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
     });
     setAlert({ type: '', message: '', detail: '' });
     setPacienteExistente(null);
-    setYaAsignado(false);
     onClose();
   };
 
@@ -347,31 +322,28 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
             <>
               {/* Paciente existente detectado */}
               {pacienteExistente && (
-                <div className="mb-6 border border-amber-500/30 bg-amber-500/10 rounded-xl p-5 text-amber-200">
+                <div className="mb-6 border border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 rounded-xl p-5 text-amber-900 dark:text-amber-200">
                   <div className="flex items-start gap-3 mb-3">
-                    <AlertCircle className="w-6 h-6 text-amber-400 shrink-0 mt-0.5" />
+                    <AlertCircle className="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                     <div>
-                      <h3 className="font-bold text-amber-300 text-lg">
-                        Este paciente ya existe en OdonLoop
+                      <h3 className="font-bold text-amber-800 dark:text-amber-300 text-lg">
+                        Ya tenés un paciente con este DNI
                       </h3>
-                      <p className="text-sm text-amber-400/90 mt-1">
-                        {yaAsignado
-                          ? 'Este paciente ya está asignado a tu lista.'
-                          : 'Puede haberse atendido previamente con otro odontólogo. Podés asignarlo a tu lista de pacientes.'
-                        }
+                      <p className="text-sm text-amber-700 dark:text-amber-400/90 mt-1">
+                        Está en tu lista de pacientes. Podés usar esa ficha.
                       </p>
                     </div>
                   </div>
-                  <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 mb-4 text-white">
+                  <div className="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-lg p-4 mb-4 text-slate-900 dark:text-white">
                     <div className="flex items-center gap-3">
                       <div className="bg-emerald-500/10 border border-emerald-500/25 p-2 rounded-full">
                         <User className="w-5 h-5 text-emerald-400" />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-white text-lg">
+                        <h4 className="font-semibold text-slate-900 dark:text-white text-lg">
                           {pacienteExistente.nombre_completo}
                         </h4>
-                        <div className="flex items-center gap-4 text-sm text-slate-400 mt-1">
+                        <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mt-1">
                           <span>DNI: {pacienteExistente.dni}</span>
                           {pacienteExistente.telefono && <span>Tel: {pacienteExistente.telefono}</span>}
                           {pacienteExistente.obra_social_detalle && (
@@ -381,31 +353,22 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
                       </div>
                     </div>
                   </div>
-                  {!yaAsignado ? (
-                    <Button
-                      variant="primary"
-                      onClick={handleAsignarExistente}
-                      disabled={asignando}
-                      className="w-full"
-                    >
-                      <UserCheck className="w-5 h-5 mr-2" />
-                      {asignando ? 'Asignando...' : 'Asignar a mi lista de pacientes'}
-                    </Button>
-                  ) : (
-                    <p className="text-center text-sm text-amber-400 font-semibold">
-                      Ya tenés a este paciente en tu lista
-                    </p>
-                  )}
+                  <Button
+                    variant="primary"
+                    onClick={handleUsarExistente}
+                    className="w-full"
+                  >
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <UserCheck className="w-5 h-5" />
+                      Usar este paciente
+                    </span>
+                  </Button>
                 </div>
               )}
 
               {/* Formulario crear paciente */}
               {!pacienteExistente && (
                 <form onSubmit={handleCrearPaciente} className="space-y-4">
-                  <p className="text-sm text-slate-400 mb-4">
-                    Este paciente podrá activar su cuenta después ingresando su DNI y email en el registro.
-                  </p>
-
                   <div className="grid grid-cols-2 gap-4">
                     <Input
                       label="Nombre *"
@@ -556,10 +519,7 @@ const ModalAsignarPaciente = ({ isOpen, onClose, onSeleccionar, soloCrear = fals
               {pacienteExistente && (
                 <div className="mt-4 text-center">
                   <button
-                    onClick={() => {
-                      setPacienteExistente(null);
-                      setYaAsignado(false);
-                    }}
+                    onClick={() => setPacienteExistente(null)}
                     className="text-sm text-slate-400 hover:text-white underline"
                   >
                     Volver al formulario

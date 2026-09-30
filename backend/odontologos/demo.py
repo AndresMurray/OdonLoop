@@ -72,11 +72,11 @@ def _registros_odontograma():
     }
 
 
-def _dni_libre():
+def _dni_libre(odontologo):
     from pacientes.models import Paciente
     while True:
         dni = str(random.randint(90_000_000, 99_999_999))
-        if not Paciente.objects.filter(dni=dni).exists():
+        if not Paciente.objects.filter(odontologo=odontologo, dni=dni).exists():
             return dni
 
 
@@ -125,7 +125,8 @@ def crear_consultorio_demo():
         )
         paciente = Paciente.objects.create(
             user=pac_user,
-            dni=_dni_libre(),
+            odontologo=odontologo,
+            dni=_dni_libre(odontologo),
             obra_social=obras[i % len(obras)] if obras else None,
             creado_por_odontologo=odontologo,
         )
@@ -176,7 +177,7 @@ def borrar_demos_vencidas():
     total = 0
     for odontologo in vencidas:
         with transaction.atomic():
-            usuarios_pacientes = Paciente.objects.filter(creado_por_odontologo=odontologo).values_list('user_id', flat=True)
+            usuarios_pacientes = Paciente.objects.filter(odontologo=odontologo).values_list('user_id', flat=True)
             CustomUser.objects.filter(id__in=list(usuarios_pacientes)).delete()
             odontologo.user.delete()
             total += 1

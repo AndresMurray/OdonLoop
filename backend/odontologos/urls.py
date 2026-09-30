@@ -7,7 +7,6 @@ from .views import (
     suspender_odontologo,
     activar_odontologo,
     crear_paciente_rapido,
-    asignar_paciente_existente,
     MiPerfilOdontologoView,
     MiStorageView,
     PlanConfigListView,
@@ -37,7 +36,6 @@ urlpatterns = [
     
     # Endpoint para crear paciente rápido (solo odontólogos)
     path('crear-paciente-rapido/', crear_paciente_rapido, name='crear-paciente-rapido'),
-    path('asignar-paciente/', asignar_paciente_existente, name='asignar-paciente'),
     
     # Endpoints del panel de administración
     path('admin/todos/', AdminOdontologoListView.as_view(), name='admin-list'),
