@@ -23,10 +23,11 @@ class PacienteTurnoSerializer(serializers.ModelSerializer):
     """Serializer para mostrar datos del paciente en turnos"""
     nombre_completo = serializers.SerializerMethodField()
     email = serializers.SerializerMethodField()
+    telefono = serializers.CharField(source='user.telefono', read_only=True)
     
     class Meta:
         model = Paciente
-        fields = ['id', 'nombre_completo', 'dni', 'email']
+        fields = ['id', 'nombre_completo', 'dni', 'email', 'telefono']
     
     def get_nombre_completo(self, obj):
         return f"{obj.user.first_name} {obj.user.last_name}"

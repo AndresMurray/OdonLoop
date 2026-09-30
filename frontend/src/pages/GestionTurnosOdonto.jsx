@@ -12,6 +12,9 @@ import ConfirmModal from '../components/ConfirmModal';
 import ModalAsignarPaciente from '../components/ModalAsignarPaciente';
 import TurnoCalendar from '../components/TurnoCalendar';
 import { getToday } from '../utils/dateUtils';
+import { MessageCircle } from 'lucide-react';
+import { linkRecordatorioTurno } from '../utils/whatsapp';
+import { trackEvent } from '../utils/analytics';
 
 const GestionTurnosOdonto = () => {
   const navigate = useNavigate();
@@ -1283,7 +1286,18 @@ const GestionTurnosOdonto = () => {
                                 <p className="text-sm text-slate-400 mt-1">{turno.motivo}</p>
                               )}
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap justify-end items-center gap-2">
+                              <a
+                                href={linkRecordatorioTurno(turno, userData)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => trackEvent('recordatorio_whatsapp')}
+                                title="Enviar recordatorio por WhatsApp"
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-slate-50 transition-colors"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                                Recordar
+                              </a>
                               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEstadoColor(turno.estado)}`}>
                                 {turno.estado}
                               </span>

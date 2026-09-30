@@ -14,6 +14,7 @@ import TurnoCalendar from '../components/TurnoCalendar';
 import { PlanModal } from '../components';
 import SnakeGame from '../components/SnakeGame';
 import { getToday } from '../utils/dateUtils';
+import { linkRecordatorioTurno, nombrePacienteTurno } from '../utils/whatsapp';
 import { trackEvent } from '../utils/analytics';
 import { linkWhatsAppVentas } from '../config/marketing';
 
@@ -427,10 +428,10 @@ const HomeOdonto = () => {
                               key={turno.id}
                               className="border border-slate-850 bg-slate-950/40 rounded-lg p-4 hover:border-slate-800 transition-colors"
                             >
-                              <div className="flex justify-between items-start">
+                              <div className="flex justify-between items-start gap-3">
                                 <div>
                                   <h4 className="font-bold text-white">
-                                    {turno.paciente_nombre || 'Paciente no registrado'}
+                                    {nombrePacienteTurno(turno) || 'Paciente no registrado'}
                                   </h4>
                                   <p className="text-sm text-slate-400 mt-1">
                                     🕒 {formatearFecha(turno.fecha_hora)}
@@ -444,9 +445,22 @@ const HomeOdonto = () => {
                                     </p>
                                   )}
                                 </div>
-                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getEstadoColor(turno.estado)}`}>
-                                  {turno.estado}
-                                </span>
+                                <div className="flex flex-col items-end gap-2">
+                                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getEstadoColor(turno.estado)}`}>
+                                    {turno.estado}
+                                  </span>
+                                  <a
+                                    href={linkRecordatorioTurno(turno, userData)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => trackEvent('recordatorio_whatsapp')}
+                                    title="Enviar recordatorio por WhatsApp"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-slate-50 transition-colors"
+                                  >
+                                    <MessageCircle className="w-3.5 h-3.5" />
+                                    Recordar
+                                  </a>
+                                </div>
                               </div>
                             </div>
                           ))}
