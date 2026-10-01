@@ -54,7 +54,7 @@ const TerminosContenido = () => (
     <Seccion titulo="5. Datos de tus pacientes">
       <Lista items={[
         'Vos sos responsable de los datos de pacientes que cargás y de contar con su consentimiento cuando corresponda, según la Ley 25.326 de Protección de Datos Personales (los datos de salud son datos sensibles).',
-        'OdonLoop trata esos datos solo por tu cuenta y para prestarte el servicio: no los vendemos, no los compartimos con terceros ni los usamos para otros fines.',
+        'OdonLoop usa esos datos únicamente por tu cuenta y para prestarte el servicio.',
         'Cada profesional accede solo a sus propios pacientes. Si un paciente se atiende con otro profesional que usa OdonLoop, cada uno tiene su ficha por separado.',
         'Para operar el servicio usamos proveedores de alojamiento, base de datos, envío de mails y almacenamiento de archivos, que acceden a los datos solo en la medida necesaria.',
       ]} />
