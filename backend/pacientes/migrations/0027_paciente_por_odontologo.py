@@ -46,6 +46,13 @@ def _username_libre(CustomUser, base):
 
 
 def separar_pacientes(apps, schema_editor):
+    # Django deja para el final de la migración el índice y la FK de la columna nueva. En Postgres,
+    # crearlos después de modificar filas en la misma transacción falla ("pending trigger events"):
+    # se crean ahora, antes de tocar los datos.
+    for sql in schema_editor.deferred_sql:
+        schema_editor.execute(sql)
+    schema_editor.deferred_sql.clear()
+
     Paciente = apps.get_model('pacientes', 'Paciente')
     Seguimiento = apps.get_model('pacientes', 'Seguimiento')
     Odontograma = apps.get_model('pacientes', 'Odontograma')
