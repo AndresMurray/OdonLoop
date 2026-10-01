@@ -35,7 +35,7 @@ export const mensajeRecordatorioTurno = ({ nombrePaciente, fechaHora, profesiona
   const dia = fecha.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
   const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
   const lineas = [
-    `Hola ${nombrePaciente}! 👋`,
+    `¡Hola ${nombrePaciente}!`,
     `Te recordamos tu turno odontológico el ${dia} a las ${hora} hs${profesional ? ` con ${profesional}` : ''}.`,
   ];
   lineas.push('Por favor confirmá tu asistencia respondiendo este mensaje. ¡Gracias!');
