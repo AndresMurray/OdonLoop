@@ -3,6 +3,10 @@ from django.utils import timezone
 
 DIAS_PRUEBA = 30
 
+# Versión vigente de los Términos y Condiciones (fecha de la última actualización).
+# Cambiarla junto con el texto (frontend/src/components/TerminosContenido.jsx y config/terminos.js).
+TERMINOS_VERSION = '2026-10-01'
+
 
 def generar_slug(modelo, nombre, apellido, excluir_pk=None):
     """'Valeria Sosa' → 'valeria-sosa' (o 'valeria-sosa-2' si ya existe)."""
@@ -81,6 +85,8 @@ class Odontologo(models.Model):
     # Términos y condiciones
     terms_accepted = models.BooleanField(default=False, verbose_name='T\u00e9rminos aceptados')
     terms_accepted_date = models.DateTimeField(blank=True, null=True, verbose_name='Fecha de aceptaci\u00f3n de t\u00e9rminos')
+    terms_version = models.CharField(max_length=20, blank=True, default='', db_default='',
+                                     verbose_name='Versión de términos aceptada')
 
     # Metadata
     fecha_alta = models.DateTimeField(default=timezone.now, verbose_name='Fecha de alta')

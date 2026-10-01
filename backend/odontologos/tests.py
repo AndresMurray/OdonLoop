@@ -66,6 +66,41 @@ class PruebaGratisTests(TestCase):
         login = self.client.post('/api/usuarios/login/', {'email': 'nueva@test.local', 'password': 'ClaveSegura123'}, format='json')
         self.assertEqual(login.status_code, 200, login.content)
 
+    def test_sin_aceptar_los_terminos_no_se_activa_y_al_aceptar_queda_registrada_la_version(self):
+        from .models import TERMINOS_VERSION
+        self.client.post('/api/usuarios/register/', {
+            'email': 'nueva@test.local', 'password': 'ClaveSegura123', 'password2': 'ClaveSegura123',
+            'first_name': 'Ana', 'last_name': 'López', 'tipo_usuario': 'odontologo'}, format='json')
+        token = EmailVerificationToken.objects.get(user__email='nueva@test.local', used=False)
+
+        sin_aceptar = self.client.post('/api/usuarios/verify-email/', {'token': token.token}, format='json')
+
+        self.assertEqual(sin_aceptar.status_code, 400)
+        self.assertTrue(sin_aceptar.data['requiere_terminos'])
+        odontologo = Odontologo.objects.get(user__email='nueva@test.local')
+        self.assertFalse(odontologo.user.is_active)
+        self.assertEqual(odontologo.estado, 'pendiente')
+
+        # El mismo link sigue sirviendo para aceptar
+        aceptando = self.client.post('/api/usuarios/verify-email/', {'token': token.token, 'terms_accepted': True}, format='json')
+        self.assertEqual(aceptando.status_code, 200, aceptando.content)
+        odontologo.refresh_from_db()
+        self.assertTrue(odontologo.terms_accepted)
+        self.assertIsNotNone(odontologo.terms_accepted_date)
+        self.assertEqual(odontologo.terms_version, TERMINOS_VERSION)
+
+    def test_el_link_reenviado_pasa_por_la_pantalla_de_terminos(self):
+        self.client.post('/api/usuarios/register/', {
+            'email': 'nueva@test.local', 'password': 'ClaveSegura123', 'password2': 'ClaveSegura123',
+            'first_name': 'Ana', 'last_name': 'López', 'tipo_usuario': 'odontologo'}, format='json')
+        mail.outbox.clear()
+
+        self.client.post('/api/usuarios/resend-verification/', {'email': 'nueva@test.local'}, format='json')
+
+        reenvio = next(m for m in mail.outbox if m.to == ['nueva@test.local'])
+        cuerpo = reenvio.body + ''.join(c for c, _ in getattr(reenvio, 'alternatives', []))
+        self.assertIn('tipo=odontologo', cuerpo)
+
     def test_el_admin_recibe_el_lead_con_link_de_whatsapp(self):
         self.registrar_y_verificar()
 

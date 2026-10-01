@@ -280,8 +280,16 @@ class VerifyEmailView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Activar el usuario
             user = token.user
+            # Un odontólogo no puede activar su cuenta sin aceptar los términos (queda registrado)
+            if user.tipo_usuario == 'odontologo' and request.data.get('terms_accepted') is not True:
+                return Response(
+                    {'error': 'Para activar tu cuenta tenés que aceptar los Términos y Condiciones.',
+                     'requiere_terminos': True},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Activar el usuario
             user.email_verified = True
             user.save()
             
@@ -298,10 +306,11 @@ class VerifyEmailView(APIView):
 
             if user.tipo_usuario == 'odontologo':
                 # Odontólogos: al verificar arranca la prueba gratis, sin esperar aprobación manual
+                from odontologos.models import TERMINOS_VERSION
                 odontologo = user.perfil_odontologo
-                if request.data.get('terms_accepted', False):
-                    odontologo.terms_accepted = True
-                    odontologo.terms_accepted_date = timezone.now()
+                odontologo.terms_accepted = True
+                odontologo.terms_accepted_date = timezone.now()
+                odontologo.terms_version = TERMINOS_VERSION
                 if odontologo.estado == 'pendiente':
                     odontologo.iniciar_prueba()
                     self._notificar_admin_inicio_prueba(odontologo)
@@ -377,9 +386,9 @@ class ResendVerificationEmailView(APIView):
             
             # Enviar email
             frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
-            activation_link = f"{frontend_url}/activar-cuenta?token={token.token}"
-            
             is_odontologo = user.tipo_usuario == 'odontologo'
+            # Los odontólogos pasan por la pantalla de términos antes de activar
+            activation_link = f"{frontend_url}/activar-cuenta?token={token.token}" + ('&tipo=odontologo' if is_odontologo else '')
             
             from config.email_utils import send_html_email
             

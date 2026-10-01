@@ -22,7 +22,7 @@ class OdontologoAdmin(admin.ModelAdmin):
     ]
     list_filter = ['plan', 'estado', 'activo', 'especialidad', 'terms_accepted', 'fecha_alta']
     search_fields = ['user__first_name', 'user__last_name', 'matricula', 'especialidad']
-    readonly_fields = ['fecha_alta', 'fecha_aprobacion', 'fecha_suspension', 'terms_accepted_date']
+    readonly_fields = ['fecha_alta', 'fecha_aprobacion', 'fecha_suspension', 'terms_accepted_date', 'terms_version']
 
     fieldsets = (
         ('Información del Usuario', {
@@ -45,7 +45,7 @@ class OdontologoAdmin(admin.ModelAdmin):
             'fields': ('fecha_fin_prueba', 'aviso_prueba_dias', 'es_demo', 'slug'),
         }),
         ('Términos y Condiciones', {
-            'fields': ('terms_accepted', 'terms_accepted_date'),
+            'fields': ('terms_accepted', 'terms_accepted_date', 'terms_version'),
         }),
         ('Almacenamiento (Cloudinary)', {
             'fields': ('storage_used', 'storage_limit'),
