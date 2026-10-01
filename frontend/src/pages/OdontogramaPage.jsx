@@ -300,8 +300,8 @@ const OdontogramaPage = () => {
       {/* Header */}
       <header className="bg-slate-900/40 border-b border-white/5 backdrop-blur-md sticky top-16 z-40 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-4 min-w-0">
               <Button 
                 variant="outline" 
                 size="sm"
@@ -330,7 +330,7 @@ const OdontogramaPage = () => {
             </div>
             
             {/* Indicador de guardado y botón Seguimiento */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
               {guardando && (
                 <div className="flex items-center gap-2 text-cyan-400 bg-cyan-950/40 px-3 py-1.5 rounded-lg border border-cyan-800/40">
                   <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-cyan-400"></div>
@@ -340,7 +340,7 @@ const OdontogramaPage = () => {
               <Button
                 variant="primary"
                 onClick={handleNuevoSeguimiento}
-                className="px-8 py-2.5 min-w-[200px] font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="px-8 py-2.5 w-full sm:w-auto sm:min-w-[200px] font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 <ClipboardPlus className="w-4 h-4 mr-1" />
                 Nuevo Seguimiento

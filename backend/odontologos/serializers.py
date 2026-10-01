@@ -17,6 +17,7 @@ class OdontologoSerializer(serializers.ModelSerializer):
     plan = PlanConfigSerializer(read_only=True)
     nombre_completo = serializers.ReadOnlyField(source='get_nombre_completo')
     estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+    dias_prueba_restantes = serializers.ReadOnlyField()
     
     class Meta:
         model = Odontologo
@@ -25,9 +26,26 @@ class OdontologoSerializer(serializers.ModelSerializer):
             'anos_experiencia', 'horario_atencion', 'consultorio', 'fecha_alta', 'activo',
             'estado', 'estado_display', 'fecha_aprobacion', 'fecha_suspension', 'motivo_suspension',
             'terms_accepted', 'terms_accepted_date',
-            'storage_used', 'storage_limit', 'snake_high_score'
+            'storage_used', 'storage_limit', 'snake_high_score',
+            'fecha_fin_prueba', 'dias_prueba_restantes', 'es_demo'
         ]
         read_only_fields = ['id', 'fecha_alta', 'storage_used', 'storage_limit']
+
+
+class UsuarioPublicoSerializer(serializers.Serializer):
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+
+
+class OdontologoPublicoSerializer(serializers.ModelSerializer):
+    """Datos que cualquiera puede ver (sin sesión): nada de email, teléfono ni fecha de nacimiento."""
+    user = UsuarioPublicoSerializer(read_only=True)
+    nombre_completo = serializers.ReadOnlyField(source='get_nombre_completo')
+    acepta_turnos_online = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Odontologo
+        fields = ['id', 'slug', 'user', 'nombre_completo', 'especialidad', 'consultorio', 'acepta_turnos_online']
 
 
 class OdontologoCreateSerializer(serializers.ModelSerializer):

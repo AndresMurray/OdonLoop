@@ -23,9 +23,9 @@ export const authService = {
       return response;
     } catch (error) {
       
-      // Manejar diferentes formatos de error
+      // Manejar diferentes formatos de error (conservando status y respuesta para el login)
       if (error.message) {
-        throw new Error(error.message);
+        throw Object.assign(new Error(error.message), { status: error.status, response: error.response });
       }
       
       if (error.errors) {
@@ -110,10 +110,10 @@ export const authService = {
       const response = await apiClient.post(API_ENDPOINTS.users.verifyEmail, { token, ...extraData });
       return response;
     } catch (error) {
-      if (error.error) {
-        throw new Error(error.error);
-      }
-      throw new Error('Error al verificar el email');
+      // El cliente deja el mensaje del backend en error.message (antes se perdía y siempre decía lo mismo)
+      const e = new Error(error.message || 'Error al verificar el email');
+      e.requiereTerminos = Boolean(error.response?.data?.requiere_terminos);
+      throw e;
     }
   },
 

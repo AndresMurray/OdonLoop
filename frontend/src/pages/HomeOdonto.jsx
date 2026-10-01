@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/Card';
 import Button from '../components/Button';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, HardDrive, Lock } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Users, HardDrive, Lock, MessageCircle, PartyPopper } from 'lucide-react';
 import { authService } from '../api/authService';
 import { userService } from '../api/userService';
 import { getMisTurnos } from '../api/turnoService';
@@ -13,10 +13,16 @@ import Pagination from '../components/Pagination';
 import TurnoCalendar from '../components/TurnoCalendar';
 import { PlanModal } from '../components';
 import SnakeGame from '../components/SnakeGame';
+import LinkTurnos from '../components/LinkTurnos';
 import { getToday } from '../utils/dateUtils';
+import { linkRecordatorioTurno, nombrePacienteTurno } from '../utils/whatsapp';
+import { trackEvent } from '../utils/analytics';
+import { linkWhatsAppVentas } from '../config/marketing';
 
 const HomeOdonto = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [mostrarBienvenida, setMostrarBienvenida] = useState(() => Boolean(location.state?.bienvenida));
   const [userData, setUserData] = useState(() => authService.getUserData());
   const [planesModalOpen, setPlanesModalOpen] = useState(false);
   const [turnos, setTurnos] = useState([]);
@@ -198,7 +204,7 @@ const HomeOdonto = () => {
                 Panel de Odontólogo
               </h1>
               <p className="text-slate-400 mt-1 text-sm font-semibold">
-                Bienvenido, Dr. {userData.first_name} {userData.last_name}
+                ¡Hola, {userData.first_name}!
               </p>
             </div>
           </div>
@@ -208,6 +214,38 @@ const HomeOdonto = () => {
       {/* Main Content */}
       <main className="flex-grow relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Bienvenida al empezar la prueba gratis */}
+          {mostrarBienvenida && (
+            <div className="mb-8 animate-fadeIn rounded-2xl border border-emerald-300 bg-emerald-50 text-slate-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-white p-6">
+              <div className="flex items-start justify-between gap-4">
+                <h2 className="text-xl font-black flex items-center gap-2">
+                  <PartyPopper className="w-6 h-6 text-emerald-600 dark:text-emerald-300" />
+                  ¡Listo! Tu prueba gratis de 30 días ya empezó
+                </h2>
+                <button onClick={() => setMostrarBienvenida(false)} className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-sm cursor-pointer">Cerrar</button>
+              </div>
+              <ol className="mt-4 grid gap-2 sm:grid-cols-3 text-sm text-slate-700 dark:text-slate-200">
+                <li className="bg-white border border-emerald-100 dark:bg-slate-950/40 dark:border-transparent rounded-xl p-3"><strong>1.</strong> Cargá tus pacientes en <strong>Mis Pacientes</strong>.</li>
+                <li className="bg-white border border-emerald-100 dark:bg-slate-950/40 dark:border-transparent rounded-xl p-3"><strong>2.</strong> Creá tus turnos en <strong>Gestión de Turnos</strong>.</li>
+                <li className="bg-white border border-emerald-100 dark:bg-slate-950/40 dark:border-transparent rounded-xl p-3"><strong>3.</strong> Recordale el turno a cada paciente por <strong>WhatsApp</strong> con un click.</li>
+              </ol>
+              <a
+                href={linkWhatsAppVentas(`Hola! Empecé la prueba de OdonLoop (${userData?.email}) y tengo una consulta para empezar.`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackEvent('contact', { origen: 'bienvenida' })}
+                className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
+              >
+                <MessageCircle className="w-4 h-4" />
+                ¿Tenés dudas para empezar? Escribinos por WhatsApp
+              </a>
+            </div>
+          )}
+
+          <div className="mb-8">
+            <LinkTurnos userData={userData} />
+          </div>
+
           {/* Botón destacado de Gestión de Turnos */}
           <div className="mb-8 animate-fadeIn">
             <Card className="bg-gradient-to-r from-blue-900/80 to-indigo-950/80 border border-blue-500/30">
@@ -393,12 +431,12 @@ const HomeOdonto = () => {
                           {getTurnosPaginados('reservados', paginaReservados).map((turno) => (
                             <div
                               key={turno.id}
-                              className="border border-slate-850 bg-slate-950/40 rounded-lg p-4 hover:border-slate-800 transition-colors"
+                              className="border border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-slate-700 rounded-lg p-4 transition-colors"
                             >
-                              <div className="flex justify-between items-start">
+                              <div className="flex justify-between items-start gap-3">
                                 <div>
                                   <h4 className="font-bold text-white">
-                                    {turno.paciente_nombre || 'Paciente no registrado'}
+                                    {nombrePacienteTurno(turno) || 'Paciente no registrado'}
                                   </h4>
                                   <p className="text-sm text-slate-400 mt-1">
                                     🕒 {formatearFecha(turno.fecha_hora)}
@@ -412,9 +450,22 @@ const HomeOdonto = () => {
                                     </p>
                                   )}
                                 </div>
-                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getEstadoColor(turno.estado)}`}>
-                                  {turno.estado}
-                                </span>
+                                <div className="flex flex-col items-end gap-2">
+                                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getEstadoColor(turno.estado)}`}>
+                                    {turno.estado}
+                                  </span>
+                                  <a
+                                    href={linkRecordatorioTurno(turno, userData)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => trackEvent('recordatorio_whatsapp')}
+                                    title="Enviar recordatorio por WhatsApp"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-slate-50 transition-colors"
+                                  >
+                                    <MessageCircle className="w-3.5 h-3.5" />
+                                    Recordar
+                                  </a>
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -456,7 +507,7 @@ const HomeOdonto = () => {
                           {getTurnosPaginados('disponibles', paginaDisponibles).map((turno) => (
                             <div
                               key={turno.id}
-                              className="border border-slate-850 bg-slate-950/40 rounded-lg p-4 hover:border-slate-800 transition-colors"
+                              className="border border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-slate-700 rounded-lg p-4 transition-colors"
                             >
                               <div className="flex justify-between items-center">
                                 <div>

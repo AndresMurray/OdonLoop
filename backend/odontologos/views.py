@@ -2,6 +2,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.throttling import AnonRateThrottle
 from django.utils import timezone
 from django.db import transaction
 from django.contrib.auth import get_user_model
@@ -12,7 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from .models import Odontologo, PlanConfig
-from .serializers import OdontologoSerializer, OdontologoPerfilSerializer, PlanConfigSerializer
+from .serializers import OdontologoSerializer, OdontologoPerfilSerializer, OdontologoPublicoSerializer, PlanConfigSerializer
 
 User = get_user_model()
 
@@ -62,22 +63,45 @@ class MiStorageView(APIView):
 
 class OdontologoListView(generics.ListAPIView):
     """Lista solo odontólogos activos (disponibles para pacientes)"""
-    queryset = Odontologo.objects.filter(estado='activo')
-    serializer_class = OdontologoSerializer
+    queryset = Odontologo.objects.filter(estado='activo', es_demo=False).select_related('user', 'plan')
+    serializer_class = OdontologoPublicoSerializer
     permission_classes = [permissions.AllowAny]
 
 
 class OdontologoDetailView(generics.RetrieveAPIView):
-    queryset = Odontologo.objects.filter(estado='activo')
-    serializer_class = OdontologoSerializer
+    queryset = Odontologo.objects.filter(estado='activo', es_demo=False).select_related('user', 'plan')
+    serializer_class = OdontologoPublicoSerializer
     permission_classes = [permissions.AllowAny]
+
+
+class DemoRateThrottle(AnonRateThrottle):
+    rate = '5/hour'
+
+
+class DemoLoginView(APIView):
+    """Crea un consultorio demo con datos de ejemplo y devuelve la sesión."""
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [DemoRateThrottle]
+
+    def post(self, request):
+        from rest_framework_simplejwt.tokens import RefreshToken
+        from usuarios.serializers import UserSerializer
+        from .demo import crear_consultorio_demo
+
+        user = crear_consultorio_demo()
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': UserSerializer(user).data,
+        }, status=status.HTTP_201_CREATED)
 
 
 # ===== PANEL DE ADMINISTRACIÓN =====
 
 class AdminOdontologoListView(generics.ListAPIView):
     """Lista TODOS los odontólogos para el panel de administración"""
-    queryset = Odontologo.objects.all().order_by('-fecha_alta')
+    queryset = Odontologo.objects.filter(es_demo=False).order_by('-fecha_alta')
     serializer_class = OdontologoSerializer
     permission_classes = [permissions.IsAuthenticated]
     
@@ -112,8 +136,7 @@ def aprobar_odontologo(request, pk):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    odontologo.estado = 'activo'
-    odontologo.fecha_aprobacion = timezone.now()
+    odontologo.iniciar_prueba()
     odontologo.save()
     
     # Activar el usuario para que pueda iniciar sesión
@@ -225,6 +248,8 @@ def activar_odontologo(request, pk):
     
     odontologo.estado = 'activo'
     odontologo.motivo_suspension = None
+    # Reactivar implica que la cuenta ya está paga: termina el período de prueba
+    odontologo.fecha_fin_prueba = None
     odontologo.save()
     
     # Activar el usuario para que pueda iniciar sesión
@@ -268,11 +293,40 @@ def activar_odontologo(request, pk):
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
+def confirmar_suscripcion(request, pk):
+    """Marca como paga una cuenta en prueba (el admin registró el pago)."""
+    if request.user.tipo_usuario != 'admin':
+        return Response(
+            {'error': 'No tienes permisos para realizar esta acción'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    try:
+        odontologo = Odontologo.objects.get(pk=pk)
+    except Odontologo.DoesNotExist:
+        return Response(
+            {'error': 'Odontólogo no encontrado'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    odontologo.fecha_fin_prueba = None
+    odontologo.save()
+
+    serializer = OdontologoSerializer(odontologo)
+    return Response({
+        'message': f'Suscripción de {odontologo.get_nombre_completo()} confirmada',
+        'odontologo': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
 @transaction.atomic
 def crear_paciente_rapido(request):
     """
-    Crear un paciente rápido sin cuenta de email (creado por odontólogo).
-    Este paciente podrá activar su cuenta después ingresando su DNI y email.
+    Crear un paciente del odontólogo (sin cuenta de email).
+    Cada odontólogo tiene sus propias fichas: el mismo DNI puede estar cargado por otro
+    odontólogo sin que se crucen; solo no se repite dentro de sus propios pacientes.
     """
     if not hasattr(request.user, 'perfil_odontologo'):
         return Response(
@@ -300,17 +354,17 @@ def crear_paciente_rapido(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Verificar que el DNI no exista
     from pacientes.models import Paciente
-    paciente_existente = Paciente.objects.filter(dni=dni).select_related('user', 'obra_social').first()
+    from pacientes.permisos import pacientes_del_odontologo
+    from pacientes.serializers import MisPacientesSerializer
+    odontologo = request.user.perfil_odontologo
+    paciente_existente = pacientes_del_odontologo(odontologo).filter(dni=dni).select_related('user', 'obra_social').first()
     if paciente_existente:
-        from pacientes.serializers import PacienteSerializer
-        odontologo = request.user.perfil_odontologo
-        ya_asignado = paciente_existente.odontologos_asignados.filter(id=odontologo.id).exists()
+        # Ya es paciente suyo: se le devuelve la ficha para que la use
         return Response({
-            'error': 'Ya existe un paciente con este DNI',
-            'paciente_existente': PacienteSerializer(paciente_existente).data,
-            'ya_asignado': ya_asignado
+            'error': 'Ya tenés un paciente con este DNI',
+            'paciente_existente': MisPacientesSerializer(paciente_existente, context={'odontologo': odontologo}).data,
+            'ya_asignado': True,
         }, status=status.HTTP_409_CONFLICT)
     
     try:
@@ -334,10 +388,9 @@ def crear_paciente_rapido(request):
             is_active=True
         )
         
-        # Crear perfil de paciente
-        odontologo = request.user.perfil_odontologo
         paciente = Paciente.objects.create(
             user=user,
+            odontologo=odontologo,
             dni=dni,
             direccion=direccion or None,
             obra_social_id=obra_social_id if obra_social_id else None,
@@ -348,7 +401,7 @@ def crear_paciente_rapido(request):
             antecedentes_medicos=antecedentes_medicos or None,
             creado_por_odontologo=odontologo
         )
-        # También agregar la relación M2M
+        # Se sigue completando por compatibilidad con la versión anterior
         paciente.odontologos_asignados.add(odontologo)
         
         from pacientes.serializers import PacienteSerializer
@@ -364,55 +417,6 @@ def crear_paciente_rapido(request):
             {'error': f'Error al crear paciente: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
-
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticated])
-def asignar_paciente_existente(request):
-    """
-    Asignar un paciente existente al odontólogo actual.
-    Si el paciente no tiene creado_por_odontologo, se le asigna.
-    En cualquier caso, queda vinculado a través del campo creado_por_odontologo.
-    """
-    if not hasattr(request.user, 'perfil_odontologo'):
-        return Response(
-            {'error': 'Solo odontólogos pueden asignar pacientes'},
-            status=status.HTTP_403_FORBIDDEN
-        )
-
-    paciente_id = request.data.get('paciente_id')
-    if not paciente_id:
-        return Response(
-            {'error': 'ID del paciente es obligatorio'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    from pacientes.models import Paciente
-    try:
-        paciente = Paciente.objects.select_related('user').get(id=paciente_id)
-    except Paciente.DoesNotExist:
-        return Response(
-            {'error': 'Paciente no encontrado'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-    odontologo = request.user.perfil_odontologo
-
-    # Agregar relación M2M (idempotente, no falla si ya existe)
-    paciente.odontologos_asignados.add(odontologo)
-
-    # Si no tiene creado_por_odontologo, asignarlo también
-    if not paciente.creado_por_odontologo:
-        paciente.creado_por_odontologo = odontologo
-        paciente.save(update_fields=['creado_por_odontologo'])
-
-    from pacientes.serializers import PacienteSerializer
-    serializer = PacienteSerializer(paciente)
-
-    return Response({
-        'message': 'Paciente asignado exitosamente',
-        'paciente': serializer.data
-    }, status=status.HTTP_200_OK)
 
 
 class MiPerfilOdontologoView(APIView):

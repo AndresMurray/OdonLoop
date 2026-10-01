@@ -143,7 +143,7 @@ const HomePaciente = () => {
                   </p>
                   {proximoTurno.odontologo && (
                     <p className="text-sm text-slate-300 mb-1">
-                      Dr. {proximoTurno.odontologo.nombre_completo}
+                      {proximoTurno.odontologo.nombre_completo}
                     </p>
                   )}
                   <p className="text-sm text-slate-400">

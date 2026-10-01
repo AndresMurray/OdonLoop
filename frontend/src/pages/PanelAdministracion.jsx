@@ -1,14 +1,33 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllOdontologos, aprobarOdontologo, suspenderOdontologo, activarOdontologo, updatePlan, cambiarPlanOdontologo } from '../api/adminService';
+import { getAllOdontologos, aprobarOdontologo, suspenderOdontologo, activarOdontologo, confirmarSuscripcion, updatePlan, cambiarPlanOdontologo } from '../api/adminService';
 import { getPlanes } from '../api/odontologoService';
 import { authService } from '../api/authService';
 import Button from '../components/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { UserCheck, UserX, Clock, CheckCircle, XCircle, AlertCircle, Edit, Lock } from 'lucide-react';
+import { UserCheck, UserX, Clock, CheckCircle, XCircle, AlertCircle, Edit, Lock, BadgeDollarSign } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
+import { OFERTA_FUNDADOR, tienePrecioFundador, fechaFinOfertaTexto } from '../config/marketing';
+
+const TEXTOS_CONFIRMACION = {
+  aprobar: {
+    titulo: 'Aprobar Odontólogo',
+    mensaje: '¿Estás seguro de que querés aprobar este odontólogo? Empieza su prueba gratis de 30 días y se le enviará una notificación por email.',
+    boton: 'Sí, aprobar',
+  },
+  reactivar: {
+    titulo: 'Reactivar Odontólogo',
+    mensaje: '¿Estás seguro de que querés reactivar este odontólogo? Se considera cuenta paga (termina el período de prueba).',
+    boton: 'Sí, reactivar',
+  },
+  suscripcion: {
+    titulo: 'Confirmar pago',
+    mensaje: '¿Recibiste el pago? La cuenta pasa a suscripta y deja de tener fecha de vencimiento de prueba.',
+    boton: 'Sí, confirmar',
+  },
+};
 
 const PanelAdministracion = () => {
   const navigate = useNavigate();
@@ -87,6 +106,9 @@ const PanelAdministracion = () => {
       } else if (tipo === 'reactivar') {
         const response = await activarOdontologo(id);
         setSuccess(response.message || 'Odontólogo reactivado exitosamente');
+      } else if (tipo === 'suscripcion') {
+        const response = await confirmarSuscripcion(id);
+        setSuccess(response.message || 'Suscripción confirmada');
       }
       await cargarOdontologos();
     } catch (err) {
@@ -276,7 +298,7 @@ const PanelAdministracion = () => {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Pendientes</p>
+                        <p className="text-sm font-medium text-gray-600 dark:text-slate-300">Pendientes</p>
                         <p className="text-3xl font-bold text-yellow-600">{contadores.pendiente}</p>
                       </div>
                       <Clock className="w-12 h-12 text-yellow-600 opacity-50" />
@@ -287,7 +309,7 @@ const PanelAdministracion = () => {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Activos</p>
+                        <p className="text-sm font-medium text-gray-600 dark:text-slate-300">Activos</p>
                         <p className="text-3xl font-bold text-green-600">{contadores.activo}</p>
                       </div>
                       <CheckCircle className="w-12 h-12 text-green-600 opacity-50" />
@@ -298,7 +320,7 @@ const PanelAdministracion = () => {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Suspendidos</p>
+                        <p className="text-sm font-medium text-gray-600 dark:text-slate-300">Suspendidos</p>
                         <p className="text-3xl font-bold text-red-600">{contadores.suspendido}</p>
                       </div>
                       <XCircle className="w-12 h-12 text-red-600 opacity-50" />
@@ -362,7 +384,7 @@ const PanelAdministracion = () => {
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
                                 <h3 className="text-lg font-semibold text-gray-900">
-                                  Dr. {odontologo.nombre_completo}
+                                  {odontologo.nombre_completo}
                                 </h3>
                                 {getEstadoBadge(odontologo.estado)}
                               </div>
@@ -378,6 +400,21 @@ const PanelAdministracion = () => {
                                 <p><strong>Fecha de registro:</strong> {new Date(odontologo.fecha_alta).toLocaleDateString('es-AR')}</p>
                                 {odontologo.fecha_aprobacion && (
                                   <p><strong>Fecha de aprobación:</strong> {new Date(odontologo.fecha_aprobacion).toLocaleDateString('es-AR')}</p>
+                                )}
+                                {odontologo.fecha_fin_prueba ? (
+                                  <p className={odontologo.dias_prueba_restantes <= 7 ? 'text-amber-600 font-semibold' : 'text-emerald-700'}>
+                                    <strong>Prueba gratis:</strong> {odontologo.dias_prueba_restantes > 0 ? `quedan ${odontologo.dias_prueba_restantes} días` : 'vencida'} (vence {new Date(odontologo.fecha_fin_prueba).toLocaleDateString('es-AR')})
+                                  </p>
+                                ) : odontologo.estado === 'activo' && (
+                                  <p className="text-emerald-700"><strong>Suscripción:</strong> paga</p>
+                                )}
+                                {odontologo.fecha_fin_prueba && tienePrecioFundador(odontologo.fecha_alta) && (
+                                  <p className="text-emerald-700 font-semibold">
+                                    <strong>Precio Fundador:</strong> {OFERTA_FUNDADOR.precio} por {OFERTA_FUNDADOR.meses} meses (se registró antes del {fechaFinOfertaTexto})
+                                  </p>
+                                )}
+                                {odontologo.user.telefono && (
+                                  <p><strong>Teléfono:</strong> {odontologo.user.telefono}</p>
                                 )}
                                 {odontologo.motivo_suspension && (
                                   <p className="text-red-600"><strong>Motivo de suspensión:</strong> {odontologo.motivo_suspension}</p>
@@ -399,6 +436,17 @@ const PanelAdministracion = () => {
                               )}
                               {odontologo.estado === 'activo' && (
                                 <>
+                                  {odontologo.fecha_fin_prueba && (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => setConfirmModal({ open: true, tipo: 'suscripcion', id: odontologo.id })}
+                                      isLoading={procesando}
+                                      className="w-full flex items-center justify-center gap-1.5"
+                                    >
+                                      <BadgeDollarSign className="w-4 h-4" />
+                                      Confirmar pago
+                                    </Button>
+                                  )}
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -407,7 +455,7 @@ const PanelAdministracion = () => {
                                       setPlanSelect(odontologo.plan?.plan_key || 'basico');
                                       setMostrarModalCambiarPlan(true);
                                     }}
-                                    className="w-full border-blue-500 text-blue-600 hover:bg-blue-50 flex items-center justify-center gap-1.5"
+                                    className="w-full border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-500! dark:text-blue-600! dark:hover:bg-blue-50! dark:hover:text-blue-700! flex items-center justify-center gap-1.5"
                                   >
                                     <Lock className="w-3.5 h-3.5" />
                                     Cambiar Plan
@@ -541,7 +589,7 @@ const PanelAdministracion = () => {
               Cambiar Plan de Suscripción
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Estás modificando la suscripción de <strong>Dr. {odontologoSeleccionadoParaPlan.nombre_completo}</strong>.
+              Estás modificando la suscripción de <strong>{odontologoSeleccionadoParaPlan.nombre_completo}</strong>.
             </p>
             <div className="mb-4">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -746,15 +794,11 @@ const PanelAdministracion = () => {
         isOpen={confirmModal.open}
         onClose={() => setConfirmModal({ open: false, tipo: null, id: null })}
         onConfirm={confirmarAccion}
-        title={confirmModal.tipo === 'aprobar' ? 'Aprobar Odontólogo' : 'Reactivar Odontólogo'}
-        message={
-          confirmModal.tipo === 'aprobar'
-            ? '¿Estás seguro de que querés aprobar este odontólogo? Se le enviará una notificación por email.'
-            : '¿Estás seguro de que querés reactivar este odontólogo?'
-        }
-        confirmText={confirmModal.tipo === 'aprobar' ? 'Sí, aprobar' : 'Sí, reactivar'}
+        title={TEXTOS_CONFIRMACION[confirmModal.tipo]?.titulo}
+        message={TEXTOS_CONFIRMACION[confirmModal.tipo]?.mensaje}
+        confirmText={TEXTOS_CONFIRMACION[confirmModal.tipo]?.boton}
         cancelText="Cancelar"
-        variant={confirmModal.tipo === 'aprobar' ? 'info' : 'warning'}
+        variant={confirmModal.tipo === 'reactivar' ? 'warning' : 'info'}
       />
     </div>
   );

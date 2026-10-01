@@ -23,10 +23,11 @@ class PacienteTurnoSerializer(serializers.ModelSerializer):
     """Serializer para mostrar datos del paciente en turnos"""
     nombre_completo = serializers.SerializerMethodField()
     email = serializers.SerializerMethodField()
+    telefono = serializers.CharField(source='user.telefono', read_only=True)
     
     class Meta:
         model = Paciente
-        fields = ['id', 'nombre_completo', 'dni', 'email']
+        fields = ['id', 'nombre_completo', 'dni', 'email', 'telefono']
     
     def get_nombre_completo(self, obj):
         return f"{obj.user.first_name} {obj.user.last_name}"
@@ -47,6 +48,7 @@ class TurnoSerializer(serializers.ModelSerializer):
             'id', 'odontologo', 'paciente', 'fecha_hora', 
             'duracion_minutos', 'motivo', 'estado', 'esta_disponible',
             'nombre_paciente_manual', 'apellido_paciente_manual', 'telefono_paciente_manual',
+            'email_paciente_manual', 'origen',
             'fecha_creacion', 'fecha_actualizacion', 'visible'
         ]
 
@@ -145,6 +147,15 @@ class TurnoUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 f"No se puede cambiar de '{current_estado}' a '{value}'.")
         
+        return value
+
+    def validate_paciente(self, value):
+        """Un odontólogo solo puede asignar turnos a sus propios pacientes."""
+        request = self.context.get('request')
+        if value and request and hasattr(request.user, 'perfil_odontologo'):
+            from pacientes.permisos import pacientes_del_odontologo
+            if not pacientes_del_odontologo(request.user.perfil_odontologo).filter(id=value.id).exists():
+                raise serializers.ValidationError('Paciente no encontrado.')
         return value
     
     def validate(self, data):

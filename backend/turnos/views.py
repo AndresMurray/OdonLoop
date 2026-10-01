@@ -170,6 +170,13 @@ class TurnoViewSet(viewsets.ModelViewSet):
                     {'error': 'El odontólogo seleccionado no tiene habilitado el sistema de turnos.'},
                     status=status.HTTP_403_FORBIDDEN
                 )
+
+            # La ficha es de un solo odontólogo: con otros se reserva desde su link de turnos online
+            if turno.odontologo_id != paciente.odontologo_id:
+                return Response(
+                    {'error': 'Para sacar turno con este odontólogo usá su link de turnos online.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
             
             if not turno.esta_disponible:
                 return Response(
@@ -370,6 +377,11 @@ class TurnoViewSet(viewsets.ModelViewSet):
                 logger.error(f'Tipo de excepción: {type(e).__name__}')
                 if hasattr(e, 'smtp_error'):
                     logger.error(f'SMTP Error: {e.smtp_error}')
+        elif turno.origen == 'online' and turno.email_paciente_manual:
+            # Reserva online con email: avisarle al paciente
+            from .publico import avisar_cancelacion_por_consultorio
+            avisar_cancelacion_por_consultorio(turno)
+            email_sent = True
         elif turno.paciente and turno.paciente.user:
             # Es un paciente registrado pero sin email
             is_manual_booking = True

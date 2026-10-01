@@ -23,8 +23,6 @@ class Paciente(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='perfil_paciente')
     
     # Datos personales específicos
-
-    dni = models.CharField(max_length=20, unique=True, blank=True, null=True, verbose_name='DNI')
     direccion = models.CharField(max_length=200, blank=True, null=True, verbose_name='Dirección')
     
     # Datos médicos
@@ -34,7 +32,8 @@ class Paciente(models.Model):
     alergias = models.TextField(blank=True, null=True, verbose_name='Alergias')
     antecedentes_medicos = models.TextField(blank=True, null=True, verbose_name='Antecedentes Médicos')
 
-    dni = models.CharField(max_length=20, unique=True, blank=True, null=True, verbose_name='DNI')
+    # Único por odontólogo (ver Meta): el mismo DNI puede ser paciente de varios odontólogos, cada uno con su ficha
+    dni = models.CharField(max_length=20, blank=True, null=True, verbose_name='DNI')
     
     # Datos médicos
     obra_social = models.ForeignKey(
@@ -59,6 +58,15 @@ class Paciente(models.Model):
     # Metadata
     fecha_alta = models.DateTimeField(default=timezone.now, verbose_name='Fecha de alta')
     activo = models.BooleanField(default=True, verbose_name='Activo')
+    # Dueño de la ficha: cada odontólogo tiene sus propios pacientes y su propia historia con cada uno
+    odontologo = models.ForeignKey(
+        'odontologos.Odontologo',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='pacientes',
+        verbose_name='Odontólogo'
+    )
     creado_por_odontologo = models.ForeignKey(
         'odontologos.Odontologo',
         on_delete=models.SET_NULL,
@@ -78,6 +86,13 @@ class Paciente(models.Model):
         verbose_name = 'Paciente'
         verbose_name_plural = 'Pacientes'
         ordering = ['user__last_name', 'user__first_name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['odontologo', 'dni'],
+                condition=models.Q(odontologo__isnull=False, dni__isnull=False) & ~models.Q(dni=''),
+                name='dni_unico_por_odontologo',
+            ),
+        ]
     
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name} - DNI: {self.dni}"

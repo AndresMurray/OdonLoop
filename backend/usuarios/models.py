@@ -61,6 +61,16 @@ class CustomUser(AbstractUser):
         return None
 
 
+def registros_abandonados():
+    """
+    Cuentas que se registraron y nunca confirmaron el mail, sin nada cargado: son las únicas que
+    se pueden borrar. Nunca entra una cuenta en uso, un odontólogo aprobado o suspendido, ni un paciente.
+    """
+    return CustomUser.objects.filter(
+        email_verified=False, is_active=False, perfil_paciente__isnull=True,
+    ).filter(models.Q(perfil_odontologo__isnull=True) | models.Q(perfil_odontologo__estado='pendiente'))
+
+
 class PasswordResetToken(models.Model):
     """Modelo para tokens de recuperación de contraseña"""
     user = models.ForeignKey(

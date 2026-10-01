@@ -216,7 +216,7 @@ const MisPacientesPage = () => {
                 <p className="text-slate-400 mt-2">
                   {searchTerm
                     ? 'Intenta con otros términos de búsqueda'
-                    : 'Creá tu primer paciente con el botón "Nuevo Paciente" o los pacientes aparecerán aquí cuando soliciten turnos contigo'
+                    : 'Creá tu primer paciente con el botón "Nuevo Paciente".'
                   }
                 </p>
               </CardContent>

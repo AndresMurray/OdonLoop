@@ -11,7 +11,11 @@ import Pagination from '../components/Pagination';
 import ConfirmModal from '../components/ConfirmModal';
 import ModalAsignarPaciente from '../components/ModalAsignarPaciente';
 import TurnoCalendar from '../components/TurnoCalendar';
+import LinkTurnos from '../components/LinkTurnos';
 import { getToday } from '../utils/dateUtils';
+import { MessageCircle } from 'lucide-react';
+import { linkRecordatorioTurno } from '../utils/whatsapp';
+import { trackEvent } from '../utils/analytics';
 
 const GestionTurnosOdonto = () => {
   const navigate = useNavigate();
@@ -608,11 +612,15 @@ const GestionTurnosOdonto = () => {
           <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400">Gestión de Turnos</h1>
-              <p className="text-slate-400 font-semibold text-sm mt-1">Dr. {userData.nombre} {userData.apellido}</p>
+              <p className="text-slate-400 font-semibold text-sm mt-1">{userData.nombre} {userData.apellido}</p>
             </div>
             <Button onClick={() => navigate('/home-odontologo')} variant="secondary" className="w-full sm:w-auto">
               Volver al Inicio
             </Button>
+          </div>
+
+          <div className="mb-6">
+            <LinkTurnos userData={userData} />
           </div>
 
           {/* Indicadores globales */}
@@ -1137,7 +1145,7 @@ const GestionTurnosOdonto = () => {
                               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <p className="font-semibold text-white">{formatearFecha(turno.fecha_hora)}</p>
+                                    <p className="font-semibold text-slate-900 dark:text-white">{formatearFecha(turno.fecha_hora)}</p>
                                     {!turno.visible && (
                                       <span className="text-xs bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2 py-0.5 rounded-full font-medium">
                                         🚫 Oculto para pacientes
@@ -1265,14 +1273,19 @@ const GestionTurnosOdonto = () => {
                             className="flex justify-between items-center p-4 bg-slate-900/60 border border-slate-800 rounded-lg"
                           >
                             <div>
-                              <p className="font-semibold text-white">{formatearFecha(turno.fecha_hora)}</p>
+                              <p className="font-semibold text-slate-900 dark:text-white">{formatearFecha(turno.fecha_hora)}</p>
                               {turno.paciente ? (
                                 <p className="text-sm text-slate-300">
                                   Paciente: {turno.paciente.nombre_completo}
                                 </p>
                               ) : turno.nombre_paciente_manual && turno.apellido_paciente_manual ? (
                                 <div className="text-sm text-slate-300">
-                                  <p>Paciente: {turno.nombre_paciente_manual} {turno.apellido_paciente_manual} <span className="text-xs text-blue-400">(reserva manual)</span></p>
+                                  <p>Paciente: {turno.nombre_paciente_manual} {turno.apellido_paciente_manual} {turno.origen === 'online'
+                                    ? <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">(reserva online)</span>
+                                    : <span className="text-xs text-blue-400">(reserva manual)</span>}</p>
+                                  {turno.email_paciente_manual && (
+                                    <p className="text-xs text-slate-400 mt-0.5">✉️ {turno.email_paciente_manual}</p>
+                                  )}
                                   {turno.telefono_paciente_manual && (
                                     <p className="text-xs text-slate-400 mt-0.5">📞 {turno.telefono_paciente_manual}</p>
                                   )}
@@ -1283,7 +1296,18 @@ const GestionTurnosOdonto = () => {
                                 <p className="text-sm text-slate-400 mt-1">{turno.motivo}</p>
                               )}
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap justify-end items-center gap-2">
+                              <a
+                                href={linkRecordatorioTurno(turno, userData)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => trackEvent('recordatorio_whatsapp')}
+                                title="Enviar recordatorio por WhatsApp"
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-slate-50 transition-colors"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                                Recordar
+                              </a>
                               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getEstadoColor(turno.estado)}`}>
                                 {turno.estado}
                               </span>

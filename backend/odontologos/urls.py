@@ -7,12 +7,13 @@ from .views import (
     suspender_odontologo,
     activar_odontologo,
     crear_paciente_rapido,
-    asignar_paciente_existente,
     MiPerfilOdontologoView,
     MiStorageView,
     PlanConfigListView,
     PlanConfigUpdateView,
     cambiar_plan_odontologo,
+    confirmar_suscripcion,
+    DemoLoginView,
     snake_score_view
 )
 
@@ -21,6 +22,7 @@ app_name = 'odontologos'
 urlpatterns = [
     # Endpoints públicos (solo odontólogos activos)
     path('', OdontologoListView.as_view(), name='list'),
+    path('demo/', DemoLoginView.as_view(), name='demo'),
     path('<int:pk>/', OdontologoDetailView.as_view(), name='detail'),
     
     # Récord del minijuego Snake (odontólogo logueado)
@@ -34,7 +36,6 @@ urlpatterns = [
     
     # Endpoint para crear paciente rápido (solo odontólogos)
     path('crear-paciente-rapido/', crear_paciente_rapido, name='crear-paciente-rapido'),
-    path('asignar-paciente/', asignar_paciente_existente, name='asignar-paciente'),
     
     # Endpoints del panel de administración
     path('admin/todos/', AdminOdontologoListView.as_view(), name='admin-list'),
@@ -42,6 +43,7 @@ urlpatterns = [
     path('admin/<int:pk>/suspender/', suspender_odontologo, name='admin-suspender'),
     path('admin/<int:pk>/activar/', activar_odontologo, name='admin-activar'),
     path('admin/<int:pk>/cambiar-plan/', cambiar_plan_odontologo, name='admin-cambiar-plan'),
+    path('admin/<int:pk>/confirmar-suscripcion/', confirmar_suscripcion, name='admin-confirmar-suscripcion'),
     
     # Configuración de planes
     path('planes/', PlanConfigListView.as_view(), name='planes-list'),

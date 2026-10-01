@@ -1,29 +1,54 @@
+import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import RegisterPage from '../pages/RegisterPage';
-import RegisterPacientePage from '../pages/RegisterPacientePage';
 import RegisterOdontologoPage from '../pages/RegisterOdontologoPage';
-import PendienteAprobacionPage from '../pages/PendienteAprobacionPage';
+import RegistroExitosoPage from '../pages/RegistroExitosoPage';
 import LoginPage from '../pages/LoginPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
 import ActivarCuentaPage from '../pages/ActivarCuentaPage';
 import ReenviarVerificacionPage from '../pages/ReenviarVerificacionPage';
-import TurnosPage from '../pages/TurnosPage';
-import HomeOdonto from '../pages/HomeOdonto';
-import HomePaciente from '../pages/HomePaciente';
-import HomeAdmin from '../pages/HomeAdmin';
-import PanelAdministracion from '../pages/PanelAdministracion';
-import GestionTurnosOdonto from '../pages/GestionTurnosOdonto';
-import SolicitarTurnoPage from '../pages/SolicitarTurnoPage';
-import MisPacientesPage from '../pages/MisPacientesPage';
-import SeguimientoPacientePage from '../pages/SeguimientoPacientePage';
-import PerfilPacientePage from '../pages/PerfilPacientePage';
-import PerfilOdontologoPage from '../pages/PerfilOdontologoPage';
-import OdontogramaPage from '../pages/OdontogramaPage';
 import App from '../App';
 import HomePage from '../pages/HomePage';
 import ProtectedRoute from '../components/ProtectedRoute';
 import GuestRoute from '../components/GuestRoute';
 import RootRedirect from '../components/RootRedirect';
+
+// Tras un deploy, una pestaña abierta con la versión anterior pide archivos que ya no existen:
+// en ese caso se recarga una vez para traer la versión nueva.
+const CLAVE_RECARGA = 'odonloop-recarga-por-deploy';
+const lazyConRecarga = (importar) => lazy(() =>
+  importar()
+    .then((modulo) => {
+      try { sessionStorage.removeItem(CLAVE_RECARGA); } catch { /* sin sessionStorage */ }
+      return modulo;
+    })
+    .catch((error) => {
+      let yaRecargo = true;
+      try {
+        yaRecargo = Boolean(sessionStorage.getItem(CLAVE_RECARGA));
+        if (!yaRecargo) sessionStorage.setItem(CLAVE_RECARGA, '1');
+      } catch { /* sin sessionStorage: no reintentar */ }
+      if (yaRecargo) throw error;
+      window.location.reload();
+      return new Promise(() => {});
+    })
+);
+
+// Pantallas de la app (con sesión): se descargan recién cuando se usan, así la landing carga liviana
+const TurnosPage = lazyConRecarga(() => import('../pages/TurnosPage'));
+const HomeOdonto = lazyConRecarga(() => import('../pages/HomeOdonto'));
+const HomePaciente = lazyConRecarga(() => import('../pages/HomePaciente'));
+const HomeAdmin = lazyConRecarga(() => import('../pages/HomeAdmin'));
+const PanelAdministracion = lazyConRecarga(() => import('../pages/PanelAdministracion'));
+const GestionTurnosOdonto = lazyConRecarga(() => import('../pages/GestionTurnosOdonto'));
+const SolicitarTurnoPage = lazyConRecarga(() => import('../pages/SolicitarTurnoPage'));
+const MisPacientesPage = lazyConRecarga(() => import('../pages/MisPacientesPage'));
+const SeguimientoPacientePage = lazyConRecarga(() => import('../pages/SeguimientoPacientePage'));
+const PerfilPacientePage = lazyConRecarga(() => import('../pages/PerfilPacientePage'));
+const PerfilOdontologoPage = lazyConRecarga(() => import('../pages/PerfilOdontologoPage'));
+const OdontogramaPage = lazyConRecarga(() => import('../pages/OdontogramaPage'));
+const ReservarTurnoPage = lazyConRecarga(() => import('../pages/ReservarTurnoPage'));
+const CancelarTurnoPage = lazyConRecarga(() => import('../pages/CancelarTurnoPage'));
+const TerminosPage = lazyConRecarga(() => import('../pages/TerminosPage'));
 
 export const router = createBrowserRouter([
   {
@@ -71,20 +96,13 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    // El registro es solo para odontólogos; los pacientes sacan turno con el link de su odontólogo
     path: '/register',
-    element: (
-      <GuestRoute>
-        <RegisterPage />
-      </GuestRoute>
-    ),
+    element: <Navigate to="/register/odontologo" replace />,
   },
   {
     path: '/register/paciente',
-    element: (
-      <GuestRoute>
-        <RegisterPacientePage />
-      </GuestRoute>
-    ),
+    element: <Navigate to="/home" replace />,
   },
   {
     path: '/register/odontologo',
@@ -95,12 +113,30 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/pendiente-aprobacion',
+    path: '/terminos',
+    element: <TerminosPage />,
+  },
+  {
+    // Link público de cada odontólogo: los pacientes reservan sin cuenta
+    path: '/turnos/:slug',
+    element: <ReservarTurnoPage />,
+  },
+  {
+    path: '/turnos/cancelar/:token',
+    element: <CancelarTurnoPage />,
+  },
+  {
+    path: '/registro-exitoso',
     element: (
       <GuestRoute>
-        <PendienteAprobacionPage />
+        <RegistroExitosoPage />
       </GuestRoute>
     ),
+  },
+  {
+    // Ruta anterior (cuando había aprobación manual)
+    path: '/pendiente-aprobacion',
+    element: <Navigate to="/registro-exitoso" replace />,
   },
   {
     path: '/home-paciente',

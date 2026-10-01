@@ -112,7 +112,7 @@ const SolicitarTurnoPage = () => {
 
   const handleSeleccionarOdontologo = (odontologo) => {
     setOdontologoSeleccionado(odontologo);
-    setSearchOdontologo(`Dr. ${odontologo.user.first_name} ${odontologo.user.last_name}`);
+    setSearchOdontologo(`${odontologo.user.first_name} ${odontologo.user.last_name}`);
     setMostrarResultados(false);
     buscarTurnos(odontologo.id);
   };
@@ -382,7 +382,7 @@ const SolicitarTurnoPage = () => {
                                 <UserRound className="w-8 h-8 text-blue-400 shrink-0" />
                                 <div>
                                   <p className="font-bold text-white">
-                                    Dr. {odontologo.user.first_name} {odontologo.user.last_name}
+                                    {odontologo.user.first_name} {odontologo.user.last_name}
                                   </p>
                                   <p className="text-sm text-slate-400">{odontologo.especialidad}</p>
                                 </div>
@@ -400,7 +400,7 @@ const SolicitarTurnoPage = () => {
                         <UserRound className="w-8 h-8 text-blue-400 shrink-0" />
                         <div className="flex-1">
                           <p className="font-bold text-white">
-                            Dr. {odontologoSeleccionado.user.first_name} {odontologoSeleccionado.user.last_name}
+                            {odontologoSeleccionado.user.first_name} {odontologoSeleccionado.user.last_name}
                           </p>
                           <p className="text-sm text-slate-300">{odontologoSeleccionado.especialidad}</p>
                         </div>

@@ -176,6 +176,11 @@ const SeguimientoPacientePage = () => {
   const handleFilesSelected = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
+    if (userData?.suscripcion?.es_demo) {
+      setAlert({ type: 'info', message: 'En la demo no se pueden subir archivos', detail: 'Creá tu cuenta gratis para adjuntar fotos, radiografías y documentos.' });
+      e.target.value = '';
+      return;
+    }
 
     // --- Validación de tamaño por archivo (límite Cloudinary: 10 MB) ---
     const archivosExcedidos = files.filter(f => f.size > MAX_FILE_SIZE);
@@ -367,6 +372,11 @@ const SeguimientoPacientePage = () => {
   const handleEditFilesSelected = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
+    if (userData?.suscripcion?.es_demo) {
+      setAlert({ type: 'info', message: 'En la demo no se pueden subir archivos', detail: 'Creá tu cuenta gratis para adjuntar fotos, radiografías y documentos.' });
+      e.target.value = '';
+      return;
+    }
 
     // --- Validación de tamaño por archivo (límite Cloudinary: 10 MB) ---
     const archivosExcedidos = files.filter(f => f.size > MAX_FILE_SIZE);

@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate
 from django.db import transaction
 from django.core.mail import EmailMessage
 from django.conf import settings
+from config.telefonos import normalizar_telefono_ar
 from django.utils import timezone
 import logging
 
@@ -110,114 +111,47 @@ class UserLoginView(APIView):
 
 
 
+ADMIN_EMAIL = 'amurrayroppel@gmail.com'
+
+
+def whatsapp_link(telefono):
+    """Link wa.me para un teléfono argentino cargado a mano (mejor esfuerzo)."""
+    numero = normalizar_telefono_ar(telefono)
+    return f'https://wa.me/{numero}' if numero else None
+
+
+def notificar_admin(subject, title, body_paragraphs, telefono=None):
+    """Aviso interno al administrador. Nunca rompe el flujo que lo llama."""
+    try:
+        from config.email_utils import send_html_email
+        link = whatsapp_link(telefono)
+        send_html_email(
+            subject=subject,
+            recipient_list=[ADMIN_EMAIL],
+            title=title,
+            body_paragraphs=body_paragraphs,
+            button_text='Escribirle por WhatsApp' if link else 'Ir a OdonLoop',
+            button_url=link or getattr(settings, 'FRONTEND_URL', 'https://odonloop.com'),
+        )
+    except Exception as e:
+        logger.error(f'Error al notificar al admin ({subject}): {str(e)}')
+
+
 class UserRegistrationView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
-    @transaction.atomic
     def create(self, request, *args, **kwargs):
         """
-        Crear nuevo usuario o hacer upgrade de cuenta existente.
-        Si el DNI existe sin email, actualiza la cuenta (upgrade).
-        Si el DNI existe con email, retorna error.
-        Si no existe, crea nuevo usuario.
+        Registro público: solo odontólogos. Los pacientes no tienen cuenta propia: los carga su
+        odontólogo o sacan turno desde el link de turnos online, sin registrarse.
         """
-        tipo_usuario = request.data.get('tipo_usuario', 'paciente')
-        
-        # Solo manejar upgrade para pacientes
-        if tipo_usuario == 'paciente':
-            dni = request.data.get('dni')
-            email = request.data.get('email')
-            
-            if dni:
-                from pacientes.models import Paciente
-                try:
-                    paciente_existente = Paciente.objects.select_related('user').get(dni=dni)
-                    
-                    # Verificar si es un upgrade (usuario sin email)
-                    if not paciente_existente.user.email:
-                        # UPGRADE: Activar cuenta existente
-                        user = paciente_existente.user
-                        
-                        # Verificar que el email no esté en uso por otro usuario
-                        if email and CustomUser.objects.filter(email=email).exists():
-                            return Response(
-                                {'error': 'Este email ya está registrado'},
-                                status=status.HTTP_400_BAD_REQUEST
-                            )
-                        
-                        # Actualizar datos del usuario
-                        user.email = email
-                        user.set_password(request.data.get('password'))
-                        user.username = email  # Cambiar username a email
-                        user.tipo_registro = 'autoregistro'
-                        user.cuenta_completa = True
-                        
-                        # Actualizar otros campos si vienen en el request
-                        if request.data.get('telefono'):
-                            user.telefono = request.data.get('telefono')
-                        if request.data.get('first_name'):
-                            user.first_name = request.data.get('first_name')
-                        if request.data.get('last_name'):
-                            user.last_name = request.data.get('last_name')
-                        
-                        user.save()
-                        
-                        # Actualizar obra social si viene en el request
-                        obra_social_id = request.data.get('obra_social_id')
-                        if obra_social_id:
-                            from pacientes.models import ObraSocial
-                            try:
-                                obra_social = ObraSocial.objects.get(id=obra_social_id, activo=True)
-                                paciente_existente.obra_social = obra_social
-                                paciente_existente.save()
-                            except ObraSocial.DoesNotExist:
-                                pass
-                        
-                        # Enviar email de bienvenida al paciente que hace upgrade
-                        if user.email:
-                            try:
-                                from config.email_utils import send_html_email
-                                send_html_email(
-                                    subject='Tu cuenta OdonLoop está lista',
-                                    recipient_list=[user.email],
-                                    title=f'¡Hola {user.first_name}!',
-                                    body_paragraphs=[
-                                        'Excelentes noticias: tu cuenta en OdonLoop ya está activa y lista para usar.',
-                                        'Estamos aquí para hacer tu experiencia de gestión de turnos mucho más simple.',
-                                        'Saludos,',
-                                        'El equipo de OdonLoop'
-                                    ],
-                                    reply_to=[getattr(settings, 'DEFAULT_REPLY_TO_EMAIL', settings.DEFAULT_FROM_EMAIL)]
-                                )
-                            except Exception:
-                                # No fallar el registro si falla el email
-                                pass
-                        
-                        # Generar tokens JWT
-                        from rest_framework_simplejwt.tokens import RefreshToken
-                        refresh = RefreshToken.for_user(user)
-                        
-                        return Response({
-                            'message': 'Cuenta activada exitosamente',
-                            'upgrade': True,
-                            'refresh': str(refresh),
-                            'access': str(refresh.access_token),
-                            'user': UserSerializer(user).data
-                        }, status=status.HTTP_200_OK)
-                    else:
-                        # DNI existe y ya tiene cuenta completa
-                        return Response(
-                            {'error': 'Ya existe una cuenta registrada con este DNI'},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-                        
-                except Paciente.DoesNotExist:
-                    # DNI no existe, continuar con registro normal
-                    pass
-        
-        # Flujo normal de creación
+        if request.data.get('tipo_usuario') != 'odontologo':
+            return Response(
+                {'error': 'El registro es solo para odontólogos. Si sos paciente, pedile a tu odontólogo su link para sacar turno.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         return super().create(request, *args, **kwargs)
     
     @transaction.atomic
@@ -225,74 +159,28 @@ class UserRegistrationView(generics.CreateAPIView):
         # Crear el usuario como INACTIVO (requiere verificación de email)
         user = serializer.save(is_active=False, email_verified=False)
         
-        # Crear el perfil correspondiente según el tipo de usuario
-        if user.tipo_usuario == 'paciente':
-            from pacientes.models import Paciente, ObraSocial
-            
-            # Obtener datos adicionales del contexto del serializer
-            dni = serializer.context.get('dni')
-            obra_social_id = serializer.context.get('obra_social_id')
-            obra_social_otra = serializer.context.get('obra_social_otra')
-            numero_afiliado = serializer.context.get('numero_afiliado')
-            plan = serializer.context.get('plan')
-            
-            # Obtener la obra social si se proporcionó un ID
-            obra_social = None
-            if obra_social_id:
-                try:
-                    obra_social = ObraSocial.objects.get(id=obra_social_id, activo=True)
-                except ObraSocial.DoesNotExist:
-                    pass
-            
-            Paciente.objects.create(
-                user=user,
-                dni=dni,
-                obra_social=obra_social,
-                obra_social_otra=obra_social_otra if not obra_social else None,
-                numero_afiliado=numero_afiliado or None,
-                plan=plan or None
-            )
-            
-            # Enviar email de verificación
-            if user.email:
-                self._send_verification_email(user)
-                    
-        elif user.tipo_usuario == 'odontologo':
+        if user.tipo_usuario == 'odontologo':
             from odontologos.models import Odontologo
             # Obtener consultorio del request si viene
-            consultorio = self.context.get('request').data.get('consultorio', '')
+            consultorio = self.request.data.get('consultorio', '')
             Odontologo.objects.create(user=user, consultorio=consultorio)
             
-            # Notificar al admin sobre nuevo odontólogo registrado
-            try:
-                from config.email_utils import send_html_email
-                
-                admin_email = 'amurrayroppel@gmail.com'
-                nombre_completo = f'{user.first_name} {user.last_name}'.strip() or user.email
-                
-                from django.utils import timezone as tz
-                fecha_registro = tz.localtime(tz.now()).strftime('%d/%m/%Y %H:%M')
-                
-                logger.info(f'Notificando al admin sobre nuevo odontólogo: {user.email}')
-                
-                send_html_email(
-                    subject=f'Nuevo odontólogo registrado: {nombre_completo}',
-                    recipient_list=[admin_email],
-                    title='Nuevo odontólogo registrado',
-                    body_paragraphs=[
-                        'Se ha registrado un nuevo odontólogo en OdonLoop y está pendiente de verificación.',
-                        f'• Nombre: {nombre_completo}',
-                        f'• Email: {user.email}',
-                        f'• Fecha de registro: {fecha_registro}',
-                        'Ingresá a la plataforma para revisarlo y aprobarlo.'
-                    ],
-                    button_text='Ir a OdonLoop',
-                    button_url=getattr(settings, "FRONTEND_URL", "https://odonloop.com")
-                )
-                logger.info(f'Notificación al admin enviada exitosamente')
-                
-            except Exception as e:
-                logger.error(f'Error al notificar al admin sobre nuevo odontólogo: {str(e)}')
+            # Notificar al admin: es un lead para contactar aunque todavía no confirme el email
+            nombre_completo = f'{user.first_name} {user.last_name}'.strip() or user.email
+            fecha_registro = timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')
+            notificar_admin(
+                subject=f'Nuevo odontólogo registrado: {nombre_completo}',
+                title='Nuevo odontólogo registrado',
+                body_paragraphs=[
+                    'Se registró un nuevo odontólogo en OdonLoop. Su prueba gratis empieza cuando confirme el email.',
+                    f'• Nombre: {nombre_completo}',
+                    f'• Email: {user.email}',
+                    f'• Teléfono: {user.telefono or "-"}',
+                    f'• Fecha de registro: {fecha_registro}',
+                    'Si en unas horas no confirmó el email, escribile para ayudarlo a entrar.',
+                ],
+                telefono=user.telefono,
+            )
             
             # Enviar email de verificación
             if user.email:
@@ -323,12 +211,12 @@ class UserRegistrationView(generics.CreateAPIView):
             
             if is_odontologo:
                 subject = 'Confirma tu cuenta en OdonLoop'
-                title = f'¡Bienvenido Dr./Dra. {user.first_name} {user.last_name}!'
+                title = f'¡Hola {user.first_name}, te damos la bienvenida!'
                 body_paragraphs = [
                     'Gracias por registrarte en OdonLoop.',
                     'Solo necesitamos confirmar tu dirección de email. Por favor, haz clic en el siguiente botón para continuar:',
                     'Este enlace estará disponible durante las próximas 48 horas.',
-                    'Una vez que confirmes tu email, verás los pasos a seguir para activar tu cuenta. Te enviaremos una notificación cuando tu cuenta esté lista para usar.',
+                    'Apenas lo confirmes empieza tu prueba gratis de 30 días con todas las funciones, y entrás directo a tu consultorio digital.',
                     'Si no realizaste este registro, simplemente ignora este mensaje. Tu dirección de email no será utilizada sin tu confirmación.',
                     'Saludos cordiales,',
                     'El equipo de OdonLoop'
@@ -392,8 +280,16 @@ class VerifyEmailView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Activar el usuario
             user = token.user
+            # Un odontólogo no puede activar su cuenta sin aceptar los términos (queda registrado)
+            if user.tipo_usuario == 'odontologo' and request.data.get('terms_accepted') is not True:
+                return Response(
+                    {'error': 'Para activar tu cuenta tenés que aceptar los Términos y Condiciones.',
+                     'requiere_terminos': True},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Activar el usuario
             user.email_verified = True
             user.save()
             
@@ -403,38 +299,36 @@ class VerifyEmailView(APIView):
             
             logger.info(f'Email verificado exitosamente para {user.email}')
             
-            # Solo activar is_active y generar tokens para pacientes
-            # Los odontólogos deben esperar aprobación del admin
             response_data = {
                 'message': '',
                 'verified': True,
-                'user': UserSerializer(user).data
             }
-            
+
             if user.tipo_usuario == 'odontologo':
-                # Odontólogos NO deben autenticarse hasta ser aprobados
-                response_data['message'] = 'Email verificado exitosamente. Tu cuenta está ahora en proceso de aprobación. Te notificaremos cuando sea aprobada.'
-                # Guardar aceptación de términos y condiciones
-                terms_accepted = request.data.get('terms_accepted', False)
-                if terms_accepted:
-                    try:
-                        odontologo = user.perfil_odontologo
-                        odontologo.terms_accepted = True
-                        odontologo.terms_accepted_date = timezone.now()
-                        odontologo.save(update_fields=['terms_accepted', 'terms_accepted_date'])
-                    except Exception:
-                        pass  # No bloquear la verificación si falla el guardado de términos
+                # Odontólogos: al verificar arranca la prueba gratis, sin esperar aprobación manual
+                from odontologos.models import TERMINOS_VERSION
+                odontologo = user.perfil_odontologo
+                odontologo.terms_accepted = True
+                odontologo.terms_accepted_date = timezone.now()
+                odontologo.terms_version = TERMINOS_VERSION
+                if odontologo.estado == 'pendiente':
+                    odontologo.iniciar_prueba()
+                    self._notificar_admin_inicio_prueba(odontologo)
+                odontologo.save()
+                response_data['message'] = '¡Email verificado! Tu prueba gratis de 30 días ya empezó.'
             else:
-                # Pacientes y otros usuarios pueden iniciar sesión inmediatamente
-                user.is_active = True
-                user.save()
-                
-                # Generar tokens JWT para login automático
-                refresh = RefreshToken.for_user(user)
                 response_data['message'] = 'Email verificado exitosamente. Ya puedes iniciar sesión y usar la plataforma.'
-                response_data['refresh'] = str(refresh)
-                response_data['access'] = str(refresh.access_token)
-            
+
+            # Todos pueden iniciar sesión inmediatamente
+            user.is_active = True
+            user.save()
+
+            # Generar tokens JWT para login automático
+            refresh = RefreshToken.for_user(user)
+            response_data['refresh'] = str(refresh)
+            response_data['access'] = str(refresh.access_token)
+            response_data['user'] = UserSerializer(user).data
+
             return Response(response_data, status=status.HTTP_200_OK)
             
         except EmailVerificationToken.DoesNotExist:
@@ -442,6 +336,23 @@ class VerifyEmailView(APIView):
                 {'error': 'Token de verificación inválido'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+    def _notificar_admin_inicio_prueba(self, odontologo):
+        user = odontologo.user
+        fin = timezone.localtime(odontologo.fecha_fin_prueba).strftime('%d/%m/%Y')
+        notificar_admin(
+            subject=f'Empezó una prueba gratis: {odontologo.get_nombre_completo()}',
+            title='Nuevo odontólogo en prueba',
+            body_paragraphs=[
+                'Un odontólogo confirmó su email y ya está usando OdonLoop con el plan Premium.',
+                f'• Nombre: {odontologo.get_nombre_completo()}',
+                f'• Email: {user.email}',
+                f'• Teléfono: {user.telefono or "-"}',
+                f'• La prueba vence el {fin}',
+                'Escribile hoy para darle la bienvenida y ofrecerle una capacitación.',
+            ],
+            telefono=user.telefono,
+        )
 
 
 class ResendVerificationEmailView(APIView):
@@ -475,9 +386,9 @@ class ResendVerificationEmailView(APIView):
             
             # Enviar email
             frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
-            activation_link = f"{frontend_url}/activar-cuenta?token={token.token}"
-            
             is_odontologo = user.tipo_usuario == 'odontologo'
+            # Los odontólogos pasan por la pantalla de términos antes de activar
+            activation_link = f"{frontend_url}/activar-cuenta?token={token.token}" + ('&tipo=odontologo' if is_odontologo else '')
             
             from config.email_utils import send_html_email
             
@@ -544,9 +455,14 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
 
 class UserListView(generics.ListAPIView):
-    queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Solo el administrador puede listar usuarios
+        if self.request.user.tipo_usuario != 'admin':
+            return CustomUser.objects.none()
+        return CustomUser.objects.all()
 
 
 class RequestPasswordResetView(APIView):

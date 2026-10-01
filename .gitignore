@@ -71,3 +71,6 @@ dist/
 *~
 .DS_Store
 Thumbs.dbgi
+
+# Material de marketing (reel, análisis): se guarda aparte
+marketing/

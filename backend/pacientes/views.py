@@ -21,14 +21,14 @@ from django.http import HttpResponse
 import requests
 import mimetypes
 import os
-from .models import Paciente, ObraSocial, Seguimiento, RegistroDental, Odontograma
+from .models import Paciente, ObraSocial, Seguimiento, SeguimientoArchivo, RegistroDental, Odontograma
 from .serializers import (
-    PacienteSerializer, PacienteCreateSerializer, ObraSocialSerializer,
+    PacienteSerializer, ObraSocialSerializer,
     SeguimientoSerializer, SeguimientoCreateSerializer, MisPacientesSerializer,
     PacientePerfilSerializer, RegistroDentalSerializer, RegistroDentalCreateUpdateSerializer,
     OdontogramaSerializer, OdontogramaListSerializer
 )
-from turnos.models import Turno
+from .permisos import pacientes_del_odontologo, pacientes_visibles_para
 
 
 class SeguimientoPagination(PageNumberPagination):
@@ -45,19 +45,16 @@ class ObraSocialViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [AllowAny]  # Público para registro
 
 
-class PacienteViewSet(viewsets.ModelViewSet):
-    """ViewSet para gestionar pacientes - acceso para odontólogos"""
+class PacienteViewSet(viewsets.ReadOnlyModelViewSet):
+    """Consulta de pacientes (solo los propios). Se crean y editan desde Mis Pacientes."""
     queryset = Paciente.objects.select_related('user', 'obra_social').filter(activo=True)
     permission_classes = [IsAuthenticated]
     
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return PacienteCreateSerializer
-        return PacienteSerializer
+    serializer_class = PacienteSerializer
     
     def get_queryset(self):
-        """Filtrar pacientes con búsqueda opcional"""
-        queryset = Paciente.objects.select_related('user', 'obra_social').filter(activo=True)
+        """Filtrar pacientes con búsqueda opcional (solo los que el usuario puede ver)"""
+        queryset = pacientes_visibles_para(self.request.user).select_related('user', 'obra_social').filter(activo=True)
         
         # Obtener parámetro de búsqueda si existe
         search = self.request.query_params.get('search', '')
@@ -90,24 +87,14 @@ class MisPacientesView(APIView):
             # Obtener búsqueda si existe
             search = request.query_params.get('search', '')
             
-            # Obtener pacientes únicos que tienen turnos con este odontólogo
-            pacientes_con_turno_ids = Turno.objects.filter(
-                odontologo=odontologo
-            ).exclude(paciente__isnull=True).values_list('paciente_id', flat=True).distinct()
-            
-            # Filtrar pacientes: los que tienen turnos, creados por este odontólogo, o asignados vía M2M
-            from django.db.models import Q as DQ
-            pacientes = Paciente.objects.filter(
-                DQ(id__in=pacientes_con_turno_ids) | DQ(creado_por_odontologo=odontologo) | DQ(odontologos_asignados=odontologo),
-                activo=True
-            ).distinct().select_related('user', 'obra_social')
+            pacientes = pacientes_del_odontologo(odontologo).filter(activo=True).select_related('user', 'obra_social')
             
             # Aplicar búsqueda por nombre si existe
             if search:
                 pacientes = pacientes.filter(
-                    DQ(user__first_name__icontains=search) |
-                    DQ(user__last_name__icontains=search) |
-                    DQ(dni__icontains=search)
+                    Q(user__first_name__icontains=search) |
+                    Q(user__last_name__icontains=search) |
+                    Q(dni__icontains=search)
                 )
             
             # Ordenar por apellido y nombre
@@ -141,15 +128,7 @@ class EditarPacienteView(APIView):
 
             odontologo = request.user.perfil_odontologo
 
-            # Verificar que el paciente exista y esté vinculado al odontólogo
-            paciente = Paciente.objects.select_related('user', 'obra_social').filter(
-                Q(id=paciente_id),
-                Q(creado_por_odontologo=odontologo) |
-                Q(odontologos_asignados=odontologo) |
-                Q(id__in=Turno.objects.filter(odontologo=odontologo).exclude(
-                    paciente__isnull=True
-                ).values_list('paciente_id', flat=True))
-            ).distinct().first()
+            paciente = pacientes_del_odontologo(odontologo).select_related('user', 'obra_social').filter(id=paciente_id).first()
 
             if not paciente:
                 return Response(
@@ -174,11 +153,11 @@ class EditarPacienteView(APIView):
             # Actualizar campos del paciente
             if 'dni' in data:
                 nuevo_dni = data['dni'].strip()
-                # Verificar unicidad de DNI si cambió
+                # El DNI no se repite entre los pacientes del mismo odontólogo
                 if nuevo_dni and nuevo_dni != paciente.dni:
-                    if Paciente.objects.filter(dni=nuevo_dni).exclude(id=paciente.id).exists():
+                    if pacientes_del_odontologo(odontologo).filter(dni=nuevo_dni).exclude(id=paciente.id).exists():
                         return Response(
-                            {'error': 'Ya existe otro paciente con ese DNI'},
+                            {'error': 'Ya tenés otro paciente con ese DNI'},
                             status=status.HTTP_400_BAD_REQUEST
                         )
                 paciente.dni = nuevo_dni if nuevo_dni else None
@@ -420,10 +399,8 @@ class OdontogramaView(APIView):
     permission_classes = [IsAuthenticated, TieneOdontogramaPermission]
 
     def _get_paciente(self, paciente_id):
-        try:
-            return Paciente.objects.get(id=paciente_id)
-        except Paciente.DoesNotExist:
-            return None
+        # Solo pacientes del odontólogo que consulta
+        return pacientes_visibles_para(self.request.user).filter(id=paciente_id).first()
 
     def _build_odontograma_response(self, odontograma_obj, paciente):
         """Construye la respuesta del odontograma con 52 piezas"""
@@ -616,9 +593,8 @@ class OdontogramaListView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        try:
-            paciente = Paciente.objects.get(id=paciente_id)
-        except Paciente.DoesNotExist:
+        paciente = pacientes_visibles_para(request.user).filter(id=paciente_id).first()
+        if not paciente:
             return Response(
                 {'error': 'Paciente no encontrado'},
                 status=status.HTTP_404_NOT_FOUND
@@ -649,10 +625,8 @@ class HistorialPiezaDentalView(APIView):
                     status=status.HTTP_403_FORBIDDEN
                 )
             
-            # Verificar que el paciente existe
-            try:
-                paciente = Paciente.objects.get(id=paciente_id)
-            except Paciente.DoesNotExist:
+            paciente = pacientes_visibles_para(request.user).filter(id=paciente_id).first()
+            if not paciente:
                 return Response(
                     {'error': 'Paciente no encontrado'},
                     status=status.HTTP_404_NOT_FOUND
@@ -692,8 +666,9 @@ class RegistroDentalViewSet(viewsets.ModelViewSet):
         user = self.request.user
         
         if hasattr(user, 'perfil_odontologo'):
+            # Los registros de sus pacientes, los haya cargado él o vengan de antes de separar las fichas
             return RegistroDental.objects.filter(
-                actualizado_por=user.perfil_odontologo
+                paciente__odontologo=user.perfil_odontologo
             ).select_related('paciente__user', 'actualizado_por__user')
         
         return RegistroDental.objects.none()
@@ -708,6 +683,11 @@ class RegistroDentalViewSet(viewsets.ModelViewSet):
         paciente_id = request.data.get('paciente')
         pieza_dental = request.data.get('pieza_dental')
         odontograma_id = request.data.get('odontograma')
+
+        if not pacientes_del_odontologo(request.user.perfil_odontologo).filter(id=paciente_id).exists():
+            return Response({'error': 'Paciente no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        if odontograma_id and not Odontograma.objects.filter(id=odontograma_id, paciente_id=paciente_id).exists():
+            return Response({'error': 'Odontograma no encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
         # Si no se envía odontograma_id, usar el último del paciente o crear uno
         if not odontograma_id:
@@ -749,6 +729,20 @@ class DescargarArchivoView(APIView):
         url = request.query_params.get('url')
         if not url:
             return Response({'error': 'URL requerida'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        if hasattr(user, 'perfil_odontologo'):
+            seguimientos = Seguimiento.objects.filter(odontologo=user.perfil_odontologo)
+        elif hasattr(user, 'perfil_paciente'):
+            seguimientos = Seguimiento.objects.filter(paciente=user.perfil_paciente)
+        else:
+            seguimientos = Seguimiento.objects.none()
+        es_suyo = (
+            SeguimientoArchivo.objects.filter(url=url, seguimiento__in=seguimientos).exists()
+            or seguimientos.filter(imagen_url=url).exists()
+        )
+        if not es_suyo:
+            return Response({'error': 'Archivo no encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
         try:
             response = requests.get(url, timeout=30)
